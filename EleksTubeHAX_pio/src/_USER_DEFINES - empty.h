@@ -33,6 +33,20 @@
 #define BACKLIGHT_DIMMED_INTENSITY  1   // 0..7
 #define TFT_DIMMED_INTENSITY        20  // 0..255
 
+#ifdef HARDWARE_IPSTUBE_CLOCK
+  // comment the next line out to disable hardware dimming with GPIO4 pin (TFT_ENABLE_PIN) for IPSTUBE clock
+  // (in case you have a clock that does not support hardware dimming because of missing Q1 transistor)
+  #define DIM_WITH_ENABLE_PIN_PWM
+  // it is recommended to try this feature only if you are sure that your clock supports hardware dimming
+  // (that is, it is available in native application and really dims the backlight) because it may damage clock
+  // if used with unsupported hardware! this feature only is expected to be supported safely by IPSTUBE clocks by now
+#endif
+
+#ifdef DIM_WITH_ENABLE_PIN_PWM
+  // skip reinitialization if using PWM to control backlight since actual TFTs are never deactivated
+  // disable by commenting the following line if this causes wake up issues from disabled (brightness 0) state
+  #define TFT_SKIP_REINIT
+#endif
 
 // ************* WiFi config *************
 #define WIFI_CONNECT_TIMEOUT_SEC    20

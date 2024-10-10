@@ -10,6 +10,11 @@ void TFTs::begin() {
 
   // Turn power on to displays. 
   pinMode(TFT_ENABLE_PIN, OUTPUT);
+  #ifdef DIM_WITH_ENABLE_PIN_PWM
+  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
+  ledcChangeFrequency(TFT_PWM_CHANNEL, 20000, 8);
+  ProcessUpdatedDimming();
+  #endif
   enableAllDisplays();
   InvalidateImageInBuffer();
 
@@ -30,16 +35,25 @@ void TFTs::begin() {
 }
 
 void TFTs::reinit() {
+  #ifndef TFT_SKIP_REINIT
   // Start with all displays selected.
   chip_select.begin();
   chip_select.setAll();
 
   // Turn power on to displays.
   pinMode(TFT_ENABLE_PIN, OUTPUT);
+  #ifdef DIM_WITH_ENABLE_PIN_PWM
+  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
+  ledcChangeFrequency(TFT_PWM_CHANNEL, 20000, 8);
+  ProcessUpdatedDimming();
+  #endif
   enableAllDisplays();
 
   // Initialize the super class.
   init();
+  #else
+  enableAllDisplays();
+  #endif
 }
 
 void TFTs::clear() {
@@ -83,15 +97,23 @@ void TFTs::showNoMqttStatus() {
 }
 
 void TFTs::enableAllDisplays() {
-  // Turn power on to displays.
-  digitalWrite(TFT_ENABLE_PIN, ACTIVATEDISPLAYS);
+  // Turn power on to displays.  
   enabled = true;
+  #ifndef DIM_WITH_ENABLE_PIN_PWM
+  digitalWrite(TFT_ENABLE_PIN, ACTIVATEDISPLAYS);
+  #else
+  ProcessUpdatedDimming();
+  #endif
 }
 
 void TFTs::disableAllDisplays() {
   // Turn power off to displays.
-  digitalWrite(TFT_ENABLE_PIN, DEACTIVATEDISPLAYS);
   enabled = false;
+  #ifndef DIM_WITH_ENABLE_PIN_PWM
+  digitalWrite(TFT_ENABLE_PIN, DEACTIVATEDISPLAYS);
+  #else
+  ProcessUpdatedDimming();
+  #endif
 }
 
 void TFTs::toggleAllDisplays() {
@@ -177,6 +199,18 @@ void TFTs::LoadNextImage() {
 
 void TFTs::InvalidateImageInBuffer() { // force reload from Flash with new dimming settings
   FileInBuffer=255; // invalid, always load first image
+}
+
+void TFTs::ProcessUpdatedDimming() {
+  #ifdef DIM_WITH_ENABLE_PIN_PWM
+  if (enabled) {
+    ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(dimming));
+  } else {
+    ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(0));
+  }
+  #else
+  InvalidateImageInBuffer();
+  #endif
 }
 
 bool TFTs::FileExists(const char* path) {
@@ -336,9 +370,11 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index) {
         }
 
         uint16_t color = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xFF) >> 3);
+        #ifndef DIM_WITH_ENABLE_PIN_PWM
         if (dimming < 255) { // only dim when needed
           color = alphaBlend(dimming, color, TFT_BLACK);
         } // dimming
+        #endif
 
         UnpackedImageBuffer[row+y][col+x] = color;
     } // col
@@ -447,6 +483,9 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index) {
     
     // Colors are already in 16-bit R5, G6, B5 format
     for (col = 0; col < w; col++) {
+      #ifdef DIM_WITH_ENABLE_PIN_PWM
+      UnpackedImageBuffer[row+y][col+x] = (lineBuffer[col*2+1] << 8) | (lineBuffer[col*2]);
+      #else
       if (dimming == 255) { // not needed, copy directly
         UnpackedImageBuffer[row+y][col+x] = (lineBuffer[col*2+1] << 8) | (lineBuffer[col*2]);
       } else {
@@ -465,6 +504,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index) {
         b = b >> 8;
         UnpackedImageBuffer[row+y][col+x] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
       } // dimming
+      #endif
     } // col
   } // row
   FileInBuffer = file_index;

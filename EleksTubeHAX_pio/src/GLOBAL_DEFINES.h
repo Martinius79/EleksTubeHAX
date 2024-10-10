@@ -78,9 +78,11 @@
 #ifndef HARDWARE_IPSTUBE_CLOCK
   #define ACTIVATEDISPLAYS      HIGH    // Activate is HIGH for the IPSTUBEs
   #define DEACTIVATEDISPLAYS    LOW     // Deactivate is LOW for the IPSTUBEs
+  #define CALCDIMVALUE(x)       (x)
 #else
   #define ACTIVATEDISPLAYS      LOW     // Activate is LOW for the Elekstube
   #define DEACTIVATEDISPLAYS    HIGH    // Deactivate is HIGH for the Elekstube
+  #define CALCDIMVALUE(x)       (255 - x)
 #endif
 
 
@@ -370,6 +372,7 @@
 
   // The H401 has the enable pin of the LCDs connectected to the VCC, so Always On.  
   #define TFT_ENABLE_PIN (GPIO_NUM_4) // pin 24 is GPIO4  
+  #define TFT_PWM_CHANNEL 0
 
   // configure library \TFT_eSPI\User_Setup.h
   // ST7789 135 x 240 display with no chip select line

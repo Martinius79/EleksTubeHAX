@@ -234,7 +234,7 @@ void loop() {
   if(MqttCommandMainBrightnessReceived) {
     MqttCommandMainBrightnessReceived = false;
     tfts.dimming = MqttCommandMainBrightness;
-    tfts.InvalidateImageInBuffer();
+    tfts.ProcessUpdatedDimming();
     updateClockDisplay(TFTs::force);
   }
 
@@ -689,7 +689,7 @@ void EveryFullHour(bool loopUpdate) {
     if (isNightTime(current_hour)) {
       Serial.println("Setting night mode (dimmed)");
       tfts.dimming = TFT_DIMMED_INTENSITY;
-      tfts.InvalidateImageInBuffer(); // invalidate; reload images with new dimming value
+      tfts.ProcessUpdatedDimming();
       backlights.dimming = true;
       if (menu.getState() == Menu::idle || !loopUpdate) { // otherwise erases the menu
         updateClockDisplay(TFTs::force); // update all
@@ -697,7 +697,7 @@ void EveryFullHour(bool loopUpdate) {
     } else {
       Serial.println("Setting daytime mode (normal brightness)");
       tfts.dimming = 255; // 0..255
-      tfts.InvalidateImageInBuffer(); // invalidate; reload images with new dimming value
+      tfts.ProcessUpdatedDimming();
       backlights.dimming = false;
       if (menu.getState() == Menu::idle || !loopUpdate) { // otherwise erases the menu
         updateClockDisplay(TFTs::force); // update all
