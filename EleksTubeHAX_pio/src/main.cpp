@@ -309,37 +309,43 @@ void loop()
 
   if (MqttCommandPatternReceived)
   {
-    MqttCommandPatternReceived = false;
+      MqttCommandPatternReceived = false;
 
-    for (int8_t i = 0; i < Backlights::num_patterns; i++)
-    {
-      Serial.print("New pattern ");
-      Serial.print(MqttCommandPattern);
-      Serial.print(", check pattern ");
-      Serial.println(Backlights::patterns_str[i]);
-      if (strcmp(MqttCommandPattern, (Backlights::patterns_str[i]).c_str()) == 0)
+      String receivedPattern = String(MqttCommandPattern);
+
+      for (int8_t i = 0; i < Backlights::num_patterns; i++)
       {
-        backlights.setPattern(Backlights::patterns(i));
-        break;
+          Serial.print("New pattern ");
+          Serial.print(receivedPattern);
+          Serial.print(", check pattern ");
+          Serial.println(Backlights::patterns_str[i]);
+
+          if (receivedPattern == Backlights::patterns_str[i])
+          {
+              backlights.setPattern(Backlights::patterns(i));
+              break;
+          }
       }
-    }
   }
 
   if (MqttCommandBackPatternReceived)
   {
-    MqttCommandBackPatternReceived = false;
-    for (int8_t i = 0; i < Backlights::num_patterns; i++)
-    {
-      Serial.print("new pattern ");
-      Serial.print(MqttCommandBackPattern);
-      Serial.print(", check pattern ");
-      Serial.println(Backlights::patterns_str[i]);
-      if (strcmp(MqttCommandBackPattern, (Backlights::patterns_str[i]).c_str()) == 0)
+      MqttCommandBackPatternReceived = false;
+      String receivedPattern = String(MqttCommandBackPattern);
+
+      for (int8_t i = 0; i < Backlights::num_patterns; i++)
       {
-        backlights.setPattern(Backlights::patterns(i));
-        break;
+          Serial.print("New pattern ");
+          Serial.print(receivedPattern);
+          Serial.print(", check pattern ");
+          Serial.println(Backlights::patterns_str[i]);
+
+          if (receivedPattern == Backlights::patterns_str[i])
+          {
+              backlights.setPattern(Backlights::patterns(i));
+              break;
+          }
       }
-    }
   }
 
   if (MqttCommandBackColorPhaseReceived)
@@ -405,9 +411,9 @@ void loop()
   MqttStatusBackBrightness = backlights.getIntensity();
   String PatternName = backlights.getPatternStr();
   strncpy(MqttStatusPattern, PatternName.c_str(), sizeof(MqttStatusPattern) - 1);
-  MqttStatusPattern[sizeof(MqttStatusPattern) - 1] = '\0'; // Ensure null termination
+  MqttStatusPattern[sizeof(MqttStatusPattern) - 1] = '\0';
   strncpy(MqttStatusBackPattern, PatternName.c_str(), sizeof(MqttStatusBackPattern) - 1);
-  MqttStatusBackPattern[sizeof(MqttStatusBackPattern) - 1] = '\0'; // Ensure null termination
+  MqttStatusBackPattern[sizeof(MqttStatusBackPattern) - 1] = '\0';
   PatternName.toCharArray(MqttStatusBackPattern, PatternName.length() + 1);
   MqttStatusBackColorPhase = backlights.getColorPhase();
   MqttStatusGraphic = uclock.getActiveGraphicIdx();

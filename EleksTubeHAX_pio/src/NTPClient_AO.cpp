@@ -109,7 +109,7 @@ bool NTPClient::forceUpdate()
   char s1[4];
   for (int i = 0; i < NTP_PACKET_SIZE; i++)
   {
-    sprintf(s1, " %02X", _packetBuffer[i]);
+    snprintf(s1, sizeof(s1), " %02X", _packetBuffer[i]);
     Serial.print(s1);
   }
   Serial.println(".");

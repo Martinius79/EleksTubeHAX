@@ -197,9 +197,8 @@ void MqttReportState(bool force)
       Serial.println(buffer);
     }
 
-    if (force || MqttStatusBackPower != LastSentBackPowerState || MqttStatusBackBrightness != LastSentBackBrightness || strcmp(MqttStatusBackPattern, LastSentBackPattern) != 0 || MqttStatusBackColorPhase != LastSentBackColorPhase || MqttStatusPulseBpm != LastSentPulseBpm || MqttStatusBreathBpm != LastSentBreathBpm || MqttStatusRainbowSec != LastSentRainbowSec)
+    if (force || MqttStatusBackPower != LastSentBackPowerState || MqttStatusBackBrightness != LastSentBackBrightness || String(MqttStatusBackPattern) != String(LastSentBackPattern) || MqttStatusBackColorPhase != LastSentBackColorPhase || MqttStatusPulseBpm != LastSentPulseBpm || MqttStatusBreathBpm != LastSentBreathBpm || MqttStatusRainbowSec != LastSentRainbowSec)
     {
-
       JsonDocument state;
       state["state"] = MqttStatusBackPower == 0 ? MQTT_STATE_OFF : MQTT_STATE_ON;
       state["brightness"] = MqttStatusBackBrightness;
@@ -435,9 +434,10 @@ void callback(char *topic, byte *payload, unsigned int length)
   char *command[commandNumber];
   commandNumber = splitCommand(topic, command, commandNumber);
 
-  char message[length + 1];
-  strncpy(message, (char *)payload, length);
-  message[length] = '\0';
+  String message((char *)payload);
+  // char message[length + 1];
+  // strncpy(message, (char *)payload, length);
+  // message[length] = '\0';
 
   if (commandNumber < 2)
   {
@@ -451,64 +451,72 @@ void callback(char *topic, byte *payload, unsigned int length)
   Serial.print(" ");
   Serial.println(message);
 
+  String cmd0 = String(command[0]);
+  String cmd1 = String(command[1]);
+
 #ifndef MQTT_HOME_ASSISTANT
   //------------------Decide what to do depending on the topic and message---------------------------------
-  if (strcmp(command[0], "directive") == 0 && strcmp(command[1], "powerState") == 0)
+  if (cmd0 == "directive" && cmd1 == "powerState")
   { // Turn On or OFF
-    if (strcmp(message, "ON") == 0)
+    if (message == "ON")
     {
       MqttCommandPower = true;
       MqttCommandPowerReceived = true;
     }
-    else if (strcmp(message, "OFF") == 0)
+    else if (message == "OFF")
     {
       MqttCommandPower = false;
       MqttCommandPowerReceived = true;
-    } //      SmartNest:                         // SmartThings
+    }
   }
-  else if (strcmp(command[0], "directive") == 0 && (strcmp(command[1], "setpoint") == 0) || (strcmp(command[1], "percentage") == 0))
+  else if (cmd0 == "directive" && (cmd1 == "setpoint" || cmd1 == "percentage"))
   {
-    double valueD = atof(message);
-    if (!isnan(valueD))
+    char *endPtr;
+    double valueD = strtod(message.c_str(), &endPtr);
+
+    // Check if the conversion was successful and consumed the entire string
+    if (endPtr != message.c_str() && *endPtr == '\0' && !isnan(valueD))
     {
-      MqttCommandState = (int)valueD;
+      MqttCommandState = static_cast<int>(valueD);
       MqttCommandStateReceived = true;
     }
   }
 #endif
 
 #ifdef MQTT_HOME_ASSISTANT
-  if (strcmp(command[0], "main") == 0 && strcmp(command[1], "set") == 0)
+  if (cmd0 == "main" && cmd1 == "set")
   {
     JsonDocument doc;
     deserializeJson(doc, payload, length);
 
     if (doc["state"].is<const char *>())
     {
-      MqttCommandMainPower = strcmp(doc["state"], MQTT_STATE_ON) == 0;
+      String stateValue = doc["state"].as<String>();
+      MqttCommandMainPower = (stateValue == MQTT_STATE_ON);
       MqttCommandMainPowerReceived = true;
     }
     if (doc["brightness"].is<int>())
     {
-      MqttCommandMainBrightness = doc["brightness"];
+      MqttCommandMainBrightness = doc["brightness"].as<int>();
       MqttCommandMainBrightnessReceived = true;
     }
     if (doc["effect"].is<const char *>())
     {
-      MqttCommandMainGraphic = tfts.nameToClockFace(doc["effect"]);
+      String effectValue = doc["effect"].as<String>();
+      MqttCommandMainGraphic = tfts.nameToClockFace(effectValue);
       MqttCommandMainGraphicReceived = true;
     }
-
     doc.clear();
   }
-  if (strcmp(command[0], "back") == 0 && strcmp(command[1], "set") == 0)
+  else if (cmd0 == "back" && cmd1 == "set")
   {
     JsonDocument doc;
     deserializeJson(doc, payload, length);
 
     if (doc["state"].is<const char *>())
     {
-      MqttCommandBackPower = strcmp(doc["state"], MQTT_STATE_ON) == 0;
+      String stateValue = doc["state"].as<String>();
+      MqttCommandBackPower = (stateValue == MQTT_STATE_ON);
       MqttCommandBackPowerReceived = true;
     }
     if (doc["brightness"].is<int>())
@@ -529,31 +537,33 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
     doc.clear();
   }
-  if (strcmp(command[0], "use_twelve_hours") == 0 && strcmp(command[1], "set") == 0)
+  else if (cmd0 == "use_twelve_hours" && cmd1 == "set")
   {
     JsonDocument doc;
     deserializeJson(doc, payload, length);
 
     if (doc["state"].is<const char *>())
     {
-      MqttCommandUseTwelveHours = strcmp(doc["state"], MQTT_STATE_ON) == 0;
+      String stateValue = doc["state"].as<String>();
+      MqttCommandUseTwelveHours = (stateValue == MQTT_STATE_ON);
       MqttCommandUseTwelveHoursReceived = true;
     }
     doc.clear();
   }
-  if (strcmp(command[0], "blank_zero_hours") == 0 && strcmp(command[1], "set") == 0)
+  else if (cmd0 == "blank_zero_hours" && cmd1 == "set")
   {
     JsonDocument doc;
     deserializeJson(doc, payload, length);
 
     if (doc["state"].is<const char *>())
     {
-      MqttCommandBlankZeroHours = strcmp(doc["state"], MQTT_STATE_ON) == 0;
+      String stateValue = doc["state"].as<String>();
+      MqttCommandBlankZeroHours = (stateValue == MQTT_STATE_ON);
       MqttCommandBlankZeroHoursReceived = true;
     }
     doc.clear();
   }
-  if (strcmp(command[0], "pulse_bpm") == 0 && strcmp(command[1], "set") == 0)
+  else if (cmd0 == "pulse_bpm" && cmd1 == "set")
   {
     JsonDocument doc;
     deserializeJson(doc, payload, length);
@@ -565,7 +575,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
     doc.clear();
   }
-  if (strcmp(command[0], "breath_bpm") == 0 && strcmp(command[1], "set") == 0)
+  else if (cmd0 == "breath_bpm" && cmd1 == "set")
   {
     JsonDocument doc;
     deserializeJson(doc, payload, length);
@@ -577,7 +587,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
     doc.clear();
   }
-  if (strcmp(command[0], "rainbow_duration") == 0 && strcmp(command[1], "set") == 0)
+  else if (cmd0 == "rainbow_duration" && cmd1 == "set")
   {
     JsonDocument doc;
     deserializeJson(doc, payload, length);
