@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 #include <Arduino.h>
-#include "_USER_DEFINES.h" ///// User defines
+#include "_USER_DEFINES.h" // User defines
 
 #ifdef HARDWARE_PunkCyber_CLOCK
 // everything else is the same, except digits are swapped from left to right

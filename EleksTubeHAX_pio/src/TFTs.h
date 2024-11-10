@@ -92,7 +92,7 @@ private:
   uint32_t read32(fs::File &f);
 
   static uint16_t UnpackedImageBuffer[TFT_HEIGHT][TFT_WIDTH];
-  uint8_t FileInBuffer = 255; // invalid, always load first image
+  uint8_t FileInBuffer = 255; // 255=invalid, always load first image
   uint8_t NextFileRequired = 0;
 
   String patterns_str[9] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};

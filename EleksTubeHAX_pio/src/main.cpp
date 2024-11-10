@@ -17,23 +17,37 @@
 #include "WiFi_WPS.h"
 #include "Mqtt_client_ips.h"
 #include "TempSensor_inc.h"
+#include "IPGeolocation_AO.h"
 #ifdef HARDWARE_NovelLife_SE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// #include "Gestures.h"
 // TODO put into class
 #include <Wire.h>
 #include <SparkFun_APDS9960.h>
-#endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-// Constants
-
-// Global Variables
-#ifdef HARDWARE_NovelLife_SE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// TODO put into class
 SparkFun_APDS9960 apds = SparkFun_APDS9960();
 // interupt signal for gesture sensor
 int volatile isr_flag = 0;
-#endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+void GestureStart();
+void HandleGestureInterupt(void);   // only for NovelLife SE
+void GestureInterruptRoutine(void); // only for NovelLife SE
+void HandleGesture(void);           // only for NovelLife SE
+#endif                              // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+#ifdef DIMMING
+bool isDimmingNeeded = false;
+uint8_t hour_old = 255;
+
+bool isNightTime(uint8_t current_hour);
+void checkDimmingNeeded(void);
+#endif
+
+#ifdef GEOLOCATION_ENABLED
+double GeoLocTZoffset = 0;
+
+bool GetGeoLocationTimeZoneOffset();
+#endif
+
+// general global variables
 Backlights backlights;
 Buttons buttons;
 TFTs tfts;
@@ -41,29 +55,14 @@ Clock uclock;
 Menu menu;
 StoredConfig stored_config;
 
-#ifdef DIMMING
-bool isDimmingNeeded = false;
-uint8_t hour_old = 255;
-#endif
 bool DstNeedsUpdate = false;
 uint8_t yesterday = 0;
-
 uint32_t lastMqttCommandExecuted = (uint32_t)-1;
 
-// Helper function, defined below.
+// general global helper functions
 void updateClockDisplay(TFTs::show_t show = TFTs::yes);
 void setupMenu(void);
-#ifdef DIMMING
-bool isNightTime(uint8_t current_hour);
-void checkDimmingNeeded(void);
-#endif
 void UpdateDstEveryNight(void);
-#ifdef HARDWARE_NovelLife_SE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-void GestureStart();
-void HandleGestureInterupt(void);   // only for NovelLife SE
-void GestureInterruptRoutine(void); // only for NovelLife SE
-void HandleGesture(void);           // only for NovelLife SE
-#endif                              // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 void setup()
 {
@@ -719,7 +718,8 @@ void loop()
         bTemperatureUpdated = false;
       }
 
-      // run once a day (= 744 times per month which is below the limit of 5k for free account)
+#ifdef GEOLOCATION_ENABLED
+      // run once a day (= ~30 times per month, 1k requests allowed for free account)
       if (DstNeedsUpdate)
       { // Daylight savings time changes at 3 in the morning
         if (GetGeoLocationTimeZoneOffset())
@@ -728,6 +728,7 @@ void loop()
           DstNeedsUpdate = false; // done for this night; retry if not sucessfull
         }
       }
+#endif
       // Sleep for up to 20ms, less if we've spent time doing stuff above.
       time_in_loop = millis() - millis_at_top;
       if (time_in_loop < 20)
@@ -891,17 +892,38 @@ void checkDimmingNeeded()
 }
 #endif // DIMMING
 
+#ifdef GEOLOCATION_ENABLED
+// Get an API Key by registering on https://www.abstractapi.com/api/ip-geolocation-api -> 1000 Requests free
+bool GetGeoLocationTimeZoneOffset()
+{
+  Serial.println("Starting Geolocation query...");
+  IPGeolocation location(GEOLOCATION_API_KEY, "ABSTRACT");
+  IPGeo IPG;
+  if (location.updateStatus(&IPG))
+  {
+    Serial.println(String("Geo Time Zone: ") + String(IPG.tz));
+    Serial.println(String("Geo TZ Offset: ") + String(IPG.offset));          // we are interested in this one, type = double
+    Serial.println(String("Geo Current Time: ") + String(IPG.current_time)); // currently not used
+    GeoLocTZoffset = IPG.offset;
+    return true;
+  }
+  else
+  {
+    Serial.println("Geolocation failed.");
+    return false;
+  }
+}
+#endif
+
 void UpdateDstEveryNight()
 {
   uint8_t currentDay = uclock.getDay();
-  // This `DstNeedsUpdate` is True between 3:00:05 and 3:00:59. Has almost one minute of time slot to fetch updates, incl. eventual retries.
+  // This `DstNeedsUpdate` is True between 3:00:05 and 3:00:59. The "freetime" in main has almost one minute of time slot to fetch updates, incl. eventual retries.
   DstNeedsUpdate = (currentDay != yesterday) && (uclock.getHour24() == 3) && (uclock.getMinute() == 0) && (uclock.getSecond() > 5);
   if (DstNeedsUpdate)
   {
     Serial.print("DST needs update...");
-
-    // Update day after geoloc was sucesfully updated. Otherwise this will immediatelly disable the failed update retry.
-    yesterday = currentDay;
+    yesterday = currentDay; // Update day after geoloc was succesfully updated. Otherwise this will immediatelly disable the failed update retry.
   }
 }
 

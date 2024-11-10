@@ -6,11 +6,14 @@
  * - configured for use on ESP32
  */
 
+#include "GLOBAL_DEFINES.h"
 #include "Arduino.h"
 #include <WiFi.h> // ESP32
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include "IPGeolocation_AO.h"
+
+#ifdef GEOLOCATION_ENABLED
 
 IPGeolocation::IPGeolocation(String Key)
 {
@@ -264,3 +267,4 @@ bool IPGeolocation::updateStatus(IPGeo *I)
   }
   return false;
 }
+#endif // GEOLOCATION_ENABLED

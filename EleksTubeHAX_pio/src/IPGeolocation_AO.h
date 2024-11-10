@@ -7,6 +7,9 @@
 
 #ifndef IPGeolocation_h
 #define IPGeolocation_h
+#include "Arduino.h"
+
+#ifdef GEOLOCATION_ENABLED
 
 #define DEBUG
 #define GEO_CONN_TIMEOUT_SEC 15
@@ -18,8 +21,6 @@
 #define DEBUGPRINT(x)
 #endif
 #endif
-
-#include "Arduino.h"
 
 struct IPGeo
 {
@@ -36,15 +37,16 @@ struct IPGeo
 
 class IPGeolocation
 {
-  public:
-    explicit IPGeolocation(String Key);
-    IPGeolocation(String Key, String API); // Use IPG for api.ipgeolocation.io and ABSTRACT for app.abstractapi.com/api/ip-geolocation
-    bool updateStatus(IPGeo *I);
-    String getResponse();
-  private:
-    String _Key;
-    String _Response;
-    String _API;
-};
+public:
+  explicit IPGeolocation(String Key);
+  IPGeolocation(String Key, String API); // Use IPG for api.ipgeolocation.io and ABSTRACT for app.abstractapi.com/api/ip-geolocation
+  bool updateStatus(IPGeo *I);
+  String getResponse();
 
-#endif
+private:
+  String _Key;
+  String _Response;
+  String _API;
+};
+#endif // GEOLOCATION_ENABLED
+#endif // IPGeolocation_h
