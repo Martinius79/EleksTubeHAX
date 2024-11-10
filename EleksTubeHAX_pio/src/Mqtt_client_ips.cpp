@@ -626,15 +626,15 @@ void MqttReportStatus()
   }
 }
 
+#ifdef ONE_WIRE_BUS_PIN
 void MqttReportTemperature()
 {
-#ifdef ONE_WIRE_BUS_PIN
   if (fTemperature > -30)
   { // transmit data to MQTT only if data is valid
     sendToBroker("report/temperature", sTemperatureTxt);
   }
-#endif
 }
+#endif
 
 void MqttReportPowerState()
 {

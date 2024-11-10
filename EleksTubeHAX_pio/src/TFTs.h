@@ -38,7 +38,9 @@ public:
   void clear();
   void showNoWifiStatus();
   void showNoMqttStatus();
+  #ifdef ONE_WIRE_BUS_PIN
   void showTemperature();
+  #endif
 
   void setDigit(uint8_t digit, uint8_t value, show_t show = yes);
   uint8_t getDigit(uint8_t digit) { return digits[digit]; }

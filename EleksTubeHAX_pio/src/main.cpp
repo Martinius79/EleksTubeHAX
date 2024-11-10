@@ -16,7 +16,7 @@
 #include "StoredConfig.h"
 #include "WiFi_WPS.h"
 #include "Mqtt_client_ips.h"
-#include "TempSensor_inc.h"
+#include "TempSensor.h"
 #ifdef HARDWARE_NovelLife_SE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // #include "Gestures.h"
 // TODO put into class
@@ -712,12 +712,14 @@ void loop()
     if (time_in_loop < 20)
     {
       MqttLoopInFreeTime();
+#ifdef ONE_WIRE_BUS_PIN
       PeriodicReadTemperature();
       if (bTemperatureUpdated)
       {
         tfts.setDigit(HOURS_ONES, uclock.getHoursOnes(), TFTs::force); // show latest clock digit and temperature readout together
         bTemperatureUpdated = false;
       }
+#endif
 
       // run once a day (= 744 times per month which is below the limit of 5k for free account)
       if (DstNeedsUpdate)

@@ -89,9 +89,10 @@ void TFTs::showNoMqttStatus()
   print("NO MQTT !");
 }
 
+#ifdef ONE_WIRE_BUS_PIN
 void TFTs::showTemperature()
 {
-#ifdef ONE_WIRE_BUS_PIN
+
   if (fTemperature > -30)
   { // only show if temperature is valid
     chip_select.setHoursOnes();
@@ -105,8 +106,8 @@ void TFTs::showTemperature()
 #ifdef DEBUG_OUTPUT
   Serial.println("Temperature to LCD");
 #endif
-#endif
 }
+#endif // ONE_WIRE_BUS_PIN
 
 void TFTs::setDigit(uint8_t digit, uint8_t value, show_t show)
 {
@@ -129,10 +130,12 @@ void TFTs::setDigit(uint8_t digit, uint8_t value, show_t show)
         showNoMqttStatus();
       }
 
+#ifdef ONE_WIRE_BUS_PIN
     if (digit == HOURS_ONES)
     {
       showTemperature();
     }
+#endif
   }
 }
 
