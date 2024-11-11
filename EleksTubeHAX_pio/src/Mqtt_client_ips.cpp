@@ -44,12 +44,14 @@ void MqttReportBattery();
 void MqttReportStatus();
 void MqttReportPowerState();
 void MqttReportWiFiSignal();
-void MqttReportTemperature();
 void MqttReportNotification(String message);
 void MqttReportGraphic(bool force);
 void MqttReportBackOnChange();
 void MqttReportBackEverything(bool force);
 void MqttPeriodicReportBack();
+#ifdef ONE_WIRE_BUS_PIN
+void MqttReportTemperature();
+#endif
 
 char topic[100];
 char msg[5];
@@ -699,7 +701,9 @@ void MqttReportBackEverything(bool force)
     MqttReportStatus();
     // MqttReportBattery();
     MqttReportWiFiSignal();
+#ifdef ONE_WIRE_BUS_PIN
     MqttReportTemperature();
+#endif
 #endif
 
 #ifdef MQTT_HOME_ASSISTANT
