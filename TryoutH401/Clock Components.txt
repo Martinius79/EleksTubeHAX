@@ -1,3 +1,13 @@
+The difference between NovelLife Pro, NovelLife SE and IV-18 clock:
+NovelLife Pro support ONLY button control and app control
+NovelLife SE support ONLY gesture control and app control
+IV-18 clock only support button control
+
+
+
+
+
+
 Components:
 
 
@@ -6,3 +16,5 @@ XT25F64 as XT25F64BDXI/HGT with Package: DFN8 4x3x0.55 mm, see https://file2.dzs
 DS1302 as DS1302Z+ with Package: SO (208 mils/150 mils), see https://www.analog.com/media/en/technical-documentation/data-sheets/DS1302.pdf
 CH340 as CH340N with Package: SOP-8 3.9mm 150mil, see https://web.archive.org/web/20230328023924/http://wch-ic.com/downloads/file/79.html?time=2023-01-31%2005:37:01&code=byrlQteadwoMguMjmbWlPKyCiEACwGGapSxnN8I1
 ME6118 as ME6118A33(2121/33) with Package SOT223, see https://datasheetspdf.com/download_new.php?id=1330628
+TFT Display with FPC ST7789 as ER-TFT1.14-2, see https://www.buydisplay.com/download/manual/ER-TFT1.14-2_Datasheet.pdf
+RGB-LED as WS2812, see https://cdn-shop.adafruit.com/datasheets/WS2812.pdf
