@@ -6,7 +6,7 @@
  *   Should only need editing to add a new harware version of the clock
  *   User configuration is located in "_USER_DEFINES.h"
  */
- 
+
 #ifndef GLOBAL_DEFINES_H_
 #define GLOBAL_DEFINES_H_
 
@@ -14,28 +14,23 @@
 #include <Arduino.h>
 #include "_USER_DEFINES.h" ///// User defines
 
-
-
 // ************* Version Infomation  *************
-#define DEVICE_NAME             "IPS-clock"
-#define FIRMWARE_VERSION        "SmittyHalibut & aly-fly IPS clock v1.0 HA Edition victorvuelma & gamba69"
-#define SAVED_CONFIG_NAMESPACE  "configs"
-
+#define DEVICE_NAME "IPS-clock"
+#define FIRMWARE_VERSION "SmittyHalibut & aly-fly IPS clock v1.0 HA Edition victorvuelma & gamba69"
+#define SAVED_CONFIG_NAMESPACE "configs"
 
 // ************ WiFi advanced config *********************
-#define ESP_WPS_MODE        WPS_TYPE_PBC  // push-button
-#define ESP_MANUFACTURER    "ESPRESSIF"
-#define ESP_MODEL_NUMBER    "ESP32"
-#define ESP_MODEL_NAME      "IPS clock"
-
+#define ESP_WPS_MODE WPS_TYPE_PBC // push-button
+#define ESP_MANUFACTURER "ESPRESSIF"
+#define ESP_MODEL_NUMBER "ESP32"
+#define ESP_MODEL_NAME "IPS clock"
 
 // ************ MQTT config *********************
-#define MQTT_RECONNECT_WAIT_SEC       30  // how long to wait between retries to connect to broker
-#define MQTT_REPORT_STATUS_EVERY_SEC  15 // How often report status to MQTT Broker
-
+#define MQTT_RECONNECT_WAIT_SEC 30      // how long to wait between retries to connect to broker
+#define MQTT_REPORT_STATUS_EVERY_SEC 15 // How often report status to MQTT Broker
 
 // ************ Temperature config *********************
-#define TEMPERATURE_READ_EVERY_SEC    60  // how often to read the temperature sensor (if present)
+#define TEMPERATURE_READ_EVERY_SEC 60 // how often to read the temperature sensor (if present)
 
 // ************ Backlight config *********************
 #define DEFAULT_BL_RAINBOW_DURATION_SEC 8
@@ -46,468 +41,461 @@
 #define DISABLE_ALL_LIBRARY_WARNINGS
 
 // Common indexing scheme, used to identify the digit
-#define NUM_DIGITS   (6)
+#define NUM_DIGITS (6)
 #ifdef HARDWARE_PunkCyber_CLOCK
-  #define SECONDS_ONES (5)
-  #define SECONDS_TENS (4)
-  #define MINUTES_ONES (3)
-  #define MINUTES_TENS (2)
-  #define HOURS_ONES   (1)
-  #define HOURS_TENS   (0)
+#define SECONDS_ONES (5)
+#define SECONDS_TENS (4)
+#define MINUTES_ONES (3)
+#define MINUTES_TENS (2)
+#define HOURS_ONES (1)
+#define HOURS_TENS (0)
 #else
-  #define SECONDS_ONES (0)
-  #define SECONDS_TENS (1)
-  #define MINUTES_ONES (2)
-  #define MINUTES_TENS (3)
-  #define HOURS_ONES   (4)
-  #define HOURS_TENS   (5)
+#define SECONDS_ONES (0)
+#define SECONDS_TENS (1)
+#define MINUTES_ONES (2)
+#define MINUTES_TENS (3)
+#define HOURS_ONES (4)
+#define HOURS_TENS (5)
 #endif
-
 
 #define SECONDS_ONES_MAP (0x01 << SECONDS_ONES)
 #define SECONDS_TENS_MAP (0x01 << SECONDS_TENS)
 #define MINUTES_ONES_MAP (0x01 << MINUTES_ONES)
 #define MINUTES_TENS_MAP (0x01 << MINUTES_TENS)
-#define HOURS_ONES_MAP   (0x01 << HOURS_ONES)
-#define HOURS_TENS_MAP   (0x01 << HOURS_TENS)
+#define HOURS_ONES_MAP (0x01 << HOURS_ONES)
+#define HOURS_TENS_MAP (0x01 << HOURS_TENS)
 
 // Define the activate and deactivate state for the diplay power transistor
 // also define, how the dimming value is calculated
 #ifndef HARDWARE_IPSTUBE_CLOCK
-  #define ACTIVATEDISPLAYS      HIGH      // Activate is HIGH for the Elekstube-like clocks
-  #define DEACTIVATEDISPLAYS    LOW       // Deactivate is LOW for the Elekstube-like clocks
-  #define CALCDIMVALUE(x)       (x)       // FUTURE USAGE! Dimming value is directly used for hardware dimming for the Elekstube-like clocks
-  
+#define ACTIVATEDISPLAYS HIGH  // Activate is HIGH for the Elekstube-like clocks
+#define DEACTIVATEDISPLAYS LOW // Deactivate is LOW for the Elekstube-like clocks
+#define CALCDIMVALUE(x) (x)    // FUTURE USAGE! Dimming value is directly used for hardware dimming for the Elekstube-like clocks
+
 #else
-  //IPSTUBEs
-  #define ACTIVATEDISPLAYS      LOW       // Activate is LOW for the IPSTUBEs
-  #define DEACTIVATEDISPLAYS    HIGH      // Deactivate is HIGH for the IPSTUBEs
-  #define CALCDIMVALUE(x)       (255 - x) // Dimming value is inverted for hardware dimming for the IPSTUBEs
+// IPSTUBEs
+#define ACTIVATEDISPLAYS LOW      // Activate is LOW for the IPSTUBEs
+#define DEACTIVATEDISPLAYS HIGH   // Deactivate is HIGH for the IPSTUBEs
+#define CALCDIMVALUE(x) (255 - x) // Dimming value is inverted for hardware dimming for the IPSTUBEs
 #endif
 
-
-#ifdef HARDWARE_PunkCyber_CLOCK  // PunkCyber IPS clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  // The PunkCyber clock is an exact copy of the original EleksTube clock, except the digits are swapped from left to right
-  // We just define it is an EleksTube clock, but we swap the digits (see above where _ONES and _TENS are defined)
-  #define HARDWARE_Elekstube_CLOCK
+#ifdef HARDWARE_PunkCyber_CLOCK // PunkCyber IPS clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// The PunkCyber clock is an exact copy of the original EleksTube clock, except the digits are swapped from left to right
+// We just define it is an EleksTube clock, but we swap the digits (see above where _ONES and _TENS are defined)
+#define HARDWARE_Elekstube_CLOCK
 #endif // PunkCyber IPS clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 
 #ifdef HARDWARE_Elekstube_CLOCK // original EleksTube IPS clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-  // WS2812 (or compatible) LEDs on the back of the display modules.
-  #define BACKLIGHTS_PIN (12)
-  #define NUM_BACKLIGHT_LEDS  (6) // 6 LEDs on the bottom of every LCD.
+// WS2812 (or compatible) LEDs on the back of the display modules.
+#define BACKLIGHTS_PIN (12)
+#define NUM_BACKLIGHT_LEDS (6) // 6 LEDs on the bottom of every LCD.
 
-  // Buttons, active low, externally pulled up (with actual resistors!)
-  #define BUTTON_LEFT_PIN (33)
-  #define BUTTON_MODE_PIN (32)
-  #define BUTTON_RIGHT_PIN (35)
-  #define BUTTON_POWER_PIN (34)
+// Buttons, active low, externally pulled up (with actual resistors!)
+#define BUTTON_LEFT_PIN (33)
+#define BUTTON_MODE_PIN (32)
+#define BUTTON_RIGHT_PIN (35)
+#define BUTTON_POWER_PIN (34)
 
-  // I2C to DS3231 RTC.
-  #define RTC_SCL_PIN (22)
-  #define RTC_SDA_PIN (21)
+// I2C to DS3231 RTC.
+#define RTC_SCL_PIN (22)
+#define RTC_SDA_PIN (21)
 
-  // Chip Select shift register, to select the display
-  #define CSSR_DATA_PIN (14)
-  #define CSSR_CLOCK_PIN (16)
-  #define CSSR_LATCH_PIN (17)
+// Chip Select shift register, to select the display
+#define CSSR_DATA_PIN (14)
+#define CSSR_CLOCK_PIN (16)
+#define CSSR_LATCH_PIN (17)
 
-  // Power for all TFT displays are grounded through a MOSFET, so they can all be turned off.
-  // TODO: Check if dimmable!?!
-  // Active HIGH.
-  #define TFT_ENABLE_PIN (27)
+// Power for all TFT displays are grounded through a MOSFET, so they can all be turned off.
+// TODO: Check if dimmable!?!
+// Active HIGH.
+#define TFT_ENABLE_PIN (27)
 
-  // configure library \TFT_eSPI\User_Setup.h
-  // ST7789 135 x 240 display with no chip select line
-  #define ST7789_DRIVER     // Configure all registers
-  #define TFT_WIDTH  135
-  #define TFT_HEIGHT 240
-  #define CGRAM_OFFSET      // Library will add offsets required
-  // SPI to displays
-  #define TFT_SDA_READ      // Read and write on the MOSI/SDA pin, no separate MISO pin
-  #define TFT_MOSI 23
-  #define TFT_SCLK 18
-  //#define TFT_CS    -1 // Not connected
-  #define TFT_DC   25  // Data Command, aka Register Select or RS
-  #define TFT_RST  26  // Connect reset to ensure display initialises
+// configure library \TFT_eSPI\User_Setup.h
+// ST7789 135 x 240 display with no chip select line
+#define ST7789_DRIVER // Configure all registers
+#define TFT_WIDTH 135
+#define TFT_HEIGHT 240
+#define CGRAM_OFFSET // Library will add offsets required
+// SPI to displays
+#define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
+#define TFT_MOSI 23
+#define TFT_SCLK 18
+// #define TFT_CS    -1 // Not connected
+#define TFT_DC 25  // Data Command, aka Register Select or RS
+#define TFT_RST 26 // Connect reset to ensure display initialises
 
-  //#define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
-  #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
-  #define LOAD_FONT4  // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
-  //#define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
-  //#define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
-  //#define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
-  //#define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
-  //#define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
+// #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+#define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
+#define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
+// #define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
+// #define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
+// #define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
+// #define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
+// #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
 
-  #define SMOOTH_FONT     // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
-  #define SPI_FREQUENCY  40000000
+#define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
+#define SPI_FREQUENCY 40000000
 
-  /*
-   * To make the Library not over-write all this:
-   */
-  #define USER_SETUP_LOADED
+/*
+ * To make the Library not over-write all this:
+ */
+#define USER_SETUP_LOADED
 #endif // original EleksTube IPS clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-
 #ifdef HARDWARE_Elekstube_CLOCK_Gen2 // original EleksTube IPS clocks Gen2 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  // New hardware for Elekstube clock in generation 2 (all original Elekstube clocks since July 2022 with ESP32 Pico D4 Chip)
+// New hardware for Elekstube clock in generation 2 (all original Elekstube clocks since July 2022 with ESP32 Pico D4 Chip)
 
-  // WS2812 (or compatible) LEDs on the back of the display modules.
-  #define BACKLIGHTS_PIN (12)
-  #define NUM_BACKLIGHT_LEDS  (6) // 6 LEDs on the bottom of every LCD.
+// WS2812 (or compatible) LEDs on the back of the display modules.
+#define BACKLIGHTS_PIN (12)
+#define NUM_BACKLIGHT_LEDS (6) // 6 LEDs on the bottom of every LCD.
 
-  // Buttons, active low, externally pulled up (with actual resistors!)
-  #define BUTTON_LEFT_PIN (33)
-  #define BUTTON_MODE_PIN (32)
-  #define BUTTON_RIGHT_PIN (35)
-  #define BUTTON_POWER_PIN (34)
+// Buttons, active low, externally pulled up (with actual resistors!)
+#define BUTTON_LEFT_PIN (33)
+#define BUTTON_MODE_PIN (32)
+#define BUTTON_RIGHT_PIN (35)
+#define BUTTON_POWER_PIN (34)
 
-  // I2C to DS3231 RTC.
-  #define RTC_SCL_PIN (22)
-  #define RTC_SDA_PIN (21)
+// I2C to DS3231 RTC.
+#define RTC_SCL_PIN (22)
+#define RTC_SDA_PIN (21)
 
-  // Chip Select shift register, to select the display
-  #define CSSR_DATA_PIN (14)
-  #define CSSR_CLOCK_PIN (9)
-  #define CSSR_LATCH_PIN (10)
-   
-  // The enable pin of the displays of the Gen2 board is NOT connected to the ESP32! Nor the ground!
-  // So the displays can't be turned off and on! They are always on! Also the original firmware doesn't 
-  // turn them off, just switch to Matrix rain screensafer if power button (D) is pressed!
-  // I could not find ANY pin, which is connected to the enable pin of the displays, so I use a random
-  // pin, which is not used for anything else
-  #define TFT_ENABLE_PIN (GPIO_NUM_27)  // Does nothing -> Not connected!
+// Chip Select shift register, to select the display
+#define CSSR_DATA_PIN (14)
+#define CSSR_CLOCK_PIN (9)
+#define CSSR_LATCH_PIN (10)
 
-  // configure library \TFT_eSPI\User_Setup.h
-  // ST7789 135 x 240 display with no chip select line
-  #define ST7789_DRIVER     // Configure all registers
-  #define TFT_WIDTH  135
-  #define TFT_HEIGHT 240
-  #define CGRAM_OFFSET      // Library will add offsets required
+// The enable pin of the displays of the Gen2 board is NOT connected to the ESP32! Nor the ground!
+// So the displays can't be turned off and on! They are always on! Also the original firmware doesn't
+// turn them off, just switch to Matrix rain screensafer if power button (D) is pressed!
+// I could not find ANY pin, which is connected to the enable pin of the displays, so I use a random
+// pin, which is not used for anything else
+#define TFT_ENABLE_PIN (GPIO_NUM_27) // Does nothing -> Not connected!
 
-  // SPI to displays
-  #define TFT_SDA_READ      // Read and write on the MOSI/SDA pin, no separate MISO pin
-  #define TFT_MOSI 23
-  #define TFT_SCLK 18
-  //#define TFT_CS    -1 // Not connected
-  #define TFT_DC   25  // Data Command, aka Register Select or RS
-  #define TFT_RST  26  // Connect reset to ensure display initialises
+// configure library \TFT_eSPI\User_Setup.h
+// ST7789 135 x 240 display with no chip select line
+#define ST7789_DRIVER // Configure all registers
+#define TFT_WIDTH 135
+#define TFT_HEIGHT 240
+#define CGRAM_OFFSET // Library will add offsets required
 
-  //#define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
-  #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
-  #define LOAD_FONT4  // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
-  //#define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
-  //#define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
-  //#define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
-  //#define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
-  //#define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
+// SPI to displays
+#define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
+#define TFT_MOSI 23
+#define TFT_SCLK 18
+// #define TFT_CS    -1 // Not connected
+#define TFT_DC 25  // Data Command, aka Register Select or RS
+#define TFT_RST 26 // Connect reset to ensure display initialises
 
-  #define SMOOTH_FONT     // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
-  #define SPI_FREQUENCY  40000000
+// #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+#define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
+#define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
+// #define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
+// #define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
+// #define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
+// #define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
+// #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
 
-  /*
-   * To make the Library not over-write all this:
-   */
-  #define USER_SETUP_LOADED
+#define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
+#define SPI_FREQUENCY 40000000
+
+/*
+ * To make the Library not over-write all this:
+ */
+#define USER_SETUP_LOADED
 #endif // original EleksTube IPS clock Gen2 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 
 #ifdef HARDWARE_SI_HAI_CLOCK // SI HAI IPS Clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-  //#define ONE_WIRE_BUS_PIN (xx)  // DS18B20 connected to GPIOxx; comment this line if temperature sensor is not connected
+// #define ONE_WIRE_BUS_PIN (xx)  // DS18B20 connected to GPIOxx; comment this line if temperature sensor is not connected
 
-  // WS2812 (or compatible) LEDs on the back of the display modules.
-  #define BACKLIGHTS_PIN (32)
-  #define NUM_BACKLIGHT_LEDS  (6) // 6 LEDs on the bottom of every LCD.
+// WS2812 (or compatible) LEDs on the back of the display modules.
+#define BACKLIGHTS_PIN (32)
+#define NUM_BACKLIGHT_LEDS (6) // 6 LEDs on the bottom of every LCD.
 
-  // Buttons, active low, externally pulled up (with actual resistors!)
-  #define BUTTON_LEFT_PIN (35)
-  #define BUTTON_MODE_PIN (34)
-  #define BUTTON_RIGHT_PIN (39)
-  #define BUTTON_POWER_PIN (36)
+// Buttons, active low, externally pulled up (with actual resistors!)
+#define BUTTON_LEFT_PIN (35)
+#define BUTTON_MODE_PIN (34)
+#define BUTTON_RIGHT_PIN (39)
+#define BUTTON_POWER_PIN (36)
 
-  // 3-wire to DS1302 RTC
-  #define DS1302_SCLK  (33)
-  #define DS1302_IO    (25)
-  #define DS1302_CE    (26)
+// 3-wire to DS1302 RTC
+#define DS1302_SCLK (33)
+#define DS1302_IO (25)
+#define DS1302_CE (26)
 
-  // Chip Select shift register, to select the display
-  #define CSSR_DATA_PIN (4)
-  #define CSSR_CLOCK_PIN (22)
-  #define CSSR_LATCH_PIN (21)
+// Chip Select shift register, to select the display
+#define CSSR_DATA_PIN (4)
+#define CSSR_CLOCK_PIN (22)
+#define CSSR_LATCH_PIN (21)
 
-  // Power for the displays
-  // Backlight for all TFT displays are powered through a MOSFET, so they can all be turned off.
-  // TODO: Check if dimmable!?!
-  // Active HIGH.
-  #define TFT_ENABLE_PIN (2)
+// Power for the displays
+// Backlight for all TFT displays are powered through a MOSFET, so they can all be turned off.
+// TODO: Check if dimmable!?!
+// Active HIGH.
+#define TFT_ENABLE_PIN (2)
 
-  // configure library \TFT_eSPI\User_Setup.h
-  // ST7789 135 x 240 display with no chip select line
-  #define ST7789_DRIVER     // Configure all registers
-  #define TFT_WIDTH  135
-  #define TFT_HEIGHT 240
-  #define CGRAM_OFFSET      // Library will add offsets required
+// configure library \TFT_eSPI\User_Setup.h
+// ST7789 135 x 240 display with no chip select line
+#define ST7789_DRIVER // Configure all registers
+#define TFT_WIDTH 135
+#define TFT_HEIGHT 240
+#define CGRAM_OFFSET // Library will add offsets required
 
-  // SPI to displays
-  #define TFT_SDA_READ      // Read and write on the MOSI/SDA pin, no separate MISO pin
-  #define TFT_MOSI 19
-  #define TFT_SCLK 18
-  //#define TFT_CS    -1 // Not connected
-  #define TFT_DC   16  // Data Command, aka Register Select or RS
-  #define TFT_RST  23  // Connect reset to ensure display initialises
+// SPI to displays
+#define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
+#define TFT_MOSI 19
+#define TFT_SCLK 18
+// #define TFT_CS    -1 // Not connected
+#define TFT_DC 16  // Data Command, aka Register Select or RS
+#define TFT_RST 23 // Connect reset to ensure display initialises
 
-  //#define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
-  #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
-  #define LOAD_FONT4  // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
-  //#define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
-  //#define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
-  //#define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
-  //#define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
-  //#define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
+// #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+#define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
+#define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
+// #define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
+// #define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
+// #define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
+// #define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
+// #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
 
-  #define SMOOTH_FONT     // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
-  #define SPI_FREQUENCY  40000000
+#define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
+#define SPI_FREQUENCY 40000000
 
-  /*
-   * To make the Library not over-write all this:
-   */
-  #define USER_SETUP_LOADED
+/*
+ * To make the Library not over-write all this:
+ */
+#define USER_SETUP_LOADED
 #endif // SI HAI IPS Clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 
 #ifdef HARDWARE_NovelLife_SE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-  // WS2812 (or compatible) LEDs on the back of the display modules.
-  #define BACKLIGHTS_PIN (GPIO_NUM_12)
-  #define NUM_BACKLIGHT_LEDS  (6) // 6 LEDs on the bottom of every LCD.
+// WS2812 (or compatible) LEDs on the back of the display modules.
+#define BACKLIGHTS_PIN (GPIO_NUM_12)
+#define NUM_BACKLIGHT_LEDS (6) // 6 LEDs on the bottom of every LCD.
 
-  // No Buttons on SE verion!!!
-  // Set to pins, which should always be HIGH!
-  #define BUTTON_LEFT_PIN (GPIO_NUM_3)
-  #define BUTTON_MODE_PIN (GPIO_NUM_3)
-  #define BUTTON_RIGHT_PIN (GPIO_NUM_3)
-  #define BUTTON_POWER_PIN (GPIO_NUM_3)
-  
-  // Pins ADPS interupt
-  #define GESTURE_SENSOR_INPUT_PIN (GPIO_NUM_5) // -> INTERRUPT
+// No Buttons on SE verion!!!
+// Set to pins, which should always be HIGH!
+#define BUTTON_LEFT_PIN (GPIO_NUM_3)
+#define BUTTON_MODE_PIN (GPIO_NUM_3)
+#define BUTTON_RIGHT_PIN (GPIO_NUM_3)
+#define BUTTON_POWER_PIN (GPIO_NUM_3)
 
-  // I2C to DS3231 RTC.
-  #define RTC_SCL_PIN (22)
-  #define RTC_SDA_PIN (21)
+// Pins ADPS interupt
+#define GESTURE_SENSOR_INPUT_PIN (GPIO_NUM_5) // -> INTERRUPT
 
-  // Chip Select shift register, to select the display
-  #define CSSR_DATA_PIN (14)  
-  #define CSSR_CLOCK_PIN (13) // SHcp changed from IO16 in original Elekstube
-  #define CSSR_LATCH_PIN (15) // STcp was IO17 in original Elekstube
-  
-  // Power for all TFT displays are grounded through a MOSFET so they can all be turned off.
-  // TODO: Check if dimmable!?!
-  // Active HIGH.
-  #define TFT_ENABLE_PIN (4)    ///Was 27 on elekstube
+// I2C to DS3231 RTC.
+#define RTC_SCL_PIN (22)
+#define RTC_SDA_PIN (21)
 
-  // configure library \TFT_eSPI\User_Setup.h
-  // ST7789 135 x 240 display with no chip select line
-  #define ST7789_DRIVER     // Configure all registers
-  #define TFT_WIDTH  135
-  #define TFT_HEIGHT 240
-  #define CGRAM_OFFSET      // Library will add offsets required
+// Chip Select shift register, to select the display
+#define CSSR_DATA_PIN (14)
+#define CSSR_CLOCK_PIN (13) // SHcp changed from IO16 in original Elekstube
+#define CSSR_LATCH_PIN (15) // STcp was IO17 in original Elekstube
 
-  // SPI to displays
-  #define TFT_SDA_READ      // Read and write on the MOSI/SDA pin, no separate MISO pin
-  #define TFT_MOSI 23
-  #define TFT_SCLK 18
-  //#define TFT_CS    -1 // Not connected
-  #define TFT_DC   25  // Data Command, aka Register Select or RS
-  #define TFT_RST  26  // Connect reset to ensure display initialises
+// Power for all TFT displays are grounded through a MOSFET so they can all be turned off.
+// TODO: Check if dimmable!?!
+// Active HIGH.
+#define TFT_ENABLE_PIN (4) /// Was 27 on elekstube
 
-  //#define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
-  #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
-  #define LOAD_FONT4  // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
-  //#define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
-  //#define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
-  //#define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
-  //#define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
-  //#define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
+// configure library \TFT_eSPI\User_Setup.h
+// ST7789 135 x 240 display with no chip select line
+#define ST7789_DRIVER // Configure all registers
+#define TFT_WIDTH 135
+#define TFT_HEIGHT 240
+#define CGRAM_OFFSET // Library will add offsets required
 
-  #define SMOOTH_FONT  
-  #define SPI_FREQUENCY  40000000
+// SPI to displays
+#define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
+#define TFT_MOSI 23
+#define TFT_SCLK 18
+// #define TFT_CS    -1 // Not connected
+#define TFT_DC 25  // Data Command, aka Register Select or RS
+#define TFT_RST 26 // Connect reset to ensure display initialises
 
-  /*
-   * To make the Library not over-write all this:
-   */
-  #define USER_SETUP_LOADED
+// #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+#define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
+#define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
+// #define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
+// #define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
+// #define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
+// #define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
+// #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
+
+#define SMOOTH_FONT
+#define SPI_FREQUENCY 40000000
+
+/*
+ * To make the Library not over-write all this:
+ */
+#define USER_SETUP_LOADED
 #endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 
 #ifdef HARDWARE_IPSTUBE_CLOCK // IPSTUBE clock models (H401 and H402) XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-  // WS2812 (or compatible) LEDs on the back of the display modules.
-  #define BACKLIGHTS_PIN (GPIO_NUM_5) //pin 35 is GPIO5
+// WS2812 (or compatible) LEDs on the back of the display modules.
+#define BACKLIGHTS_PIN (GPIO_NUM_5) // pin 35 is GPIO5
 
-  // ATTENTION: SOME IPSTUBE clocks has a LED stripe on the bottom of the clock! SOME NOT! Define the number of LEDs here!
-  //#define NUM_BACKLIGHT_LEDS  (34) // 6 LEDs on the bottom of every LCD. For IPSTUBE clock with LED stripe: 28 LEDs in a stripe on the bottom of the clock = 34 LEDs in total.
-  #define NUM_BACKLIGHT_LEDS  (6) // 6 LEDs on the bottom of every LCD. For IPSTUBE clock without LED stripe.
+// ATTENTION: SOME IPSTUBE clocks has a LED stripe on the bottom of the clock! SOME NOT! Define the number of LEDs here!
+// #define NUM_BACKLIGHT_LEDS  (34) // 6 LEDs on the bottom of every LCD. For IPSTUBE clock with LED stripe: 28 LEDs in a stripe on the bottom of the clock = 34 LEDs in total.
+#define NUM_BACKLIGHT_LEDS (6) // 6 LEDs on the bottom of every LCD. For IPSTUBE clock without LED stripe.
 
-  // Only one Button on IPSTUBE clocks! Define, to use different code for the button and the menu
-  #define ONE_BUTTON_ONLY_MENU
+// Only one Button on IPSTUBE clocks! Define, to use different code for the button and the menu
+#define ONE_BUTTON_ONLY_MENU
 
-  // define the "mode" (and only) button pin
-  #ifdef ONE_BUTTON_ONLY_MENU
-    #define BUTTON_MODE_PIN (GPIO_NUM_0) // Only ONE Button on the back of the clock - pin 23 is GPIO0 = BOOT Button 
-  #endif
+// define the "mode" (and only) button pin
+#ifdef ONE_BUTTON_ONLY_MENU
+#define BUTTON_MODE_PIN (GPIO_NUM_0) // Only ONE Button on the back of the clock - pin 23 is GPIO0 = BOOT Button
+#endif
 
-  // 3-wire to DS1302 RTC
-  #define DS1302_SCLK  (GPIO_NUM_22) // pin 39 is GPIO22
-  #define DS1302_IO    (GPIO_NUM_19) // pin 38 is GPIO19
-  #define DS1302_CE    (GPIO_NUM_21) // pin 42 is GPIO21
+// 3-wire to DS1302 RTC
+#define DS1302_SCLK (GPIO_NUM_22) // pin 39 is GPIO22
+#define DS1302_IO (GPIO_NUM_19)   // pin 38 is GPIO19
+#define DS1302_CE (GPIO_NUM_21)   // pin 42 is GPIO21
 
-  // Chip Select shift register, to select the display
-  // No shift register on this board - Chip Select of the displays is directly connected to the ESP32!
-  // #define CSSR_DATA_PIN (-1)
-  // #define CSSR_CLOCK_PIN (-1)
-  // #define CSSR_LATCH_PIN (-1)
+// Chip Select shift register, to select the display
+// No shift register on this board - Chip Select of the displays is directly connected to the ESP32!
+// #define CSSR_DATA_PIN (-1)
+// #define CSSR_CLOCK_PIN (-1)
+// #define CSSR_LATCH_PIN (-1)
 
-  // All IPSTUBEs has the LCDs pins VCC power (LED Anode) and VDD (Power Supply for Analog) connectected to the VCC (3.3V) and Ground to Ground (PCB), so the displays are Always-On!
-  // EXCEPT: The Q1 transistor is present!
-  // Then the GPIO4 pin is connected to the transistor and Ground of the LCDs is running through the transistor, so the LCDs can be turned on and off AND dimmed!
-  #define TFT_ENABLE_PIN (GPIO_NUM_4) // pin 24 is GPIO4
+// All IPSTUBEs has the LCDs pins VCC power (LED Anode) and VDD (Power Supply for Analog) connectected to the VCC (3.3V) and Ground to Ground (PCB), so the displays are Always-On!
+// EXCEPT: The Q1 transistor is present!
+// Then the GPIO4 pin is connected to the transistor and Ground of the LCDs is running through the transistor, so the LCDs can be turned on and off AND dimmed!
+#define TFT_ENABLE_PIN (GPIO_NUM_4) // pin 24 is GPIO4
 
-  // If transistor is present and we want hardware dimming, we need to choose a PWM channel for this, can always be defines, even if not used
-  #define TFT_PWM_CHANNEL 0
+// If transistor is present and we want hardware dimming, we need to choose a PWM channel for this, can always be defines, even if not used
+#define TFT_PWM_CHANNEL 0
 
-  // Skip reinitialization
-  // This feature is only for IPSTUBE clocks by now!!! Can also be used on other clocks, but not tested yet!
-  // Always skip reinitialization for IPSTUBE clocks, because the displays are either always on (versions without Q1 transistor) 
-  // and a reinit just shows strange patterns on the displays and forces an unnecessary redraw of the clock digits.
-  // or seems to don't need a reinit (with Q1) -> this is an assumption, because the display came back on after a few hours without problems
-  // NOTE: If this causes wake up issues for you, disable it by commenting the following line out and go back to full reinit after display power off
-  #define TFT_SKIP_REINIT
+// Skip reinitialization
+// This feature is only for IPSTUBE clocks by now!!! Can also be used on other clocks, but not tested yet!
+// Always skip reinitialization for IPSTUBE clocks, because the displays are either always on (versions without Q1 transistor)
+// and a reinit just shows strange patterns on the displays and forces an unnecessary redraw of the clock digits.
+// or seems to don't need a reinit (with Q1) -> this is an assumption, because the display came back on after a few hours without problems
+// NOTE: If this causes wake up issues for you, disable it by commenting the following line out and go back to full reinit after display power off
+#define TFT_SKIP_REINIT
 
-  // Hardware dimming!
-  // This feature is only supported by IPSTUBE clocks by now!!!
-  // DON'T USE IT WITH OTHER CLOCKS! IT MAY DAMAGE YOUR CLOCK!
+// Hardware dimming!
+// This feature is only supported by IPSTUBE clocks by now!!!
+// DON'T USE IT WITH OTHER CLOCKS! IT MAY DAMAGE YOUR CLOCK!
 
-  // In case you have an IPSTUBE clock that does not support hardware dimming because of missing Q1 transistor:
-  // This will NOT damage your clock, but the dimming of the displays will be totally disabled! Also the LCD power switch will not work!
-  // If you notice, that the night time dimming or manual dimming does not work, you will have a clock without the Q1 transistor 
-  // and you can/should comment the following line out to get back to the software dimming!
+// In case you have an IPSTUBE clock that does not support hardware dimming because of missing Q1 transistor:
+// This will NOT damage your clock, but the dimming of the displays will be totally disabled! Also the LCD power switch will not work!
+// If you notice, that the night time dimming or manual dimming does not work, you will have a clock without the Q1 transistor
+// and you can/should comment the following line out to get back to the software dimming!
 
-  // Comment the next line out, to DISABLE hardware dimming with GPIO4 pin (TFT_ENABLE_PIN) for a IPSTUBE clock or undef it in the USER_DEFINES.h
-  #define DIM_WITH_ENABLE_PIN_PWM
-    
-  //NOTE: If NIGTHTIME_DIMMING is enabled: 
-  // For the main LCDs: The dimming will be set to the hard coded value TFT_NIGHTTIME_INTENSITY in the given time period EVERY HOUR beginning at NIGHT_TIME_START
-  //    and will set back to the maximum brightness at DAY_TIME_START...Disable NIGHTTIME_DIMMING if you want to use the manual set dimming value all the time
-  // For the backlight dimming: The dimming will ALWAYS stay to the hard coded value BACKLIGHT_DIMMED_INTENSITY in the given night time period! 
-  //    The check for it is done and the value is applied every loop...Disable NIGHTTIME_DIMMING if you want to use the manual set dimming value all the time
+// Comment the next line out, to DISABLE hardware dimming with GPIO4 pin (TFT_ENABLE_PIN) for a IPSTUBE clock or undef it in the USER_DEFINES.h
+#define DIM_WITH_ENABLE_PIN_PWM
 
-  // TODO: Store the dimming values and dimming times in the NVS partition to keep the last dimming value and not use the hard coded values
-  // TODO: Make the times and values adjustable in the menu and/or via MQTT for both main and backlight night time dimming
+// NOTE: If NIGTHTIME_DIMMING is enabled:
+//  For the main LCDs: The dimming will be set to the hard coded value TFT_NIGHTTIME_INTENSITY in the given time period EVERY HOUR beginning at NIGHT_TIME_START
+//     and will set back to the maximum brightness at DAY_TIME_START...Disable NIGHTTIME_DIMMING if you want to use the manual set dimming value all the time
+//  For the backlight dimming: The dimming will ALWAYS stay to the hard coded value BACKLIGHT_DIMMED_INTENSITY in the given night time period!
+//     The check for it is done and the value is applied every loop...Disable NIGHTTIME_DIMMING if you want to use the manual set dimming value all the time
 
-  // configure library \TFT_eSPI\User_Setup.h
-  // ST7789 135 x 240 display with no chip select line
-  #define ST7789_DRIVER     // Configure all registers
-  #define TFT_WIDTH  135
-  #define TFT_HEIGHT 240
-  #define CGRAM_OFFSET      // Library will add offsets required
+// TODO: Store the dimming values and dimming times in the NVS partition to keep the last dimming value and not use the hard coded values
+// TODO: Make the times and values adjustable in the menu and/or via MQTT for both main and backlight night time dimming
 
-  // SPI to displays
-  #define TFT_SDA_READ            // Read and write on the MOSI/SDA pin, no separate MISO pin
-  #define TFT_MISO  -1            // No MISO
-  #define TFT_MOSI (GPIO_NUM_32)  // pin 12 is GPIO32
-  #define TFT_SCLK (GPIO_NUM_33)  // pin 13 is GPIO33
-  #define TFT_CS   (-1)           // MUST be -1 for IPSTUBE clocks -> chipselect class does the magic also without a shift register
-  #define TFT_DC   (GPIO_NUM_25)  // pin 14 is GPIO25 - Data Command, aka Register Select or RS
-  #define TFT_RST  (GPIO_NUM_26)  // pin 15 is GPIO26 - Connect reset to ensure display initialises
+// configure library \TFT_eSPI\User_Setup.h
+// ST7789 135 x 240 display with no chip select line
+#define ST7789_DRIVER // Configure all registers
+#define TFT_WIDTH 135
+#define TFT_HEIGHT 240
+#define CGRAM_OFFSET // Library will add offsets required
 
-  #define TOUCH_CS  -1 // No Touch
+// SPI to displays
+#define TFT_SDA_READ           // Read and write on the MOSI/SDA pin, no separate MISO pin
+#define TFT_MISO -1            // No MISO
+#define TFT_MOSI (GPIO_NUM_32) // pin 12 is GPIO32
+#define TFT_SCLK (GPIO_NUM_33) // pin 13 is GPIO33
+#define TFT_CS (-1)            // MUST be -1 for IPSTUBE clocks -> chipselect class does the magic also without a shift register
+#define TFT_DC (GPIO_NUM_25)   // pin 14 is GPIO25 - Data Command, aka Register Select or RS
+#define TFT_RST (GPIO_NUM_26)  // pin 15 is GPIO26 - Connect reset to ensure display initialises
 
-  //Fonts to load for TFT
-  //#define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
-  #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
-  #define LOAD_FONT4  // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
-  //#define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
-  //#define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
-  //#define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
-  //#define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
-  //#define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
+#define TOUCH_CS -1 // No Touch
 
-  #define SMOOTH_FONT
-  #define SPI_FREQUENCY  56000000
+// Fonts to load for TFT
+// #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+#define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters -> for startup messages
+#define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters -> for the menu
+// #define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
+// #define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
+// #define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
+// #define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
+// #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
 
-  /*
-   * To make the Library not over-write all this:
-   */
-  #define USER_SETUP_LOADED
-#endif  // IPSTUBE clock models (H401 and H402) XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#define SMOOTH_FONT
+#define SPI_FREQUENCY 56000000
+
+/*
+ * To make the Library not over-write all this:
+ */
+#define USER_SETUP_LOADED
+#endif // IPSTUBE clock models (H401 and H402) XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 // Debug output macros XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #ifdef DEBUG_OUTPUT
-    #define DBG_L(X) Serial.println(X)
-    #define DBG(X) Serial.print(X)
+#define DBG_L(X) Serial.println(X)
+#define DBG(X) Serial.print(X)
 #else
-    #define DBG_L(X) (void)0
-    #define DBG(X) (void)0
+#define DBG_L(X) (void)0
+#define DBG(X) (void)0
 #endif
 
 #ifdef DEBUG_OUTPUT_VERBOSE
-    #define DBG_VERBOSE_L(X) Serial.println(X)
-    #define DBG_VERBOSE(X) Serial.print(X)
+#define DBG_VERBOSE_L(X) Serial.println(X)
+#define DBG_VERBOSE(X) Serial.print(X)
 #else
-    #define DBG_VERBOSE_L(X) (void)0
-    #define DBG_VERBOSE(X) (void)0
+#define DBG_VERBOSE_L(X) (void)0
+#define DBG_VERBOSE(X) (void)0
 #endif
 
 #ifdef DEBUG_OUTPUT_TFT
-    #define DBG_TFT_L(X) Serial.println(X)
-    #define DBG_TFT(X) Serial.print(X)
+#define DBG_TFT_L(X) Serial.println(X)
+#define DBG_TFT(X) Serial.print(X)
 #else
-    #define DBG_TFT_L(X) (void)0
-    #define DBG_TFT(X) (void)0
+#define DBG_TFT_L(X) (void)0
+#define DBG_TFT(X) (void)0
 #endif
 
 #ifdef DEBUG_OUTPUT_MENU
-    #define DBG_MENU_L(X) Serial.println(X)
-    #define DBG_MENU(X) Serial.print(X)
+#define DBG_MENU_L(X) Serial.println(X)
+#define DBG_MENU(X) Serial.print(X)
 #else
-    #define DBG_MENU_L(X) (void)0
-    #define DBG_MENU(X) (void)0
+#define DBG_MENU_L(X) (void)0
+#define DBG_MENU(X) (void)0
 #endif
 
 #ifdef DEBUG_OUTPUT_BUTTONS
-    #define DBG_BUTTONS_L(X) Serial.println(X)
-    #define DBG_BUTTONS(X) Serial.print(X)
+#define DBG_BUTTONS_L(X) Serial.println(X)
+#define DBG_BUTTONS(X) Serial.print(X)
 #else
-    #define DBG_BUTTONS_L(X) (void)0
-    #define DBG_BUTTONS(X) (void)0
+#define DBG_BUTTONS_L(X) (void)0
+#define DBG_BUTTONS(X) (void)0
 #endif
 
 #ifdef DEBUG_OUTPUT_MQTT
-    #define DBG_MQTT_L(X) Serial.println(X)
-    #define DBG_MQTT(X) Serial.print(X)
+#define DBG_MQTT_L(X) Serial.println(X)
+#define DBG_MQTT(X) Serial.print(X)
 #else
-    #define DBG_MQTT_L(X) (void)0
-    #define DBG_MQTT(X) (void)0
+#define DBG_MQTT_L(X) (void)0
+#define DBG_MQTT(X) (void)0
 #endif
 
 #ifdef DEBUG_OUTPUT_BACKLIGHTS
-    #define DBG_BACKLIGHTS_L(X) Serial.println(X)
-    #define DBG_BACKLIGHTS(X) Serial.print(X)
+#define DBG_BACKLIGHTS_L(X) Serial.println(X)
+#define DBG_BACKLIGHTS(X) Serial.print(X)
 #else
-    #define DBG_BACKLIGHTS_L(X) (void)0
-    #define DBG_BACKLIGHTS(X) (void)0
+#define DBG_BACKLIGHTS_L(X) (void)0
+#define DBG_BACKLIGHTS(X) (void)0
 #endif
 
 #ifdef DEBUG_OUTPUT_CHIPSELECT
-    #define DBG_CHIPSELECT_L(X) Serial.println(X)
-    #define DBG_CHIPSELECT(X) Serial.print(X)
+#define DBG_CHIPSELECT_L(X) Serial.println(X)
+#define DBG_CHIPSELECT(X) Serial.print(X)
 #else
-    #define DBG_CHIPSELECT_L(X) (void)0
-    #define DBG_CHIPSELECT(X) (void)0
+#define DBG_CHIPSELECT_L(X) (void)0
+#define DBG_CHIPSELECT(X) (void)0
 #endif
 
 #endif /* GLOBAL_DEFINES_H_ */
