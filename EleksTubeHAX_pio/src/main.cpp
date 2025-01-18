@@ -55,6 +55,7 @@ uint32_t lastMqttCommandExecuted = (uint32_t)-1;
 // Helper function, defined below.
 void updateClockDisplay(TFTs::show_t show = TFTs::yes);
 void setupMenu(void);
+void checkForValidValuesInStoredConfig();
 #ifdef NIGHTTIME_DIMMING
 bool isNightTime(uint8_t current_hour, uint8_t current_minute);
 void checkDimmingNeeded(void);
@@ -77,45 +78,7 @@ void setup()
 
   stored_config.begin();
   stored_config.load();
-
-//REMOVE
-#ifdef DEBUG_OUTPUT
-  Serial.print("Is config loaded: "); Serial.println(stored_config.isLoaded());
-  Serial.print("is clock valid: "); Serial.println(stored_config.config.uclock.is_valid);
-  Serial.print("Current Nighttime Dimming start time after load from config: ");Serial.print(stored_config.config.uclock.nighttime_dimming_start_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
-  Serial.print("Current Nighttime Dimming end time after load from config: ");Serial.print(stored_config.config.uclock.nighttime_dimming_end_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);  
-#endif
-
-  //check if the dimming times are set in the config, if not, set them to the default values
-  if ((stored_config.config.uclock.nighttime_dimming_start_hour != NIGHTTIME_START_HOUR) || (stored_config.config.uclock.nighttime_dimming_start_minute != NIGHTTIME_START_MINUTE) || (stored_config.config.uclock.nighttime_dimming_end_hour != NIGHTTIME_END_HOUR) || (stored_config.config.uclock.nighttime_dimming_end_minute != NIGHTTIME_END_MINUTE)) {
-    Serial.println("Nighttime Dimming start or end time changed in config, saving new values to config...");
-    stored_config.config.uclock.nighttime_dimming_start_hour = NIGHTTIME_START_HOUR;
-    stored_config.config.uclock.nighttime_dimming_start_minute = NIGHTTIME_START_MINUTE;
-    stored_config.config.uclock.nighttime_dimming_end_hour = NIGHTTIME_END_HOUR;
-    stored_config.config.uclock.nighttime_dimming_end_minute = NIGHTTIME_END_MINUTE;
-    stored_config.save();
-  }
-
-  if ((stored_config.config.uclock.nighttime_dimming_start_hour <= -1) || (stored_config.config.uclock.nighttime_dimming_start_hour > 24)) {
-    Serial.print("Nighttime Dimming start time is out of range in config, setting to default value: 22:00");
-    stored_config.config.uclock.nighttime_dimming_start_hour = 22;
-    stored_config.config.uclock.nighttime_dimming_start_minute = 00;
-    stored_config.save();
-  }
-  if ((stored_config.config.uclock.nighttime_dimming_end_hour <= -1) || (stored_config.config.uclock.nighttime_dimming_end_hour > 24)) {
-    Serial.print("Nighttime Dimming end time is out of range in config, setting to default value: 07:00");
-    stored_config.config.uclock.nighttime_dimming_end_hour = 7;
-    stored_config.config.uclock.nighttime_dimming_end_minute = 00;
-    stored_config.save();
-  }
-
-#ifdef DEBUG_OUTPUT
-  Serial.print("Is config loaded: "); Serial.println(stored_config.isLoaded());
-  Serial.print("is clock valid: "); Serial.println(stored_config.config.uclock.is_valid);
-  Serial.print("Current Nighttime Dimming start time after load from config: ");Serial.print(stored_config.config.uclock.nighttime_dimming_start_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
-  Serial.print("Current Nighttime Dimming end time after load from config: ");Serial.print(stored_config.config.uclock.nighttime_dimming_end_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);  
-#endif
-//REMOVE
+  checkForValidValuesInStoredConfig();
 
   backlights.begin(&stored_config.config.backlights);
   buttons.begin();
@@ -239,6 +202,7 @@ void setup()
   // Start up the clock displays.
   tfts.fillScreen(TFT_BLACK);
   uclock.loop();
+  checkDimmingNeeded();
   updateClockDisplay(TFTs::force); // Draw all the clock digits
   Serial.println("Setup finished.");
 }
@@ -908,6 +872,33 @@ void setupMenu()
   tfts.setCursor(0, 124, 4);                  // use font 4 - 26 pixel high - for the menu text
 }
 
+void checkForValidValuesInStoredConfig()
+{
+  //check if the dimming times have changed in the source code definition, if so, save the new values to the config
+  if ((stored_config.config.uclock.nighttime_dimming_start_hour != NIGHTTIME_START_HOUR) || (stored_config.config.uclock.nighttime_dimming_start_minute != NIGHTTIME_START_MINUTE) || (stored_config.config.uclock.nighttime_dimming_end_hour != NIGHTTIME_END_HOUR) || (stored_config.config.uclock.nighttime_dimming_end_minute != NIGHTTIME_END_MINUTE)) {
+    Serial.println("Nighttime Dimming start or end time changed in config, saving new values to config...");
+    stored_config.config.uclock.nighttime_dimming_start_hour = NIGHTTIME_START_HOUR;
+    stored_config.config.uclock.nighttime_dimming_start_minute = NIGHTTIME_START_MINUTE;
+    stored_config.config.uclock.nighttime_dimming_end_hour = NIGHTTIME_END_HOUR;
+    stored_config.config.uclock.nighttime_dimming_end_minute = NIGHTTIME_END_MINUTE;
+    stored_config.save();
+  }
+  
+  //check if the dimming times are in a valid range, if not, set them to the default values
+  if ((stored_config.config.uclock.nighttime_dimming_start_hour <= -1) || (stored_config.config.uclock.nighttime_dimming_start_hour > 24)) {
+    Serial.print("Nighttime Dimming start time is out of range in config, setting to default value: 22:00");
+    stored_config.config.uclock.nighttime_dimming_start_hour = 22;
+    stored_config.config.uclock.nighttime_dimming_start_minute = 00;
+    stored_config.save();
+  }
+  if ((stored_config.config.uclock.nighttime_dimming_end_hour <= -1) || (stored_config.config.uclock.nighttime_dimming_end_hour > 24)) {
+    Serial.print("Nighttime Dimming end time is out of range in config, setting to default value: 07:00");
+    stored_config.config.uclock.nighttime_dimming_end_hour = 7;
+    stored_config.config.uclock.nighttime_dimming_end_minute = 00;
+    stored_config.save();
+  }
+}
+
 #ifdef NIGHTTIME_DIMMING
 bool isNightTime(uint8_t current_hour, uint8_t current_minute)
 { // check the actual hour is in the defined "night time"
@@ -1054,12 +1045,14 @@ void checkDimmingNeeded()
     { // check if it is in the defined night time
       Serial.println("Set to night time mode (dimmed)!");
       tfts.dimming = TFT_NIGHTTIME_INTENSITY;
+      tfts.InvalidateImageInBuffer();
       backlights.setDimming(true);
     }
     else
     {
       Serial.println("Set to day time mode (normal brightness)!");
       tfts.dimming = TFT_DAYTIME_INTENSITY; // 0..255
+      tfts.InvalidateImageInBuffer();
       backlights.setDimming(false);
     }
     updateClockDisplay(TFTs::force); // redraw all the clock digits -> software dimming will be done here
