@@ -21,11 +21,15 @@
 // #define USE_CLK_FILES   // select between .CLK and .BMP images
 
 // ************* Display Dimming / Night time operation *************
-#define DIMMING                      // uncomment to enable hardware dimming
-#define NIGHT_TIME 22                // dim displays at 10 pm
-#define DAY_TIME 7                   // full brightness after 7 am
-#define BACKLIGHT_DIMMED_INTENSITY 1 // 0..7
-#define TFT_DIMMED_INTENSITY 20      // 0..255
+#define NIGHTTIME_DIMMING                       // uncomment to enable dimming in the given time period between NIGHT_TIME and DAY_TIME
+#define NIGHTTIME_START_HOUR                22  // dim displays at 10 pm
+#define NIGHTTIME_START_MINUTE              00  // dim displays at 10 pm and 0 minutes
+#define NIGHTTIME_END_HOUR                  7   // full brightness after 7 am
+#define NIGHTTIME_END_MINUTE                00  // full brightness after 7 am and 0 minutes
+#define BACKLIGHT_NIGHTTIME_INTENSITY       1   // 0..7 - Intensity of the backlight during night time
+#define BACKLIGHT_DAYTIME_INTENSITY         7   // 0..7 - Intensity of the backlight during day time
+#define TFT_NIGHTTIME_INTENSITY             20  // 0..255 - Intensity of the TFT displays during night time
+#define TFT_DAYTIME_INTENSITY               255 // 0..255 - Intensity of the TFT displays during day time
 
 // ************* WiFi config *************
 #define WIFI_CONNECT_TIMEOUT_SEC 20

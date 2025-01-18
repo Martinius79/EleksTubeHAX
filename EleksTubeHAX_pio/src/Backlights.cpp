@@ -82,7 +82,7 @@ void Backlights::loop()
     }
     if (dimming)
     {
-      setBrightness(0xFF >> max_intensity - BACKLIGHT_DIMMED_INTENSITY - 1);
+      setBrightness(0xFF >> max_intensity - BACKLIGHT_NIGHTTIME_INTENSITY - 1);
     }
     else
     {
@@ -114,7 +114,7 @@ void Backlights::pulsePattern()
   float val = 1 + abs(sin(2 * M_PI * millis() / pulse_length_millis)) * 254;
   if (dimming)
   {
-    val = val * BACKLIGHT_DIMMED_INTENSITY / 7;
+    val = val * BACKLIGHT_NIGHTTIME_INTENSITY / 7;
   }
   else
   {
@@ -136,7 +136,7 @@ void Backlights::breathPattern()
 
   if (dimming)
   {
-    val = val * BACKLIGHT_DIMMED_INTENSITY / 7;
+    val = val * BACKLIGHT_NIGHTTIME_INTENSITY / 7;
   }
   else
   {
@@ -167,7 +167,7 @@ void Backlights::testPattern()
 
   if (dimming)
   {
-    setBrightness(0xFF >> max_intensity - (uint8_t)BACKLIGHT_DIMMED_INTENSITY - 1);
+    setBrightness(0xFF >> max_intensity - (uint8_t)BACKLIGHT_NIGHTTIME_INTENSITY - 1);
   }
   else
   {
@@ -251,7 +251,7 @@ void Backlights::rainbowPattern()
   }
   if (dimming)
   {
-    setBrightness(0xFF >> max_intensity - (uint8_t)BACKLIGHT_DIMMED_INTENSITY - 1);
+    setBrightness(0xFF >> max_intensity - (uint8_t)BACKLIGHT_NIGHTTIME_INTENSITY - 1);
   }
   else
   {

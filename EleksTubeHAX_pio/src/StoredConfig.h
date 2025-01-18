@@ -40,29 +40,33 @@ public:
   {
     struct Backlights
     {
-      uint8_t pattern;
-      uint16_t color_phase;
-      uint8_t intensity;
-      uint8_t pulse_bpm;
-      uint8_t breath_per_min;
-      float rainbow_sec;
-      uint8_t is_valid; // Write StoredConfig::valid here when valid data is loaded.
+      uint8_t pattern = 0xFF;
+      uint16_t color_phase = 0xFF;
+      uint8_t intensity = 0xFF;
+      uint8_t pulse_bpm = 0xFF;
+      uint8_t breath_per_min = 0xFF;
+      float rainbow_sec = 0xFF;
+      uint8_t is_valid = 0x00; // only StoredConfig::valid (0x55) means valid. Write it here, after valid data is loaded.
     } backlights;
 
     struct Clock
     {
-      bool twelve_hour;
-      time_t time_zone_offset;
-      bool blank_hours_zero;
-      int8_t selected_graphic;
-      uint8_t is_valid; // Write StoredConfig::valid here when valid data is loaded.
+      bool twelve_hour = false;
+      time_t time_zone_offset = 0;
+      bool blank_hours_zero = false;
+      int8_t selected_graphic = -1;
+      int8_t nighttime_dimming_start_hour = -1;
+      int8_t nighttime_dimming_end_hour = -1;
+      int8_t nighttime_dimming_start_minute = -1;
+      int8_t nighttime_dimming_end_minute = -1;
+      uint8_t is_valid = 0x00; // only StoredConfig::valid (0x55) means valid. Write it here, after valid data is loaded.
     } uclock;
 
     struct Wifi
     {
-      char ssid[str_buffer_size];
-      char password[str_buffer_size];
-      uint8_t WPS_connected; // Write StoredConfig::valid here when valid data is loaded.
+      char ssid[str_buffer_size] = "\0";
+      char password[str_buffer_size] = "\0";
+      uint8_t WPS_connected = 0x00; // only StoredConfig::valid (0x55) means valid. Write it here, after valid data is loaded.
     } wifi;
   } config;
 

@@ -43,9 +43,10 @@ Clock uclock;
 Menu menu;
 StoredConfig stored_config;
 
-#ifdef DIMMING
+#ifdef NIGHTTIME_DIMMING
 bool isDimmingNeeded = false;
-uint8_t hour_old = 255;
+uint8_t previous_hour = 255;
+uint8_t previous_minute = 255;
 #endif
 bool DstNeedsUpdate = false;
 uint8_t yesterday = 0;
@@ -55,8 +56,8 @@ uint32_t lastMqttCommandExecuted = (uint32_t)-1;
 // Helper function, defined below.
 void updateClockDisplay(TFTs::show_t show = TFTs::yes);
 void setupMenu(void);
-#ifdef DIMMING
-bool isNightTime(uint8_t current_hour);
+#ifdef NIGHTTIME_DIMMING
+bool isNightTime(uint8_t current_hour, uint8_t current_minute);
 void checkDimmingNeeded(void);
 #endif
 void UpdateDstEveryNight(void);
@@ -77,6 +78,27 @@ void setup()
 
   stored_config.begin();
   stored_config.load();
+
+#ifdef DEBUG_OUTPUT
+  Serial.print("Current Nighttime Dimming start hour after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_start_hour);
+  Serial.print("Current Nighttime Dimming end hour after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_end_hour);
+  Serial.print("Current Nighttime Dimming start minute after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
+  Serial.print("Current Nighttime Dimming end minute after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);
+#endif
+
+  //check if the dimming times are set in the config, if not, set them to the default values
+  if (stored_config.config.uclock.nighttime_dimming_start_hour == -1) {
+    Serial.print("Nighttime Dimming start time not set in config, setting to default value:");Serial.print(NIGHTTIME_START_HOUR);Serial.print(":");Serial.println(NIGHTTIME_START_MINUTE);
+    stored_config.config.uclock.nighttime_dimming_start_hour = NIGHTTIME_START_HOUR;
+    stored_config.config.uclock.nighttime_dimming_start_minute = NIGHTTIME_START_MINUTE;
+    stored_config.save();
+  }
+  if (stored_config.config.uclock.nighttime_dimming_end_hour == -1) {
+    Serial.print("Nighttime Dimming end time not set in config, setting to default value.");Serial.print(NIGHTTIME_END_HOUR);Serial.print(":");Serial.println(NIGHTTIME_END_MINUTE);
+    stored_config.config.uclock.nighttime_dimming_end_hour = NIGHTTIME_END_HOUR;
+    stored_config.config.uclock.nighttime_dimming_end_minute = NIGHTTIME_END_MINUTE;
+    stored_config.save();
+  }
 
   backlights.begin(&stored_config.config.backlights);
   buttons.begin();
@@ -472,7 +494,7 @@ void loop()
   backlights.loop();
   uclock.loop();
 
-#ifdef DIMMING
+#ifdef NIGHTTIME_DIMMING
   checkDimmingNeeded(); // night or day time brightness change
 #endif
 
@@ -582,7 +604,7 @@ void loop()
 
           uclock.setTimeZoneOffset(newOffset); // set the new offset
           uclock.loop();                       // update the clock time and redraw the changed digits -> will "flicker" the menu for a short time, but without, menu is not redrawn correctly
-#ifdef DIMMING
+#ifdef NIGHTTIME_DIMMING
           checkDimmingNeeded(); // check if we need dimming for the night, because timezone was changed
 #endif
           currOffset = uclock.getTimeZoneOffset(); // get the new offset as current offset for the menu
@@ -637,7 +659,7 @@ void loop()
 
           uclock.setTimeZoneOffset(newOffset); // set the new offset
           uclock.loop();                       // update the clock time and redraw the changed digits -> will "flicker" the menu for a short time, but without, menu is not redrawn correctly
-#ifdef DIMMING
+#ifdef NIGHTTIME_DIMMING
           checkDimmingNeeded(); // check if we need dimming for the night, because timezone was changed
 #endif
           currOffset = uclock.getTimeZoneOffset(); // get the new offset as current offset for the menu
@@ -858,45 +880,71 @@ void setupMenu()
   tfts.setCursor(0, 124, 4);                  // use font 4 - 26 pixel high - for the menu text
 }
 
-#ifdef DIMMING
-bool isNightTime(uint8_t current_hour)
+#ifdef NIGHTTIME_DIMMING
+bool isNightTime(uint8_t current_hour, uint8_t current_minute)
 { // check the actual hour is in the defined "night time"
-  if (DAY_TIME < NIGHT_TIME)
-  { // "Night" spans across midnight so it is split between two days
-    return (current_hour < DAY_TIME) || (current_hour >= NIGHT_TIME);
+  bool isNightTime = false;  
+  if (stored_config.config.uclock.nighttime_dimming_end_hour < stored_config.config.uclock.nighttime_dimming_start_hour) {
+    // "Night" spans across midnight
+
+    //check for the minutes, if the night time spans across midnight
+    
+    //isNightTime = ((current_hour < stored_config.config.uclock.nighttime_dimming_end_hour) || (current_hour >= stored_config.config.uclock.nighttime_dimming_start_hour) 
+    //                && (current_minute >= stored_config.config.uclock.nighttime_dimming_start_minute)); ;
+    Serial.print("Night time spans across midnight: ");Serial.println(isNightTime);
+    return isNightTime;
   }
-  else
-  { // "Night" starts after midnight, entirely contained within the current day
-    return (current_hour >= NIGHT_TIME) && (current_hour < DAY_TIME);
+  else {
+    // "Night" starts after midnight, entirely contained within the day
+
+    //check if the current hour is within the defined night time
+    if ((current_hour >= stored_config.config.uclock.nighttime_dimming_start_hour) && (current_hour < stored_config.config.uclock.nighttime_dimming_end_hour)){
+      //check for the minutes, if the current hour is within the defined night time
+      if ((current_hour == stored_config.config.uclock.nighttime_dimming_start_hour) && (current_minute < stored_config.config.uclock.nighttime_dimming_start_minute)){
+        isNightTime = false;
+      }
+      else if ((current_hour == stored_config.config.uclock.nighttime_dimming_end_hour) && (current_minute >= stored_config.config.uclock.nighttime_dimming_end_minute)){
+        isNightTime = false;
+      }
+      else {
+      isNightTime = true;
+    }
+    Serial.print("Night time is within the current day: ");Serial.println(isNightTime);
+    return isNightTime;
+    }
   }
+  return isNightTime;
 }
 
 void checkDimmingNeeded()
 {                                             // dim the display in the defined night time
-  uint8_t current_hour = uclock.getHour24();  // for internal calcs we always use 24h format
-  isDimmingNeeded = current_hour != hour_old; // check, if the hour has changed since last loop (from time passing by or from timezone change)
+  uint8_t current_hour = uclock.getHour24();  // get the current hour value - for internal calcs we always use 24h format
+  uint8_t current_minute = uclock.getMinute(); // get the current minute value
+  isDimmingNeeded = current_hour != previous_hour && current_minute != previous_minute; // check, if the hour and minute has changed since last loop (from time passing by or from timezone change)
+
   if (isDimmingNeeded)
   {
-    Serial.print("Current hour = ");
-    Serial.print(current_hour);
-    Serial.print(", Night Time Start = ");
-    Serial.print(NIGHT_TIME);
-    Serial.print(", Day Time Start = ");
-    Serial.println(DAY_TIME);
-    if (isNightTime(current_hour))
+#ifdef DEBUG_OUTPUT
+    Serial.print("Current time = ");Serial.print(current_hour);
+    Serial.print(", Night Time start = ");Serial.print(NIGHTTIME_START_HOUR);Serial.print(":");Serial.print(NIGHTTIME_START_MINUTE);
+    Serial.print(", Night Time end = ");Serial.println(NIGHTTIME_END_HOUR);Serial.print(":");Serial.println(NIGHTTIME_END_MINUTE);
+#endif
+
+    if (isNightTime(current_hour, current_minute))
     { // check if it is in the defined night time
       Serial.println("Set to night time mode (dimmed)!");
-      tfts.dimming = TFT_DIMMED_INTENSITY;
+      tfts.dimming = TFT_NIGHTTIME_INTENSITY;
       backlights.setDimming(true);
     }
     else
     {
       Serial.println("Set to day time mode (normal brightness)!");
-      tfts.dimming = 255; // 0..255
+      tfts.dimming = TFT_DAYTIME_INTENSITY; // 0..255
       backlights.setDimming(false);
     }
     updateClockDisplay(TFTs::force); // redraw all the clock digits -> software dimming will be done here
-    hour_old = current_hour;
+    previous_hour = current_hour;
+    previous_minute = current_minute;
   }
 }
 #endif // DIMMING
