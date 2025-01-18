@@ -44,7 +44,6 @@ Menu menu;
 StoredConfig stored_config;
 
 #ifdef NIGHTTIME_DIMMING
-bool isDimmingNeeded = false;
 uint8_t previous_hour = 255;
 uint8_t previous_minute = 255;
 #endif
@@ -71,7 +70,7 @@ void HandleGesture(void);           // only for NovelLife SE
 void setup()
 {
   Serial.begin(115200);
-  delay(1000); // Waiting for serial monitor to catch up.
+  delay(4000); // Waiting for serial monitor to catch up.
   Serial.println("");
   Serial.println(FIRMWARE_VERSION);
   Serial.println("In setup().");
@@ -79,26 +78,44 @@ void setup()
   stored_config.begin();
   stored_config.load();
 
+//REMOVE
 #ifdef DEBUG_OUTPUT
-  Serial.print("Current Nighttime Dimming start hour after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_start_hour);
-  Serial.print("Current Nighttime Dimming end hour after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_end_hour);
-  Serial.print("Current Nighttime Dimming start minute after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
-  Serial.print("Current Nighttime Dimming end minute after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);
+  Serial.print("Is config loaded: "); Serial.println(stored_config.isLoaded());
+  Serial.print("is clock valid: "); Serial.println(stored_config.config.uclock.is_valid);
+  Serial.print("Current Nighttime Dimming start time after load from config: ");Serial.print(stored_config.config.uclock.nighttime_dimming_start_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
+  Serial.print("Current Nighttime Dimming end time after load from config: ");Serial.print(stored_config.config.uclock.nighttime_dimming_end_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);  
 #endif
 
   //check if the dimming times are set in the config, if not, set them to the default values
-  if (stored_config.config.uclock.nighttime_dimming_start_hour == -1) {
-    Serial.print("Nighttime Dimming start time not set in config, setting to default value:");Serial.print(NIGHTTIME_START_HOUR);Serial.print(":");Serial.println(NIGHTTIME_START_MINUTE);
+  if ((stored_config.config.uclock.nighttime_dimming_start_hour != NIGHTTIME_START_HOUR) || (stored_config.config.uclock.nighttime_dimming_start_minute != NIGHTTIME_START_MINUTE) || (stored_config.config.uclock.nighttime_dimming_end_hour != NIGHTTIME_END_HOUR) || (stored_config.config.uclock.nighttime_dimming_end_minute != NIGHTTIME_END_MINUTE)) {
+    Serial.println("Nighttime Dimming start or end time changed in config, saving new values to config...");
     stored_config.config.uclock.nighttime_dimming_start_hour = NIGHTTIME_START_HOUR;
     stored_config.config.uclock.nighttime_dimming_start_minute = NIGHTTIME_START_MINUTE;
-    stored_config.save();
-  }
-  if (stored_config.config.uclock.nighttime_dimming_end_hour == -1) {
-    Serial.print("Nighttime Dimming end time not set in config, setting to default value.");Serial.print(NIGHTTIME_END_HOUR);Serial.print(":");Serial.println(NIGHTTIME_END_MINUTE);
     stored_config.config.uclock.nighttime_dimming_end_hour = NIGHTTIME_END_HOUR;
     stored_config.config.uclock.nighttime_dimming_end_minute = NIGHTTIME_END_MINUTE;
     stored_config.save();
   }
+
+  if ((stored_config.config.uclock.nighttime_dimming_start_hour <= -1) || (stored_config.config.uclock.nighttime_dimming_start_hour > 24)) {
+    Serial.print("Nighttime Dimming start time is out of range in config, setting to default value: 22:00");
+    stored_config.config.uclock.nighttime_dimming_start_hour = 22;
+    stored_config.config.uclock.nighttime_dimming_start_minute = 00;
+    stored_config.save();
+  }
+  if ((stored_config.config.uclock.nighttime_dimming_end_hour <= -1) || (stored_config.config.uclock.nighttime_dimming_end_hour > 24)) {
+    Serial.print("Nighttime Dimming end time is out of range in config, setting to default value: 07:00");
+    stored_config.config.uclock.nighttime_dimming_end_hour = 7;
+    stored_config.config.uclock.nighttime_dimming_end_minute = 00;
+    stored_config.save();
+  }
+
+#ifdef DEBUG_OUTPUT
+  Serial.print("Is config loaded: "); Serial.println(stored_config.isLoaded());
+  Serial.print("is clock valid: "); Serial.println(stored_config.config.uclock.is_valid);
+  Serial.print("Current Nighttime Dimming start time after load from config: ");Serial.print(stored_config.config.uclock.nighttime_dimming_start_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
+  Serial.print("Current Nighttime Dimming end time after load from config: ");Serial.print(stored_config.config.uclock.nighttime_dimming_end_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);  
+#endif
+//REMOVE
 
   backlights.begin(&stored_config.config.backlights);
   buttons.begin();
@@ -146,6 +163,17 @@ void setup()
   tfts.println("Done!");
   Serial.println("Done!");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+
+//REMOVE
+#ifdef DEBUG_OUTPUT
+  Serial.print("Is config loaded: "); Serial.println(stored_config.isLoaded());
+  Serial.print("is clock valid: "); Serial.println(stored_config.config.uclock.is_valid);
+  Serial.print("Current Nighttime Dimming start hour after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_start_hour);
+  Serial.print("Current Nighttime Dimming end hour after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_end_hour);
+  Serial.print("Current Nighttime Dimming start minute after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
+  Serial.print("Current Nighttime Dimming end minute after load from config: ");Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);
+#endif
+//REMOVE
 
 #ifdef MQTT_ENABLED
   // Setup MQTT
@@ -883,36 +911,122 @@ void setupMenu()
 #ifdef NIGHTTIME_DIMMING
 bool isNightTime(uint8_t current_hour, uint8_t current_minute)
 { // check the actual hour is in the defined "night time"
-  bool isNightTime = false;  
+
+//REMOVE
+#ifdef DEBUG_OUTPUT
+  Serial.println("isNightTime() - is it night time check!");
+  Serial.print("Given Current hour: ");Serial.println(current_hour);
+  Serial.print("Given Current minute: ");Serial.println(current_minute);
+#endif
+//REMOVE
+
+  bool isNightTime = false;
+
   if (stored_config.config.uclock.nighttime_dimming_end_hour < stored_config.config.uclock.nighttime_dimming_start_hour) {
-    // "Night" spans across midnight
+    // "Night" spans across midnight   
 
     //check for the minutes, if the night time spans across midnight
     
     //isNightTime = ((current_hour < stored_config.config.uclock.nighttime_dimming_end_hour) || (current_hour >= stored_config.config.uclock.nighttime_dimming_start_hour) 
     //                && (current_minute >= stored_config.config.uclock.nighttime_dimming_start_minute)); ;
-    Serial.print("Night time spans across midnight: ");Serial.println(isNightTime);
+    Serial.println("Night time spans across midnight! ");    
+    //REMOVE
+    #ifdef DEBUG_OUTPUT
+        Serial.print("returned isNightTime: ");Serial.println(isNightTime);
+    #endif
+    //REMOVE    
     return isNightTime;
   }
   else {
     // "Night" starts after midnight, entirely contained within the day
 
+    //REMOVE
+    #ifdef DEBUG_OUTPUT
+    Serial.println("Night time is within the current day! ");
+
+    if (current_hour >= stored_config.config.uclock.nighttime_dimming_start_hour)
+    {
+      Serial.println("D1 - Current hour is after or equal night time start hour! ");
+    }
+
+    if (current_hour <= stored_config.config.uclock.nighttime_dimming_end_hour)
+    {
+      Serial.println("D2 - Current hour is before or equal night time end hour! ");
+    }
+    #endif
+    //REMOVE
+
     //check if the current hour is within the defined night time
-    if ((current_hour >= stored_config.config.uclock.nighttime_dimming_start_hour) && (current_hour < stored_config.config.uclock.nighttime_dimming_end_hour)){
-      //check for the minutes, if the current hour is within the defined night time
-      if ((current_hour == stored_config.config.uclock.nighttime_dimming_start_hour) && (current_minute < stored_config.config.uclock.nighttime_dimming_start_minute)){
-        isNightTime = false;
-      }
-      else if ((current_hour == stored_config.config.uclock.nighttime_dimming_end_hour) && (current_minute >= stored_config.config.uclock.nighttime_dimming_end_minute)){
-        isNightTime = false;
-      }
-      else {
+    if ((current_hour >= stored_config.config.uclock.nighttime_dimming_start_hour) && (current_hour <= stored_config.config.uclock.nighttime_dimming_end_hour)){
       isNightTime = true;
+      //check for the minutes of the defined night time, if it is the current hour 
+
+      if (current_hour == stored_config.config.uclock.nighttime_dimming_start_hour)
+      {
+        Serial.println("D3 - Current hour is equal to night time start hour! ");
+      }
+
+      if (current_minute < stored_config.config.uclock.nighttime_dimming_start_minute)
+      {
+        Serial.println("D5 - Current minute is before night time start minute! ");
+      }
+
+      if ((current_hour == stored_config.config.uclock.nighttime_dimming_start_hour) && (current_minute < stored_config.config.uclock.nighttime_dimming_start_minute)){
+      //REMOVE
+      #ifdef DEBUG_OUTPUT
+              Serial.println("Minute is before night time start! isNightTime = false");
+      #endif
+      //REMOVE
+        isNightTime = false;
+      }
+
+      //else
+      if (current_hour == stored_config.config.uclock.nighttime_dimming_end_hour)
+      {
+        Serial.println("D4 - Current hour is equal to night time end hour! ");
+      }
+
+      if (current_minute >= stored_config.config.uclock.nighttime_dimming_end_minute)
+      {
+        Serial.println("D6 - Current minute is after night time end minute! ");
+      }
+
+      if ((current_hour == stored_config.config.uclock.nighttime_dimming_end_hour) && (current_minute >= stored_config.config.uclock.nighttime_dimming_end_minute)){
+        //REMOVE
+        #ifdef DEBUG_OUTPUT
+                Serial.println("Minute is after night time end! isNightTime = false");
+        #endif
+        //REMOVE
+        isNightTime = false;
+      }
+      //else 
+      {
+        //REMOVE
+        #ifdef DEBUG_OUTPUT
+                Serial.println("No changes to isNightTime, so it stays = true");
+        #endif
+        //REMOVE
+      }
+      //REMOVE
+      #ifdef DEBUG_OUTPUT
+          Serial.print("returned isNightTime: ");Serial.println(isNightTime);
+      #endif
+      //REMOVE
+      return isNightTime;
     }
-    Serial.print("Night time is within the current day: ");Serial.println(isNightTime);
-    return isNightTime;
-    }
+    //REMOVE
+    #ifdef DEBUG_OUTPUT
+      Serial.println("Current hour is not within the defined night time2! ");
+      Serial.print("returned isNightTime: ");Serial.println(isNightTime);
+    #endif
+    //REMOVE
   }
+  //REMOVE
+  #ifdef DEBUG_OUTPUT
+    Serial.print("ERROR! We should never pass this point! ");
+    Serial.print("returned isNightTime: ");Serial.println(isNightTime);
+  #endif
+  //REMOVE
   return isNightTime;
 }
 
@@ -920,14 +1034,20 @@ void checkDimmingNeeded()
 {                                             // dim the display in the defined night time
   uint8_t current_hour = uclock.getHour24();  // get the current hour value - for internal calcs we always use 24h format
   uint8_t current_minute = uclock.getMinute(); // get the current minute value
-  isDimmingNeeded = current_hour != previous_hour && current_minute != previous_minute; // check, if the hour and minute has changed since last loop (from time passing by or from timezone change)
 
-  if (isDimmingNeeded)
+  bool isCheckNeeded = current_hour != previous_hour || current_minute != previous_minute; // check, if the hour and minute has changed since last loop (from time passing by or from timezone change)
+
+  if (isCheckNeeded)
   {
 #ifdef DEBUG_OUTPUT
-    Serial.print("Current time = ");Serial.print(current_hour);
-    Serial.print(", Night Time start = ");Serial.print(NIGHTTIME_START_HOUR);Serial.print(":");Serial.print(NIGHTTIME_START_MINUTE);
-    Serial.print(", Night Time end = ");Serial.println(NIGHTTIME_END_HOUR);Serial.print(":");Serial.println(NIGHTTIME_END_MINUTE);
+    Serial.println("");
+    Serial.println("checkDimmingNeeded() - Night time Dimming check IS needed: ");
+    Serial.print("-> Current time           = ");Serial.print(current_hour);Serial.print(":");Serial.println(current_minute);
+    Serial.print("-> Night Time start (def) = ");Serial.print(NIGHTTIME_START_HOUR);Serial.print(":");Serial.println(NIGHTTIME_START_MINUTE);
+    Serial.print("-> Night Time end (def)   = ");Serial.print(NIGHTTIME_END_HOUR);Serial.print(":");Serial.println(NIGHTTIME_END_MINUTE);
+    Serial.print("-> Night Time start (nvs) = ");Serial.print(stored_config.config.uclock.nighttime_dimming_start_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
+    Serial.print("-> Night Time end (nvs)   = ");Serial.print(stored_config.config.uclock.nighttime_dimming_end_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);
+    Serial.println("calling isNightTime() with current time!");
 #endif
 
     if (isNightTime(current_hour, current_minute))
@@ -946,6 +1066,7 @@ void checkDimmingNeeded()
     previous_hour = current_hour;
     previous_minute = current_minute;
   }
+  return;
 }
 #endif // DIMMING
 

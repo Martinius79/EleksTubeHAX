@@ -80,8 +80,44 @@ void Clock::begin(StoredConfig::Config::Clock *config_)
     Serial.println("Loaded Clock config is invalid, using default.  This is normal on first boot.");
     setTwelveHour(false);
     setBlankHoursZero(false);
-    setTimeZoneOffset(1 * 3600); // CET
+    setTimeZoneOffset(1 * 3600); // defaulting to Central European Tiemzone (CET)
     setActiveGraphicIdx(1);
+    if (NIGHTTIME_START_HOUR < 0 || NIGHTTIME_START_HOUR > 24) // check for plausibility
+    { //value is out of valid range
+      config->nighttime_dimming_start_hour = 22; // default to 22      
+    }    
+    else
+    {
+      config->nighttime_dimming_start_hour = NIGHTTIME_START_HOUR;  
+    }    
+    
+    if (NIGHTTIME_END_HOUR < 0 || NIGHTTIME_END_HOUR > 24) // check for plausibility
+    { //value is out of valid range
+      config->nighttime_dimming_end_hour = 7; // default to 7
+    }    
+    else
+    {
+      config->nighttime_dimming_end_hour = NIGHTTIME_END_HOUR;  
+    }
+    
+    if (NIGHTTIME_START_MINUTE < 0 || NIGHTTIME_START_MINUTE > 59) // check for plausibility
+    { //value is out of valid range
+      config->nighttime_dimming_start_minute = 0; // default to 0
+    }    
+    else
+    {
+      config->nighttime_dimming_start_minute = NIGHTTIME_START_MINUTE;  
+    }
+
+    if (NIGHTTIME_END_MINUTE < 0 || NIGHTTIME_END_MINUTE > 59) // check for plausibility
+    { //value is out of valid range
+      config->nighttime_dimming_end_minute = 0; // default to 0
+    }    
+    else
+    {
+      config->nighttime_dimming_end_minute = NIGHTTIME_END_MINUTE;  
+    }    
+    
     config->is_valid = StoredConfig::valid;
   }
 
