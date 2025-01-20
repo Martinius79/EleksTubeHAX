@@ -248,12 +248,15 @@ void loop()
     MqttCommandMainPowerReceived = false;
     if (MqttCommandMainPower)
     {
+      if (!MqttStatusMainPower) // only do something if the main power was off before
+      {
 #ifdef HARDWARE_Elekstube_CLOCK // original EleksTube hardware and direct clones need a reinit to wake up the displays properly
-      tfts.reinit();
+        tfts.reinit();
 #else
-      tfts.enableAllDisplays(); // for all other clocks, just enable the displays
+        tfts.enableAllDisplays(); // for all other clocks, just enable the displays
 #endif
-      updateClockDisplay(TFTs::force); // redraw all the clock digits -> needed because the displays was blanked before turning off
+        updateClockDisplay(TFTs::force); // redraw all the clock digits -> needed because the displays was blanked before turning off
+      }
     }
     else
     {
