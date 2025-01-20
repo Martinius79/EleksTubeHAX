@@ -167,13 +167,13 @@ void setup()
 
   if (uclock.getActiveGraphicIdx() > tfts.NumberOfClockFaces)
   {
-    uclock.setActiveGraphicIdx(tfts.NumberOfClockFaces);
-    Serial.println("Last selected index of clock face is larger than currently available number of image sets.");
+    Serial.println("Last selected index of clock face was larger than currently available number of image sets. Setting to last available.");
+    uclock.setActiveGraphicIdx(tfts.NumberOfClockFaces);    
   }
   if (uclock.getActiveGraphicIdx() < 1)
   {
-    uclock.setActiveGraphicIdx(1);
-    Serial.println("Last selected index of clock face is less than 1.");
+    Serial.println("Last selected index of clock face was less than 1. Setting to 1.");
+    uclock.setActiveGraphicIdx(1);    
   }
   tfts.current_graphic = uclock.getActiveGraphicIdx();
 
@@ -205,6 +205,7 @@ void loop()
 #ifdef MQTT_ENABLED
   MqttLoopFrequently();
 
+  //Store that we have received a command from MQTT at all (for auto save the config)
   bool MqttCommandReceived =
       MqttCommandPowerReceived ||
       MqttCommandMainPowerReceived ||
@@ -224,6 +225,8 @@ void loop()
       MqttCommandBreathBpmReceived ||
       MqttCommandRainbowSecReceived;
 
+//check for the single MQTT commands -> more then one command can be received in one loop -> walk through all of them
+
   if (MqttCommandPowerReceived)
   {
     MqttCommandPowerReceived = false;
@@ -238,9 +241,9 @@ void loop()
       backlights.PowerOn();
     }
     else
-    {
+    {     
       tfts.chip_select.setAll();
-      tfts.fillScreen(TFT_BLACK); // blank the screens before turning off -> needed for all clocks without a real "power switch curcuit" to "simulate" the off-switched displays
+      tfts.fillScreen(TFT_BLACK); // blank the screens before turning off -> needed for all clocks without a real "power switch curcuit" to "simulate" the off-switched displays     
       tfts.disableAllDisplays();
       backlights.PowerOff();
     }
@@ -251,12 +254,15 @@ void loop()
     MqttCommandMainPowerReceived = false;
     if (MqttCommandMainPower)
     {
+      if (!MqttStatusMainPower) // only do something if the main power was off before
+      {
 #ifdef HARDWARE_Elekstube_CLOCK // original EleksTube hardware and direct clones need a reinit to wake up the displays properly
-      tfts.reinit();
+        tfts.reinit();
 #else
-      tfts.enableAllDisplays(); // for all other clocks, just enable the displays
+        tfts.enableAllDisplays(); // for all other clocks, just enable the displays
 #endif
-      updateClockDisplay(TFTs::force); // redraw all the clock digits -> needed because the displays was blanked before turning off
+        updateClockDisplay(TFTs::force); // redraw all the clock digits -> needed because the displays was blanked before turning off
+      }
     }
     else
     {
@@ -426,7 +432,6 @@ void loop()
   if (MqttCommandReceived)
   {
     lastMqttCommandExecuted = millis();
-
     MqttReportBackEverything(true);
   }
 
@@ -436,7 +441,7 @@ void loop()
     {
       lastMqttCommandExecuted = -1;
 
-      Serial.print("Saving config...");
+      Serial.print("Saving config triggered from MQTT command received...");
       stored_config.save();
       Serial.println(" Done.");
     }
@@ -915,6 +920,10 @@ void checkForValidValuesInStoredConfig()
   //   stored_config.config.uclock.nighttime_dimming_end_minute = 0;
   //   stored_config.save();
   // }
+
+#ifdef DEBUG_OUTPUT
+  Serial.print("No changes in the nighttime dimming start or end time in config!");
+#endif
   
 }
 
@@ -989,26 +998,11 @@ void checkDimmingNeeded()
 #ifdef DEBUG_OUTPUT
     Serial.println("");
     Serial.println("checkDimmingNeeded() - Night time Dimming check IS needed: ");
-    Serial.print("-> Current time           = ");
-    Serial.print(current_hour);
-    Serial.print(":");
-    Serial.println(current_minute);
-    Serial.print("-> Night Time start (def) = ");
-    Serial.print(NIGHTTIME_START_HOUR);
-    Serial.print(":");
-    Serial.println(NIGHTTIME_START_MINUTE);
-    Serial.print("-> Night Time end (def)   = ");
-    Serial.print(NIGHTTIME_END_HOUR);
-    Serial.print(":");
-    Serial.println(NIGHTTIME_END_MINUTE);
-    Serial.print("-> Night Time start (nvs) = ");
-    Serial.print(stored_config.config.uclock.nighttime_dimming_start_hour);
-    Serial.print(":");
-    Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
-    Serial.print("-> Night Time end (nvs)   = ");
-    Serial.print(stored_config.config.uclock.nighttime_dimming_end_hour);
-    Serial.print(":");
-    Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);
+    Serial.print("-> Current time           = ");Serial.print(current_hour);Serial.print(":");Serial.println(current_minute);
+    Serial.print("-> Night Time start (def) = ");Serial.print(NIGHTTIME_START_HOUR);Serial.print(":");Serial.println(NIGHTTIME_START_MINUTE);
+    Serial.print("-> Night Time end (def)   = ");Serial.print(NIGHTTIME_END_HOUR);Serial.print(":");Serial.println(NIGHTTIME_END_MINUTE);
+    Serial.print("-> Night Time start (nvs) = ");Serial.print(stored_config.config.uclock.nighttime_dimming_start_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_start_minute);
+    Serial.print("-> Night Time end (nvs)   = ");Serial.print(stored_config.config.uclock.nighttime_dimming_end_hour);Serial.print(":");Serial.println(stored_config.config.uclock.nighttime_dimming_end_minute);
     Serial.println("calling isNightTime() with current time!");
 #endif
 
