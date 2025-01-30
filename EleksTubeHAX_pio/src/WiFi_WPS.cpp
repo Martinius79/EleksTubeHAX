@@ -4,6 +4,7 @@
 #include "TFTs.h"
 #include "esp_wps.h"
 #include "WiFi_WPS.h"
+#include "nvs_flash.h"
 
 
 #include "IPGeolocation_AO.h"
@@ -19,7 +20,8 @@ double GeoLocTZoffset = 0;
 
 #ifdef WIFI_USE_WPS   ////  WPS code
 //https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WPS/WPS.ino
-static esp_wps_config_t wps_config;
+static esp_wps_config_t wps_config = WPS_CONFIG_INIT_DEFAULT(ESP_WPS_MODE);
+
 void wpsInitConfig(){
   wps_config.wps_type = ESP_WPS_MODE;
   strcpy(wps_config.factory_info.manufacturer, ESP_MANUFACTURER);
@@ -85,6 +87,15 @@ void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info){
 void WifiBegin()  {
   WifiState = disconnected;
 
+    // Initialize NVS
+  esp_err_t ret = nvs_flash_init();
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    Serial.println("No free pages in or newer version ob NVS found. Erasing NVS flash partition...");
+    ESP_ERROR_CHECK(nvs_flash_erase());
+    ret = nvs_flash_init();
+  }
+  ESP_ERROR_CHECK(ret);
+
   WiFi.mode(WIFI_STA);
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);  
   WiFi.setHostname(DEVICE_NAME);  
@@ -93,7 +104,7 @@ void WifiBegin()  {
   // no data is saved, start WPS imediatelly
   if (stored_config.config.wifi.WPS_connected != StoredConfig::valid) {
     // Config is invalid, probably a new device never had its config written.
-    Serial.println("Loaded Wifi config is invalid. Not connecting to WiFi.");
+    Serial.println("Loaded WPS Wifi config is invalid. Not connecting to WiFi! Redoing WPS sequence.");
     WiFiStartWps();  // infinite loop until connected
   } else {
     // data is saved, connect now
