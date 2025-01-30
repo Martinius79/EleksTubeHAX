@@ -52,6 +52,7 @@ bool DstNeedsUpdate = false;
 uint8_t yesterday = 0;
 
 uint32_t lastMqttCommandExecuted = (uint32_t)-1;
+uint32_t lastSignalPrintTime = 0; // Add this line
 
 // Helper function, defined below.
 void updateClockDisplay(TFTs::show_t show = TFTs::yes);
@@ -497,6 +498,14 @@ void loop()
 
   UpdateDstEveryNight();
 
+  // Print WiFi signal strength every second
+  if (millis() - lastSignalPrintTime >= 1000) {
+    Serial.println();
+    Serial.print("WiFi Signal Strength (RSSI): ");
+    Serial.println(WiFi.RSSI());
+    lastSignalPrintTime = millis();
+  }
+
   // Menu
   if (menu.stateChanged() && tfts.isEnabled())
   {
@@ -768,9 +777,10 @@ void loop()
     Serial.print(".");
   else
   {
-    Serial.print("time spent in loop (ms): ");
-    Serial.println(time_in_loop);
+    //Serial.print("time spent in loop (ms): ");
+    //Serial.println(time_in_loop);
   }
+  
 #endif
 }
 

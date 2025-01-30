@@ -16,7 +16,7 @@ double GeoLocTZoffset = 0;
 
 #ifdef WIFI_USE_WPS // WPS code
 
-static esp_wps_config_t wps_config = WPS_CONFIG_INIT_DEFAULT(ESP_WPS_MODE); // Init with defaults
+static esp_wps_config_t wps_config; // Init with defaults
 
 // set alternative WPS config
 // https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WPS/WPS.ino

@@ -160,16 +160,16 @@ void sendToBroker(const char *topic, const char *message)
     char topicArr[100];
     snprintf(topicArr, sizeof(topicArr), "%s/%s", MQTT_CLIENT, topic);
     MQTTclient.publish(topicArr, message, true);
-#ifdef DEBUG_OUTPUT // long output
+#ifdef DEBUG_OUTPUT2 // long output
     Serial.print("Sending to MQTT: ");
     Serial.print(topicArr);
     Serial.print("/");
     Serial.println(message);
 #else
-    Serial.print("TX MQTT: ");
-    Serial.print(topicArr);
-    Serial.print(" ");
-    Serial.println(message);
+    // Serial.print("TX MQTT: ");
+    // Serial.print(topicArr);
+    // Serial.print(" ");
+    // Serial.println(message);
 #endif
     delay(120);
   }
@@ -197,10 +197,10 @@ void MqttReportState(bool force)
       LastSentMainBrightness = MqttStatusMainBrightness;
       LastSentMainGraphic = MqttStatusMainGraphic;
 
-      Serial.print("TX MQTT: ");
-      Serial.print(topic);
-      Serial.print(" ");
-      Serial.println(buffer);
+      // Serial.print("TX MQTT: ");
+      // Serial.print(topic);
+      // Serial.print(" ");
+      // Serial.println(buffer);
     }
 
     if (force || MqttStatusBackPower != LastSentBackPowerState || MqttStatusBackBrightness != LastSentBackBrightness || strcmp(MqttStatusBackPattern, LastSentBackPattern) != 0 || MqttStatusBackColorPhase != LastSentBackColorPhase || MqttStatusPulseBpm != LastSentPulseBpm || MqttStatusBreathBpm != LastSentBreathBpm || MqttStatusRainbowSec != LastSentRainbowSec)
@@ -227,10 +227,10 @@ void MqttReportState(bool force)
       LastSentBackPattern[sizeof(LastSentBackPattern) - 1] = '\0';
       LastSentBackColorPhase = MqttStatusBackColorPhase;
 
-      Serial.print("TX MQTT: ");
-      Serial.print(topic);
-      Serial.print(" ");
-      Serial.println(buffer);
+      // Serial.print("TX MQTT: ");
+      // Serial.print(topic);
+      // Serial.print(" ");
+      // Serial.println(buffer);
     }
 
     if (force || MqttStatusUseTwelveHours != LastSentUseTwelveHours)
@@ -245,10 +245,10 @@ void MqttReportState(bool force)
       MQTTclient.publish(topic, buffer, true);
       LastSentUseTwelveHours = MqttStatusUseTwelveHours;
 
-      Serial.print("TX MQTT: ");
-      Serial.print(topic);
-      Serial.print(" ");
-      Serial.println(buffer);
+      // Serial.print("TX MQTT: ");
+      // Serial.print(topic);
+      // Serial.print(" ");
+      // Serial.println(buffer);
     }
 
     if (force || MqttStatusBlankZeroHours != LastSentBlankZeroHours)
@@ -263,10 +263,10 @@ void MqttReportState(bool force)
       MQTTclient.publish(topic, buffer, true);
       LastSentBlankZeroHours = MqttStatusBlankZeroHours;
 
-      Serial.print("TX MQTT: ");
-      Serial.print(topic);
-      Serial.print(" ");
-      Serial.println(buffer);
+      // Serial.print("TX MQTT: ");
+      // Serial.print(topic);
+      // Serial.print(" ");
+      // Serial.println(buffer);
     }
 
     if (force || MqttStatusPulseBpm != LastSentPulseBpm)
@@ -281,10 +281,10 @@ void MqttReportState(bool force)
       MQTTclient.publish(topic, buffer, true);
       LastSentPulseBpm = MqttStatusPulseBpm;
 
-      Serial.print("TX MQTT: ");
-      Serial.print(topic);
-      Serial.print(" ");
-      Serial.println(buffer);
+      // Serial.print("TX MQTT: ");
+      // Serial.print(topic);
+      // Serial.print(" ");
+      // Serial.println(buffer);
     }
 
     if (force || MqttStatusBreathBpm != LastSentBreathBpm)
@@ -299,10 +299,10 @@ void MqttReportState(bool force)
       MQTTclient.publish(topic, buffer, true);
       LastSentBreathBpm = MqttStatusBreathBpm;
 
-      Serial.print("TX MQTT: ");
-      Serial.print(topic);
-      Serial.print(" ");
-      Serial.println(buffer);
+      // Serial.print("TX MQTT: ");
+      // Serial.print(topic);
+      // Serial.print(" ");
+      // Serial.println(buffer);
     }
 
     if (force || MqttStatusRainbowSec != LastSentRainbowSec)
@@ -317,10 +317,10 @@ void MqttReportState(bool force)
       MQTTclient.publish(topic, buffer, true);
       LastSentRainbowSec = MqttStatusRainbowSec;
 
-      Serial.print("TX MQTT: ");
-      Serial.print(topic);
-      Serial.print(" ");
-      Serial.println(buffer);
+      // Serial.print("TX MQTT: ");
+      // Serial.print(topic);
+      // Serial.print(" ");
+      // Serial.println(buffer);
     }
   }
 #endif
@@ -490,7 +490,7 @@ void checkMqtt()
 
 void callback(char *topic, byte *payload, unsigned int length)
 { // A new message has been received
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT2
   Serial.print("Received MQTT topic: ");
   Serial.print(topic); // long output
 #endif
@@ -808,10 +808,10 @@ void MqttReportDiscovery()
   const char *main_topic = concat3("homeassistant/light/", MQTT_CLIENT, "_main/light/config");
   MQTTclient.publish(main_topic, json_buffer, true);
   delay(120);
-  Serial.print("TX MQTT: ");
-  Serial.print(main_topic);
-  Serial.print(" ");
-  Serial.println(json_buffer);
+  // Serial.print("TX MQTT: ");
+  // Serial.print(main_topic);
+  // Serial.print(" ");
+  // Serial.println(json_buffer);
   discovery.clear();
 
   // Back Light
@@ -842,10 +842,10 @@ void MqttReportDiscovery()
   const char *back_topic = concat3("homeassistant/light/", MQTT_CLIENT, "_back/light/config");
   MQTTclient.publish(back_topic, json_buffer, true);
   delay(120);
-  Serial.print("TX MQTT: ");
-  Serial.print(back_topic);
-  Serial.print(" ");
-  Serial.println(json_buffer);
+  // Serial.print("TX MQTT: ");
+  // Serial.print(back_topic);
+  // Serial.print(" ");
+  // Serial.println(json_buffer);
   discovery.clear();
 
   // Use Twelwe Hours
@@ -873,10 +873,10 @@ void MqttReportDiscovery()
   const char *useTwelveHours_topic = concat3("homeassistant/switch/", MQTT_CLIENT, "_use_twelve_hours/switch/config");
   MQTTclient.publish(useTwelveHours_topic, json_buffer, true);
   delay(120);
-  Serial.print("TX MQTT: ");
-  Serial.print(useTwelveHours_topic);
-  Serial.print(" ");
-  Serial.println(json_buffer);
+  // Serial.print("TX MQTT: ");
+  // Serial.print(useTwelveHours_topic);
+  // Serial.print(" ");
+  // Serial.println(json_buffer);
   discovery.clear();
 
   // Blank Zero Hours
@@ -904,10 +904,10 @@ void MqttReportDiscovery()
   const char *blankZeroHours_topic = concat3("homeassistant/switch/", MQTT_CLIENT, "_blank_zero_hours/switch/config");
   MQTTclient.publish(blankZeroHours_topic, json_buffer, true);
   delay(120);
-  Serial.print("TX MQTT: ");
-  Serial.print(blankZeroHours_topic);
-  Serial.print(" ");
-  Serial.println(json_buffer);
+  // Serial.print("TX MQTT: ");
+  // Serial.print(blankZeroHours_topic);
+  // Serial.print(" ");
+  // Serial.println(json_buffer);
   discovery.clear();
 
   // Pulses per minute
@@ -936,10 +936,10 @@ void MqttReportDiscovery()
   const char *pulseBpm_topic = concat3("homeassistant/number/", MQTT_CLIENT, "_pulse_bpm/number/config");
   MQTTclient.publish(pulseBpm_topic, json_buffer, true);
   delay(120);
-  Serial.print("TX MQTT: ");
-  Serial.print(pulseBpm_topic);
-  Serial.print(" ");
-  Serial.println(json_buffer);
+  // Serial.print("TX MQTT: ");
+  // Serial.print(pulseBpm_topic);
+  // Serial.print(" ");
+  // Serial.println(json_buffer);
   discovery.clear();
 
   // Breathes per minute
@@ -968,10 +968,10 @@ void MqttReportDiscovery()
   const char *breathBpm_topic = concat3("homeassistant/number/", MQTT_CLIENT, "_breath_bpm/number/config");
   MQTTclient.publish(breathBpm_topic, json_buffer, true);
   delay(120);
-  Serial.print("TX MQTT: ");
-  Serial.print(breathBpm_topic);
-  Serial.print(" ");
-  Serial.println(json_buffer);
+  // Serial.print("TX MQTT: ");
+  // Serial.print(breathBpm_topic);
+  // Serial.print(" ");
+  // Serial.println(json_buffer);
   discovery.clear();
 
   // Rainbow duration
@@ -1000,10 +1000,10 @@ void MqttReportDiscovery()
   const char *rainbowSec_topic = concat3("homeassistant/number/", MQTT_CLIENT, "_rainbow_duration/number/config");
   MQTTclient.publish(rainbowSec_topic, json_buffer, true);
   delay(120);
-  Serial.print("TX MQTT: ");
-  Serial.print(rainbowSec_topic);
-  Serial.print(" ");
-  Serial.println(json_buffer);
+  // Serial.print("TX MQTT: ");
+  // Serial.print(rainbowSec_topic);
+  // Serial.print(" ");
+  // Serial.println(json_buffer);
   discovery.clear();
 
 #endif
