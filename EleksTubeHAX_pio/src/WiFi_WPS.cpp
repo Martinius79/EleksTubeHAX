@@ -3,6 +3,7 @@
 #include "StoredConfig.h"
 #include "TFTs.h"
 #include "esp_wps.h"
+#include "esp_wifi.h"
 #include "WiFi_WPS.h"
 
 #include "IPGeolocation_AO.h"
@@ -89,6 +90,8 @@ void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info)
 void WifiBegin()
 {
   WifiState = disconnected;
+
+  esp_log_level_set("wifi", ESP_LOG_VERBOSE);
 
   WiFi.mode(WIFI_STA);
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
