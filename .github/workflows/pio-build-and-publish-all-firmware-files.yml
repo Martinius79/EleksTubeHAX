@@ -74,12 +74,12 @@ jobs:
         cat "./EleksTubeHAX_pio/platformio.ini"
 
     - name: Build PlatformIO Project for 4MB flash
-      run: pio run --environment esp32dev
+      run: pio run --environment EleksTubeHax
       working-directory: ./EleksTubeHAX_pio
 
     - name: Rename firmware files
       run: |
-        cd EleksTubeHAX_pio/.pio/build/esp32dev/
+        cd EleksTubeHAX_pio/.pio/build/EleksTubeHax/
         echo "Rename firmware files!"
         if [ "${{ matrix.hardware }}" = "Elekstube_CLOCK" ]; then
           echo "move *_combined.bin to FW_Elekstube_HAX_${{ env.VERSION }}_original.bin"
@@ -103,7 +103,7 @@ jobs:
       with:
         name: firmware-${{ matrix.hardware }}
         path: |
-          EleksTubeHAX_pio/.pio/build/esp32dev/FW_*.bin
+          EleksTubeHAX_pio/.pio/build/EleksTubeHax/FW_*.bin
         if-no-files-found: error
 
   combine-artifacts:

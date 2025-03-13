@@ -41,19 +41,39 @@
 #define GEOLOCATION_API_KEY "__enter_your_api_key_here__"
 
 // ************* MQTT config *************
-// #define MQTT_ENABLED        // enable after creating an account, setting up the Thermostat device on www.smartnest.cz and filling in all the data below:
-// #define MQTT_HOME_ASSISTANT // enable if you want Home Assistant support
-// #define MQTT_HOME_ASSISTANT_DISCOVERY
-// #define MQTT_HOME_ASSISTANT_DISCOVERY_DEVICE_MANUFACTURER "EleksMaker"
-// #define MQTT_HOME_ASSISTANT_DISCOVERY_DEVICE_MODEL "Elekstube IPS PR2"
-// #define MQTT_HOME_ASSISTANT_DISCOVERY_SW_VERSION "0.8 Home Assistant Edition"
-// #define MQTT_HOME_ASSISTANT_DISCOVERY_HW_VERSION "2.3.04"
+// #define MQTT_ENABLED                       // enable general MQTT support
+#define MQTT_SAVE_PREFERENCES_AFTER_SEC 60 // auto save config X seconds after last MQTT message received
+
+// --- MQTT Home Assistant settings ---
+// You will either need a local MQTT broker to use MQTT with Home Assistant (e.g. Mosquitto) or use an internet-based broker with Home Assistant support.
+// If not done already, you can set up a local one easily via an Add-On in HA. See: https://www.home-assistant.io/integrations/mqtt/
+// Enter the credential data into the MQTT broker settings section below accordingly.
+
+// #define MQTT_HOME_ASSISTANT // Uncomment if you want Home Assistant (HA) support (MQTT_ENABLED must be also enabled)
+// all following MQTT_HOME_ASSISTANT_* settings require MQTT_HOME_ASSISTANT to be enabled
+// #define MQTT_HOME_ASSISTANT_DISCOVERY                                         // Uncomment if you want HA auto-discovery
+// #define MQTT_HOME_ASSISTANT_DISCOVERY_DEVICE_MANUFACTURER "EleksMaker"        // Name of the manufacturer shown in HA
+// #define MQTT_HOME_ASSISTANT_DISCOVERY_DEVICE_MODEL "Elekstube IPS"            // Name of the model shown in HA
+// #define MQTT_HOME_ASSISTANT_DISCOVERY_SW_VERSION "1.0 Home Assistant Edition" // Firmware version shown in HA
+// #define MQTT_HOME_ASSISTANT_DISCOVERY_HW_VERSION "2.3.04"                     // Hardware version shown in HA
+
+// --- MQTT broker settings ---
+// NOTE: If Home Assistant is not enabled, the MQTT support is very limited in the moment!
+// You can still use MQTT to control the clock, but only via direct sent MQTT messages, sent from a MQTT client like MQTT Explorer or similar.
+// The actual pure MQTT implementation is "emulating" a temperature sensor, so you can use "set temperature" commands to control the clock.
+// This is a workaround to have a basic MQTT support.
+// For pure MQTT support you can either use any internet-based MQTT broker (i.e. smartnest.cz or HiveMQ) or a local one (i.e. Mosquitto).
+// If you choose an internet based one, you will need to create an account, (maybe setting up the device there) and filling in the data below then.
+// If you choose a local one, you will need to set up the broker on your local network and fill in the data below.
+
 #define MQTT_BROKER "smartnest.cz"                   // Broker host
 #define MQTT_PORT 1883                               // Broker port
 #define MQTT_USERNAME "__enter_your_username_here__" // Username from Smartnest
 #define MQTT_PASSWORD "__enter_your_api_key_here__"  // Password from Smartnest or API key (under MY Account)
 #define MQTT_CLIENT "__enter_your_device_id_here__"  // Device Id from Smartnest
-#define MQTT_SAVE_PREFERENCES_AFTER_SEC 60
+// #define MQTT_USE_TLS                                 // Use TLS for MQTT connection. Setting a root CA certificate is needed!
+                                                     // Don't forget to copy the correct certificate file into the 'data' folder and rename it to mqtt-ca-root.pem!
+                                                     // Example CA cert (Let's Encrypt CA cert) can be found in the 'data - other graphics' subfolder in the root of this repo
 
 // ************* Optional temperature sensor *************
 // #define ONE_WIRE_BUS_PIN 4 // DS18B20 connected to GPIO4; comment this line if sensor is not connected

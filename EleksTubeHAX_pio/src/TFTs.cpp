@@ -5,30 +5,14 @@
 
 void TFTs::begin()
 {
-  // Start with all displays selected.
   chip_select.begin();
-  chip_select.setAll();
+  chip_select.setAll(); // Start with all displays selected
 
-#ifdef DIM_WITH_ENABLE_PIN_PWM
-  // if hardware dimming is used, we need to attach the pin to a PWM channel
-  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
-  ledcChangeFrequency(TFT_PWM_CHANNEL, 20000, 8);
-  // not needed here, because enableAllDisplays() is called later and it is called from there and if enabled is false, this does nothing
-  // ProcessUpdatedDimming();
-#else
-  // Set pin for turning display power on and off.
-  pinMode(TFT_ENABLE_PIN, OUTPUT);
-#endif
-  // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
-  InvalidateImageInBuffer();
-
-  // Initialize the super class.
-  init();
-  // to avoid flickering patterns on the screens
-  fillScreen(TFT_BLACK);
-
-  // Signal, that the display is enabled now and do the hardware dimming if enabled
-  enableAllDisplays();
+  pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
+  InvalidateImageInBuffer();       // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
+  init();                          // Initialize the super class.
+  fillScreen(TFT_BLACK);           // to avoid/reduce flickering patterns on the screens
+  enableAllDisplays();             // Signal, that the displays are enabled now
 
   // Set SPIFFS ready
   if (!SPIFFS.begin())
@@ -44,35 +28,18 @@ void TFTs::begin()
 
 void TFTs::reinit()
 {
-#ifndef TFT_SKIP_REINIT
-  // Start with all displays selected.
-  chip_select.begin();
-  chip_select.setAll();
+  if (!enabled) // perform re-init only if displays are actually off. HA sends ON command together with clock face change which causes flickering.
+  {
+    // Start with all displays selected.
+    chip_select.begin();
+    chip_select.setAll(); // Start again with all displays selected.
 
-#ifdef DIM_WITH_ENABLE_PIN_PWM
-  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
-  ledcChangeFrequency(TFT_PWM_CHANNEL, 20000, 8);
-  // same thing as on first init, not needed here, because enableAllDisplays() is called later and it is called from there and if enabled is false, this does nothing
-  // ProcessUpdatedDimming();
-#else
-  // Turn power on to displays.
-  pinMode(TFT_ENABLE_PIN, OUTPUT);
-#endif
-  // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
-  // needed, because the last drawing can be long time ago?!?
-  InvalidateImageInBuffer();
-
-  // Initialize the super class (again).
-  init();
-  // to avoid flickering patterns on the screens
-  fillScreen(TFT_BLACK);
-  // signal that the display are enabled now, also do the hardware dimming if enabled
-  enableAllDisplays();
-
-#else
-  // skip full inintialization, just reenable displays by signaling to enable them
-  enableAllDisplays();
-#endif
+    pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
+    InvalidateImageInBuffer();       // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
+    init();                          // Initialize the super class (again).
+    fillScreen(TFT_BLACK);           // to avoid/reduce flickering patterns on the screens
+    enableAllDisplays();             // Signal, that the displays are enabled now
+  }
 }
 
 void TFTs::clear()
@@ -191,11 +158,13 @@ void TFTs::setDigit(uint8_t digit, uint8_t value, show_t show)
         showNoWifiStatus();
       }
 
+#ifdef MQTT_ENABLED
     if (digit == SECONDS_TENS)
       if (!MqttConnected)
       {
         showNoMqttStatus();
       }
+#endif
 
     if (digit == HOURS_ONES)
     {
@@ -210,25 +179,26 @@ void TFTs::setDigit(uint8_t digit, uint8_t value, show_t show)
 
 void TFTs::showDigit(uint8_t digit)
 {
-  chip_select.setDigit(digit);
+  if (enabled)
+  { // only do this, if the displays are enabled
+    chip_select.setDigit(digit);
 
-  if (digits[digit] == blanked)
-  {
-    fillScreen(TFT_BLACK);
-  }
-  else
-  {
-    uint8_t file_index = current_graphic * 10 + digits[digit];
-    DrawImage(file_index);
+    if (digits[digit] == blanked)
+    { // Blank Zero
+      fillScreen(TFT_BLACK);
+    }
+    else
+    {
+      uint8_t file_index = current_graphic * 10 + digits[digit];
+      DrawImage(file_index);
 
-    uint8_t NextNumber = digits[SECONDS_ONES] + 1;
-    if (NextNumber > 9)
-      NextNumber = 0; // pre-load only seconds, because they are drawn first
-    NextFileRequired = current_graphic * 10 + NextNumber;
+      uint8_t NextNumber = digits[SECONDS_ONES] + 1;
+      if (NextNumber > 9)
+        NextNumber = 0; // pre-load only seconds, because they are drawn first
+      NextFileRequired = current_graphic * 10 + NextNumber;
+    }
   }
-#ifdef HARDWARE_IPSTUBE_CLOCK
-  chip_select.update();
-#endif
+  // else { } //display is disabled, do nothing
 }
 
 void TFTs::LoadNextImage()

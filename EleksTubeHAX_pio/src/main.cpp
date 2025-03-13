@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include "GLOBAL_DEFINES.h"
+#include "nvs_flash.h"
 #include "Buttons.h"
 #include "Backlights.h"
 #include "TFTs.h"
@@ -15,7 +16,9 @@
 #include "Menu.h"
 #include "StoredConfig.h"
 #include "WiFi_WPS.h"
+#ifdef MQTT_ENABLED
 #include "Mqtt_client_ips.h"
+#endif
 #include "TempSensor_inc.h"
 #ifdef HARDWARE_NovelLife_SE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // #include "Gestures.h"
@@ -72,6 +75,16 @@ void setup()
   Serial.println("");
   Serial.println(FIRMWARE_VERSION);
   Serial.println("In setup().");
+  
+  Serial.print("Init NVS flash partition usage...");
+  esp_err_t ret = nvs_flash_init(); // Initialize NVS
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    Serial.println("");Serial.println("No free pages in or newer version of NVS partition found. Erasing NVS flash partition...");
+    ESP_ERROR_CHECK(nvs_flash_erase());
+    ret = nvs_flash_init();
+  }
+  ESP_ERROR_CHECK(ret);
+  Serial.println("Done");
 
   stored_config.begin();
   stored_config.load();
@@ -123,14 +136,16 @@ void setup()
   Serial.println("Done!");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
+#ifdef MQTT_ENABLED
   // Setup MQTT
   tfts.setTextColor(TFT_YELLOW, TFT_BLACK);
   tfts.print("MQTT start...");
-  Serial.print("MQTT start...");
+  Serial.println("MQTT start...");
   MqttStart();
   tfts.println("Done!");
-  Serial.println("Done!");
+  Serial.println("MQTT start Done!");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+#endif
 
 #ifdef GEOLOCATION_ENABLED
   tfts.setTextColor(TFT_NAVY, TFT_BLACK);
@@ -195,6 +210,7 @@ void loop()
   // Do all the maintenance work
   WifiReconnect(); // if not connected attempt to reconnect
 
+#ifdef MQTT_ENABLED
   MqttLoopFrequently();
 
   bool MqttCommandReceived =
@@ -221,18 +237,21 @@ void loop()
     MqttCommandPowerReceived = false;
     if (MqttCommandPower)
     {
-#ifndef HARDWARE_SI_HAI_CLOCK
-      if (!tfts.isEnabled())
+      if (!tfts.isEnabled()) // perform reinit, enable, redraw only if displays are actually off. HA sends ON command together with clock face change which causes flickering.
       {
-        tfts.reinit(); // reinit (original EleksTube HW: after a few hours in OFF state the displays do not wake up properly)
-        updateClockDisplay(TFTs::force);
-      }
+#ifdef HARDWARE_Elekstube_CLOCK // original EleksTube hardware and direct clones need a reinit to wake up the displays properly
+        tfts.reinit();
+#else
+       tfts.enableAllDisplays(); // for all other clocks, just enable the displays
 #endif
-      tfts.enableAllDisplays();
-      backlights.PowerOn();
+        updateClockDisplay(TFTs::force); // redraw all the clock digits -> needed because the displays was blanked before turning off
+        backlights.PowerOn();
+      }
     }
     else
     {
+      tfts.chip_select.setAll();
+      tfts.fillScreen(TFT_BLACK); // blank the screens before turning off -> needed for all clocks without a real "power switch curcuit" to "simulate" the off-switched displays
       tfts.disableAllDisplays();
       backlights.PowerOff();
     }
@@ -243,17 +262,20 @@ void loop()
     MqttCommandMainPowerReceived = false;
     if (MqttCommandMainPower)
     {
-#ifndef HARDWARE_SI_HAI_CLOCK
-      if (!tfts.isEnabled())
+      if (!tfts.isEnabled()) // perform reinit, enable, redraw only if displays are actually off. HA sends ON command together with clock face change which causes flickering.
       {
-        tfts.reinit(); // reinit (original EleksTube HW: after a few hours in OFF state the displays do not wake up properly)
-        updateClockDisplay(TFTs::force);
-      }
+#ifdef HARDWARE_Elekstube_CLOCK // original EleksTube hardware and direct clones need a reinit to wake up the displays properly
+        tfts.reinit();
+#else
+        tfts.enableAllDisplays(); // for all other clocks, just enable the displays
 #endif
-      tfts.enableAllDisplays();
+        updateClockDisplay(TFTs::force); // redraw all the clock digits -> needed because the displays was blanked before turning off
+      }
     }
     else
     {
+      tfts.chip_select.setAll();
+      tfts.fillScreen(TFT_BLACK); // blank the screens before turning off -> needed for all clocks without a real "power switch curcuit" to "simulate" the off-switched displays
       tfts.disableAllDisplays();
     }
   }
@@ -433,6 +455,7 @@ void loop()
       Serial.println(" Done.");
     }
   }
+#endif
 
   buttons.loop();
 
@@ -441,25 +464,25 @@ void loop()
 #endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
   // Power button: If in menu, exit menu. Else turn off displays and backlight.
-#ifndef ONE_BUTTON_ONLY_MENU
-  if (buttons.power.isUpEdge() && (menu.getState() == Menu::idle))
-  {
-#ifdef DEBUG_OUTPUT
-    Serial.println("Power button pressed.");
-#endif
-    tfts.chip_select.setAll();
-    tfts.fillScreen(TFT_BLACK);
-    tfts.toggleAllDisplays();
+  if (buttons.power.isDownEdge() && (menu.getState() == Menu::idle))
+  { // Power button was pressed: if in the menu, exit menu, else turn off displays and backlight.
     if (tfts.isEnabled())
-    {
-#ifndef HARDWARE_SI_HAI_CLOCK
-      tfts.reinit(); // reinit (original EleksTube HW: after a few hours in OFF state the displays do not wake up properly)
-#endif
+    { // check if tft state is enabled -> switch OFF the LCDs and LED backlights
       tfts.chip_select.setAll();
-      tfts.fillScreen(TFT_BLACK);
-      updateClockDisplay(TFTs::force);
+      tfts.fillScreen(TFT_BLACK); // blank the screens before turning off -> needed for all clocks without a real "power switch curcuit"
+      tfts.disableAllDisplays();
+      backlights.PowerOff();
     }
-    backlights.togglePower();
+    else
+    {                           // tft state is disabled -> turn ON the displays and backlights
+#ifdef HARDWARE_Elekstube_CLOCK // original EleksTube hardware and direct clones need a reinit to wake up the displays properly
+      tfts.reinit();
+#else
+      tfts.enableAllDisplays(); // for all other clocks, just enable the displays
+#endif
+      updateClockDisplay(TFTs::force); // redraw all the clock digits -> needed because the displays was blanked before turning off
+      backlights.PowerOn();
+    }
   }
 #endif
 
@@ -714,7 +737,9 @@ void loop()
     time_in_loop = millis() - millis_at_top;
     if (time_in_loop < 20)
     {
+#ifdef MQTT_ENABLED
       MqttLoopInFreeTime();
+#endif
       PeriodicReadTemperature();
       if (bTemperatureUpdated)
       {
@@ -880,14 +905,14 @@ void checkDimmingNeeded()
     { // check if it is in the defined night time
       Serial.println("Set to night time mode (dimmed)!");
       tfts.dimming = TFT_DIMMED_INTENSITY;
-      tfts.ProcessUpdatedDimming();
+      tfts.InvalidateImageInBuffer();
       backlights.setDimming(true);
     }
     else
     {
       Serial.println("Setting daytime mode (max brightness)");
       tfts.dimming = 255; // 0..255
-      tfts.ProcessUpdatedDimming();
+      tfts.InvalidateImageInBuffer();
       backlights.setDimming(false);
     }
     updateClockDisplay(TFTs::force); // redraw all the clock digits -> software dimming will be done here

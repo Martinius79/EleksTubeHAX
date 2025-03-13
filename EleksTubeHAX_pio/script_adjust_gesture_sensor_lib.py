@@ -24,13 +24,19 @@ def inplace_change(filename, old_string, new_string):
 print("===== adjusting APDS sensor libs ===== ")
 
 # Get the board type from the used environment
-board = env.GetProjectOption("board")
+#board = env.GetProjectOption("board")
+# Get the environment name
+environmentname = print(env.subst("$PIOENV"))
 
 new_string_to_check = "#define APDS9960_ID_3"
 
 # define target files with the name of the board in the path
-filename1 = "./.pio/libdeps/" + board + "/SparkFun APDS9960 RGB and Gesture Sensor/src/SparkFun_APDS9960.h"
-filename2 = "./.pio/libdeps/" + board + "/SparkFun APDS9960 RGB and Gesture Sensor/src/SparkFun_APDS9960.cpp"
+#filename1 = "./.pio/libdeps/" + board + "/SparkFun APDS9960 RGB and Gesture Sensor/src/SparkFun_APDS9960.h"
+#filename2 = "./.pio/libdeps/" + board + "/SparkFun APDS9960 RGB and Gesture Sensor/src/SparkFun_APDS9960.cpp"
+
+# define target files with the name of the env in the path
+filename1 = "./.pio/libdeps/" + environmentname + "/SparkFun APDS9960 RGB and Gesture Sensor/src/SparkFun_APDS9960.h"
+filename2 = "./.pio/libdeps/" + environmentname + "/SparkFun APDS9960 RGB and Gesture Sensor/src/SparkFun_APDS9960.cpp"
 
 with open(filename1) as f:
     s = f.read()
