@@ -390,9 +390,9 @@
 
 // NOTE: If NIGTHTIME_DIMMING is enabled:
 //  For the main LCDs: The dimming will be set to the hard coded value TFT_DIMMED_INTENSITY in the given time period EVERY HOUR beginning at NIGHT_TIME
-//     and will set back to the maximum brightness at DAY_TIME...Disable NIGHTTIME_DIMMING if you want to use the manual set dimming value all the time
+//     and will set back to the maximum brightness at DAY_TIME...Disable DIMMING if you want to use the manual set dimming value all the time
 //  For the backlight dimming: The dimming will ALWAYS stay to the hard coded value BACKLIGHT_DIMMED_INTENSITY in the given night time period!
-//     The check for it is done and the value is apply every loop...Disable NIGHTTIME_DIMMING if you want to use the manual set dimming value all the time
+//     The check for it is done and the value is apply every loop...Disable DIMMING if you want to use the manual set dimming value all the time
 
 // TODO: Store the dimming values and dimming times in the NVS partition to keep the last dimming value and not use the hard coded values
 // make the times and values adjustable in the menu and/or via MQTT for both main and backlight dimming
