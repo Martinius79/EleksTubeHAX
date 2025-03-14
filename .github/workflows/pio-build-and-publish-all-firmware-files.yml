@@ -117,8 +117,18 @@ jobs:
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
+      if: ${{ matrix.hardware == 'IPSTUBE_CLOCK' }}
       with:
-        name: firmware-${{ matrix.hardware }}
+        name: firmware-${{ matrix.hardware }}        
+        path: |
+          EleksTubeHAX_pio/.pio/build/EleksTubeHax8MB/FW_*.bin
+        if-no-files-found: error
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      if: ${{ matrix.hardware != 'IPSTUBE_CLOCK' }}
+      with:
+        name: firmware-${{ matrix.hardware }}        
         path: |
           EleksTubeHAX_pio/.pio/build/EleksTubeHax/FW_*.bin
         if-no-files-found: error
