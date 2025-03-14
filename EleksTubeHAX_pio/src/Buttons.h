@@ -89,25 +89,9 @@ private:
 /*
  * A simple helper class to call common functions on all buttons at once.
  */
-#ifdef ONE_BUTTON_ONLY_MENU
 
-class Buttons
-{
-public:
-  Buttons() : mode(BUTTON_MODE_PIN) {}
-
-  void begin();
-  void loop();
-  bool stateChanged();
-
-  // Just making them public, so we don't have to proxy everything.
-  Button mode;
-
-private:
-};
-
-#elif
-
+#ifndef ONE_BUTTON_ONLY_MENU
+// device has 4 buttons -> define all 4 buttons
 class Buttons
 {
 public:
@@ -122,7 +106,24 @@ public:
 
 private:
 };
+#endif
 
+#ifdef ONE_BUTTON_ONLY_MENU
+// device has one button only -> define "mode" button only
+class Buttons
+{
+public:
+  Buttons() : mode(BUTTON_MODE_PIN) {}
+
+  void begin();
+  void loop();
+  bool stateChanged();
+
+  // Just making them public, so we don't have to proxy everything.
+  Button mode;
+
+private:
+};
 #endif
 
 #endif // BUTTONS_H
