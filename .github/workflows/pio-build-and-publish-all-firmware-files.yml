@@ -84,25 +84,30 @@ jobs:
       working-directory: ./EleksTubeHAX_pio
 
     - name: Rename firmware files
-      run: |
-        cd EleksTubeHAX_pio/.pio/build/EleksTubeHax/
+      run: |        
         echo "Rename firmware files!"
         if [ "${{ matrix.hardware }}" = "Elekstube_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_Elekstube_HAX_${{ env.VERSION }}_original.bin"
           mv *_combined.bin "FW_Elekstube_HAX_${{ env.VERSION }}_original.bin"
         elif [ "${{ matrix.hardware }}" = "Elekstube_CLOCK_Gen2" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_Elekstube_HAX_${{ env.VERSION }}_Gen2-1.bin"
           mv *_combined.bin "FW_Elekstube_HAX_${{ env.VERSION }}_Gen2-1.bin"
         elif [ "${{ matrix.hardware }}" = "SI_HAI_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_SI_HAI_CLOCK_HAX_${{ env.VERSION }}.bin"
           mv *_combined.bin "FW_SI_HAI_CLOCK_HAX_${{ env.VERSION }}.bin"
         elif [ "${{ matrix.hardware }}" = "NovelLife_SE_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_NovelLife_SE_HAX_${{ env.VERSION }}.bin"
           mv *_combined.bin "FW_NovelLife_SE_HAX_${{ env.VERSION }}.bin"
         elif [ "${{ matrix.hardware }}" = "PunkCyber_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_PunkCyber_Glow_PCBway_HAX_${{ env.VERSION }}.bin"
           mv *_combined.bin "FW_PunkCyber_Glow_PCBway_HAX_${{ env.VERSION }}.bin"
         elif [ "${{ matrix.hardware }}" = "IPSTUBE_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax8MB
           echo "move *_combined.bin to FW_IPSTUBE_HAX_${{ env.VERSION }}.bin"
           mv *_combined.bin "FW_IPSTUBE_HAX_${{ env.VERSION }}.bin"
         else
