@@ -75,12 +75,12 @@ jobs:
 
     - name: Build PlatformIO Project (for devices with 8MB flash)
       if: ${{ matrix.hardware == 'IPSTUBE_CLOCK' }}
-      run: pio run --environment ElekstubeHax8MB
+      run: pio run --environment EleksTubeHax8MB
       working-directory: ./EleksTubeHAX_pio
 
     - name: Build PlatformIO Project (for devices with 4MB flash)
       if: ${{ matrix.hardware != 'IPSTUBE_CLOCK' }}
-      run: pio run --environment ElekstubeHax
+      run: pio run --environment EleksTubeHax
       working-directory: ./EleksTubeHAX_pio
 
     - name: Rename firmware files
