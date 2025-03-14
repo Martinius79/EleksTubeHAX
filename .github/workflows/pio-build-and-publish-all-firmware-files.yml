@@ -27,7 +27,7 @@ jobs:
     needs: set-version
     strategy:
       matrix:
-        hardware: ['Elekstube_CLOCK', 'Elekstube_CLOCK_Gen2', 'SI_HAI_CLOCK', 'NovelLife_SE_CLOCK', 'PunkCyber_CLOCK']
+        hardware: ['Elekstube_CLOCK', 'Elekstube_CLOCK_Gen2', 'SI_HAI_CLOCK', 'NovelLife_SE_CLOCK', 'PunkCyber_CLOCK', 'IPSTUBE_CLOCK']
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.set-version.outputs.VERSION }}
@@ -73,8 +73,14 @@ jobs:
         echo "Modified platformio.ini content:"
         cat "./EleksTubeHAX_pio/platformio.ini"
 
-    - name: Build PlatformIO Project for 4MB flash
-      run: pio run --environment EleksTubeHax
+    - name: Build PlatformIO Project (for devices with 8MB flash)
+      if: ${{ matrix.hardware == 'IPSTUBE_CLOCK' }}
+      run: pio run --environment ElekstubeHax8MB
+      working-directory: ./EleksTubeHAX_pio
+
+    - name: Build PlatformIO Project (for devices with 4MB flash)
+      if: ${{ matrix.hardware != 'IPSTUBE_CLOCK' }}
+      run: pio run --environment ElekstubeHax
       working-directory: ./EleksTubeHAX_pio
 
     - name: Rename firmware files
@@ -96,6 +102,12 @@ jobs:
         elif [ "${{ matrix.hardware }}" = "PunkCyber_CLOCK" ]; then
           echo "move *_combined.bin to FW_PunkCyber_Glow_PCBway_HAX_${{ env.VERSION }}.bin"
           mv *_combined.bin "FW_PunkCyber_Glow_PCBway_HAX_${{ env.VERSION }}.bin"
+        elif [ "${{ matrix.hardware }}" = "IPSTUBE_CLOCK" ]; then
+          echo "move *_combined.bin to FW_IPSTUBE_HAX_${{ env.VERSION }}.bin"
+          mv *_combined.bin "FW_IPSTUBE_HAX_${{ env.VERSION }}.bin"
+        else
+          echo "Unknown hardware: ${{ matrix.hardware }}"
+          exit 1
         fi
 
     - name: Upload artifact

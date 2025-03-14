@@ -49,7 +49,7 @@ They are updated from time to time in the repository, so version number may vary
 | SI HAI IPS | `FW_SI_HAI_CLOCK_HAX_1.0.bin` |
 | NovelLife SE version | `FW_NovelLife_SE_HAX_1.0.bin` |
 | PunkCyber/RGB Glow Tube DIY | `FW_PunkCyber_Glow_PCBway_HAX_1.0.bin` |
-| IPSTUBE - Model H401 and H402| TBD |
+| IPSTUBE - Model H401 and H402| FW_IPSTUBE_HAX_1.0.bin |
 
 Note: All "Original" EleksTube clocks, sold after July 2022 are "Gen2" versions. See [Note on EleksTube website](https://elekstube.com/blogs/news/instructions-on-elekstube-clock-for-gen2-systems). But always check the PCB version of your clock!
 

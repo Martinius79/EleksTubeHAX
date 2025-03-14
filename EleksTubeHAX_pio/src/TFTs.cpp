@@ -90,7 +90,7 @@ void TFTs::showNoMqttStatus()
 
 void TFTs::enableAllDisplays()
 {
-  // Turn power on to displays.
+  // Turn "power" on to displays.
   enabled = true;
 #ifndef DIM_WITH_ENABLE_PIN_PWM
   digitalWrite(TFT_ENABLE_PIN, ACTIVATEDISPLAYS);
@@ -102,7 +102,7 @@ void TFTs::enableAllDisplays()
 
 void TFTs::disableAllDisplays()
 {
-  // Turn power off to displays.
+  // Turn "power" off to displays.
   enabled = false;
 #ifndef DIM_WITH_ENABLE_PIN_PWM
   digitalWrite(TFT_ENABLE_PIN, DEACTIVATEDISPLAYS);

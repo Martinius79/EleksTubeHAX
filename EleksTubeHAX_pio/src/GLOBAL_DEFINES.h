@@ -333,16 +333,14 @@
 #define BACKLIGHTS_PIN (GPIO_NUM_5) // pin 35 is GPIO5
 
 // ATTENTION: SOME IPSTUBE clocks has a LED stripe on the bottom of the clock! SOME NOT! Define the number of LEDs here!
-#define NUM_BACKLIGHT_LEDS  (34) // 6 LEDs on the bottom of every LCD. For IPSTUBE clock with LED stripe: 28 LEDs in a stripe on the bottom of the clock = 34 LEDs in total.
-// #define NUM_BACKLIGHT_LEDS (6) // 6 LEDs on the bottom of every LCD. For IPSTUBE clock without LED stripe.
+// #define NUM_BACKLIGHT_LEDS  (34) // 6 LEDs on the bottom of every LCD. For IPSTUBE clock with LED stripe: 28 LEDs in a stripe on the bottom of the clock = 34 LEDs in total.
+#define NUM_BACKLIGHT_LEDS (6) // 6 LEDs on the bottom of every LCD. For IPSTUBE clock without LED stripe.
 
 // Only one Button on IPSTUBE clocks!
 #define ONE_BUTTON_ONLY_MENU
 
 // Set the other pins, to pins, which should always be in a defined, non changing state like Always HIGH or Always LOW!
-// Pin 9 = CPU_PU = Chip enabled = Always LOW on this board
 // Pin 3 = VDD3P3 = 3.3V analog power supply = Always LOW on this board
-// Pin 5 = SENSOR_VP = GPIO36 = Unconnected = SHOULD be HIGH = Always HIGH
 #ifdef ONE_BUTTON_ONLY_MENU
 #define BUTTON_MODE_PIN (GPIO_NUM_0) // Only ONE Button on the back of the clock - pin 23 is GPIO0 = BOOT Button
 #else
@@ -398,10 +396,6 @@
 
 // TODO: Store the dimming values and dimming times in the NVS partition to keep the last dimming value and not use the hard coded values
 // make the times and values adjustable in the menu and/or via MQTT for both main and backlight dimming
-
-// TODO: Save the values changed via MQTT/in HA in the NVS partition to keep the values after a reboot. Maybe define a "save command" in HA or trigger after
-// a few minutes of inactivity only if changed something or in the "free time" of the loop cycle...
-// Save it every time receiving MQTT commands is a BAD idea, we know that already ;)
 
 // configure library \TFT_eSPI\User_Setup.h
 // ST7789 135 x 240 display with no chip select line

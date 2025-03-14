@@ -94,7 +94,7 @@ void setup()
   menu.begin();
 
   // Setup the displays (TFTs) initaly and show bootup message(s)
-  tfts.begin();
+  tfts.begin(); // and count number of clock faces available
   tfts.fillScreen(TFT_BLACK);
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
   tfts.setCursor(0, 0, 2); // Font 2. 16 pixel high
@@ -463,6 +463,8 @@ void loop()
   HandleGestureInterupt();
 #endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+// if the device has one button only,, no power button functionality is needed!
+#ifndef ONE_BUTTON_ONLY_MENU
   // Power button: If in menu, exit menu. Else turn off displays and backlight.
   if (buttons.power.isDownEdge() && (menu.getState() == Menu::idle))
   { // Power button was pressed: if in the menu, exit menu, else turn off displays and backlight.
@@ -484,7 +486,7 @@ void loop()
       backlights.PowerOn();
     }
   }
-#endif
+#endif // ONE_BUTTON_ONLY_MENU
 
   menu.loop(buttons); // Must be called after buttons.loop()
   backlights.loop();
@@ -808,7 +810,7 @@ void GestureStart()
   }
 }
 
-// Handle Interrupt from gesture sensor and simulate a short button press of the corresponding button, if a gesture is detected
+// Handle Interrupt from gesture sensor and simulate a short button press (state down_edge) of the corresponding button, if a gesture is detected
 void HandleGestureInterupt()
 {
   if (isr_flag == 1)
@@ -837,27 +839,27 @@ void HandleGesture()
     switch (apds.readGesture())
     {
     case DIR_UP:
-      buttons.left.setUpEdgeState();
+      buttons.left.setDownEdgeState();
       Serial.println("Gesture detected! LEFT");
       break;
     case DIR_DOWN:
-      buttons.right.setUpEdgeState();
+      buttons.right.setDownEdgeState();
       Serial.println("Gesture detected! RIGHT");
       break;
     case DIR_LEFT:
-      buttons.power.setUpEdgeState();
+      buttons.power.setDownEdgeState();
       Serial.println("Gesture detected! DOWN");
       break;
     case DIR_RIGHT:
-      buttons.mode.setUpEdgeState();
+      buttons.mode.setDownEdgeState();
       Serial.println("Gesture detected! UP");
       break;
     case DIR_NEAR:
-      buttons.mode.setUpEdgeState();
+      buttons.mode.setDownEdgeState();
       Serial.println("Gesture detected! NEAR");
       break;
     case DIR_FAR:
-      buttons.power.setUpEdgeState();
+      buttons.power.setDownEdgeState();
       Serial.println("Gesture detected! FAR");
       break;
     default:
@@ -910,7 +912,7 @@ void checkDimmingNeeded()
     }
     else
     {
-      Serial.println("Setting daytime mode (max brightness)");
+      Serial.println("Set to day time mode (normal brightness)!");
       tfts.dimming = 255; // 0..255
       tfts.InvalidateImageInBuffer();
       backlights.setDimming(false);

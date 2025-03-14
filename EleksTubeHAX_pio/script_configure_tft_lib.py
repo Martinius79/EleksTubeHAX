@@ -17,7 +17,7 @@ print("===== copying TFT config files ===== ")
 # Get the board type from the used environment
 #board = env.GetProjectOption("board")
 # Get the environment name
-environmentname = print(env.subst("$PIOENV"))
+environmentname = env.subst("$PIOENV")
 
 # define target directory with the name of the board in the path
 #targetDir = "./.pio/libdeps/" + board + "/TFT_eSPI"

@@ -31,7 +31,7 @@ void Menu::loop(Buttons &buttons)
   }
 
   // Menu is idle. A button is pressed, go into the menu, but don't act on the button press. It just wakes up the menu.
-  if (state == idle && (left_state == Button::up_edge || right_state == Button::up_edge || mode_state == Button::up_edge))
+  if (state == idle && (left_state == Button::down_edge || right_state == Button::down_edge || mode_state == Button::down_edge))
   {
     state = states(1); // Start at the beginning of the menu.
 
@@ -41,7 +41,7 @@ void Menu::loop(Buttons &buttons)
   }
 
   // Go to the next menu option
-  if (state != idle && mode_state == Button::up_edge)
+  if (state != idle && mode_state == Button::down_edge)
   {
     uint8_t new_state = (uint8_t(state) + 1) % num_states;
     if (new_state == 0)
@@ -56,7 +56,7 @@ void Menu::loop(Buttons &buttons)
   }
 
   // Exit with a power button.
-  if (state != idle && (power_state == Button::up_edge))
+  if (state != idle && (power_state == Button::down_edge))
   {
     state = idle;
     state_changed = true;
@@ -64,14 +64,14 @@ void Menu::loop(Buttons &buttons)
   }
 
   // In a menu, and a left (negative change value) or right button (positive change value) has been pressed!
-  if (state != idle && (left_state == Button::up_edge || right_state == Button::up_edge))
+  if (state != idle && (left_state == Button::down_edge || right_state == Button::down_edge))
   {
     // Pressing both left and right at the same time cancels out?  Sure, why not...
-    if (left_state == Button::up_edge)
+    if (left_state == Button::down_edge)
     {
       change--;
     }
-    if (right_state == Button::up_edge)
+    if (right_state == Button::down_edge)
     {
       change++;
     }
@@ -112,7 +112,7 @@ void Menu::loop(Buttons &buttons)
   }
 
   // Menu is idle. A button is pressed, go into the menu, but don't act on the button press. It just wakes up the menu.
-  if (state == idle && (mode_state == Button::up_edge))
+  if (state == idle && (mode_state == Button::down_edge))
   {
     state = states(1); // Start at the beginning of the menu.
 
@@ -123,7 +123,7 @@ void Menu::loop(Buttons &buttons)
 
   // In a menu, and button long pressed! -> simulate right button press
   /// Must be done BEFORE the next menu option
-  if (state != idle && (mode_state == Button::up_long_edge))
+  if (state != idle && (mode_state == Button::down_long_edge))
   {
     change++;
 
@@ -133,7 +133,7 @@ void Menu::loop(Buttons &buttons)
   }
 
   // Go to the next menu option
-  if (state != idle && mode_state == Button::up_edge)
+  if (state != idle && mode_state == Button::down_edge)
   {
     uint8_t new_state = (uint8_t(state) + 1) % num_states;
     if (new_state == 0)
@@ -153,6 +153,7 @@ void Menu::loop(Buttons &buttons)
 }
 #endif
 
+// menu has one more point of entry, if WPS is used
 #ifndef WIFI_USE_WPS
 const String Menu::state_str[Menu::num_states] = {
     "idle",

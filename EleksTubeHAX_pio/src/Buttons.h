@@ -86,6 +86,9 @@ private:
   bool isButtonDown() { return digitalRead(bpin) == active_state; }
 };
 
+/*
+ * A simple helper class to call common functions on all buttons at once.
+ */
 #ifdef ONE_BUTTON_ONLY_MENU
 
 class Buttons
@@ -103,12 +106,7 @@ public:
 private:
 };
 
-#endif
-
-/*
- * A simple helper class to call common functions on all buttons at once.
- */
-#ifndef ONE_BUTTON_ONLY_MENU
+#elif
 
 class Buttons
 {

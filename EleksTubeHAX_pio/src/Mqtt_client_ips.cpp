@@ -602,7 +602,6 @@ void callback(char *topic, byte *payload, unsigned int length)
       MqttCommandUseTwelveHours = strcmp(doc["state"], MQTT_STATE_ON) == 0;
       MqttCommandUseTwelveHoursReceived = true;
     }
-
     doc.clear();
   }
   if (strcmp(command[0], "blank_zero_hours") == 0 && strcmp(command[1], "set") == 0)
@@ -615,7 +614,6 @@ void callback(char *topic, byte *payload, unsigned int length)
       MqttCommandBlankZeroHours = strcmp(doc["state"], MQTT_STATE_ON) == 0;
       MqttCommandBlankZeroHoursReceived = true;
     }
-
     doc.clear();
   }
   if (strcmp(command[0], "pulse_bpm") == 0 && strcmp(command[1], "set") == 0)
@@ -628,7 +626,6 @@ void callback(char *topic, byte *payload, unsigned int length)
       MqttCommandPulseBpm = doc["state"];
       MqttCommandPulseBpmReceived = true;
     }
-
     doc.clear();
   }
   if (strcmp(command[0], "breath_bpm") == 0 && strcmp(command[1], "set") == 0)
@@ -641,7 +638,6 @@ void callback(char *topic, byte *payload, unsigned int length)
       MqttCommandBreathBpm = doc["state"];
       MqttCommandBreathBpmReceived = true;
     }
-
     doc.clear();
   }
   if (strcmp(command[0], "rainbow_duration") == 0 && strcmp(command[1], "set") == 0)
