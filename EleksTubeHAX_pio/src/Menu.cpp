@@ -2,6 +2,18 @@
 
 // Big ol' state machine: menu and buttons as the state, buttons as the transition triggers.
 
+// The menu is a state machine.  It has a number of states, and a number of transitions between those states.
+// The transitions are triggered by the buttons.  The buttons are also a state machine, with a number of states
+// and transitions between those states.  The buttons are polled in the main loop, and the menu is updated based
+// on the button state transitions.
+
+// We are only watching for the edge transitions of the buttons!.
+// the button passes the down_edge state only once, when the button is pressed down.
+// The button passes the up_edge state only once, when the button is released.
+// The button passes the down_long_edge state only once, when the button is pressed down for a long time.
+// The button passes the up_long_edge state only once, when the button is released after a long press.
+
+
 #ifndef ONE_BUTTON_ONLY_MENU
 void Menu::loop(Buttons &buttons)
 {
@@ -27,6 +39,9 @@ void Menu::loop(Buttons &buttons)
     // Go idle.
     state = idle;
     state_changed = true;
+#ifdef DEBUG_OUTPUT_MENU
+        Serial.println("MENU: Go idle if the user hasn't pressed a button in a long time.");
+#endif
     return;
   }
 
@@ -37,6 +52,9 @@ void Menu::loop(Buttons &buttons)
 
     millis_last_button_press = millis();
     state_changed = true;
+#ifdef DEBUG_OUTPUT_MENU
+    Serial.println("MENU: Menu is idle. A button is pressed, go into the menu, but don't act on the button press. It just wakes up the menu.");
+#endif
     return;
   }
 
@@ -52,6 +70,9 @@ void Menu::loop(Buttons &buttons)
 
     millis_last_button_press = millis();
     state_changed = true;
+#ifdef DEBUG_OUTPUT_MENU
+        Serial.print("MENU: Go to the next menu option! New menu_state: ");Serial.println(menu_state);
+#endif
     return;
   }
 
@@ -60,6 +81,9 @@ void Menu::loop(Buttons &buttons)
   {
     state = idle;
     state_changed = true;
+#ifdef DEBUG_OUTPUT_MENU
+    Serial.println("MENU: Exit with a power button.");
+#endif
     return;
   }
 
@@ -67,12 +91,18 @@ void Menu::loop(Buttons &buttons)
   if (state != idle && (left_state == Button::down_edge || right_state == Button::down_edge))
   {
     // Pressing both left and right at the same time cancels out?  Sure, why not...
-    if (left_state == Button::down_edge)
+    if (left_state == Button::down_edge && !buttons.left.isDownLongPending())
     {
+#ifdef DEBUG_OUTPUT_MENU
+      Serial.println("MENU: In a menu, and a left (negative change value) button has been pressed!");
+#endif
       change--;
     }
-    if (right_state == Button::down_edge)
+    if (right_state == Button::down_edge && !buttons.right.isDownLongPending())
     {
+#ifdef DEBUG_OUTPUT_MENU
+      Serial.println("MENU: In a menu, and a right (positive change value) button has been pressed!");
+#endif
       change++;
     }
 
@@ -108,6 +138,10 @@ void Menu::loop(Buttons &buttons)
     // Go idle.
     state = idle;
     state_changed = true;
+#ifdef DEBUG_OUTPUT_MENU
+    Serial.println("MENU: Go idle if the user hasn't pressed a button in a long time.");
+    Serial.println("-----------------------------------------------------------------------------------");
+#endif
     return;
   }
 
@@ -118,10 +152,14 @@ void Menu::loop(Buttons &buttons)
 
     millis_last_button_press = millis();
     state_changed = true;
+#ifdef DEBUG_OUTPUT_MENU
+    Serial.println("MENU: Menu is idle. A button is pressed, go into the menu (STATE CHANGED!), but don't act on the button press. It just wakes up the menu.");
+    Serial.print("MENU: menu state is now: ");Serial.println(state);
+#endif
     return;
   }
 
-  // In a menu, and button long pressed! -> simulate right button press
+  // In a menu, and button LONG pressed! -> simulate right button press
   /// Must be done BEFORE the next menu option
   if (state != idle && (mode_state == Button::down_long_edge))
   {
@@ -129,11 +167,16 @@ void Menu::loop(Buttons &buttons)
 
     millis_last_button_press = millis();
     state_changed = true;
+#ifdef DEBUG_OUTPUT_MENU
+    Serial.println("MENU: In a menu, and button LONG pressed! -> simulate right button press!");
+    Serial.println("-----------------------------------------------------------------------------------");
+#endif
     return;
   }
 
+  // In a menu, and button SHORT pressed! -> go to next menu option
   // Go to the next menu option
-  if (state != idle && mode_state == Button::down_edge)
+  if (state != idle && mode_state == Button::down_edge && !buttons.mode.isDownLongPending())
   {
     uint8_t new_state = (uint8_t(state) + 1) % num_states;
     if (new_state == 0)
@@ -144,6 +187,11 @@ void Menu::loop(Buttons &buttons)
 
     millis_last_button_press = millis();
     state_changed = true;
+#ifdef DEBUG_OUTPUT_MENU
+    Serial.println("MENU: In a menu, and button SHORT pressed!");
+    Serial.print("MENU: Go to the next menu option! New menu_state: ");Serial.println(state);
+    Serial.println("-----------------------------------------------------------------------------------");
+#endif
     return;
   }
 
