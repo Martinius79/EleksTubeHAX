@@ -76,163 +76,151 @@ void Button::loop()
   else if (down_last_time == false && down_now == true)
   {
     // Button is just pressed down!
-#ifdef DEBUG_OUTPUT_BUTTONS
+    #ifdef DEBUG_OUTPUT_BUTTONS
     Serial.println("BUTTON: Just Pressed!");
-#endif
+    #endif
     // Set the member button state to "down_edge"
-    button_state = down_edge;
-#ifdef DEBUG_OUTPUT_BUTTONS
+    #ifdef DEBUG_OUTPUT_BUTTONS
     Serial.print("BUTTON: millis_at_last_loop: ");Serial.println(millis_at_last_loop);
     Serial.print("BUTTON: millis_at_last_transition: ");Serial.println(millis_at_last_transition);
     Serial.print("BUTTON: millis_at_last_loop - millis_at_last_transition: ");Serial.println((millis_at_last_loop - millis_at_last_transition));
-    Serial.println("BUTTON: Just Pressed! Change button_state to DOWN_EDGE.");
-#endif
+    Serial.println("BUTTON: Just Pressed! Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to DOWN_EDGE.");
+    #endif
+    button_state = down_edge;
     millis_at_last_transition = millis_at_last_loop;
   }
   // Check if the button WAS pressed while in the last loop and IS also pressed now
   else if (down_last_time == true && down_now == true)
   {
-#ifdef DEBUG_OUTPUT_BUTTONS
+    #ifdef DEBUG_OUTPUT_BUTTONS
     Serial.println("BUTTON: Still pressed!");
- #endif
+    #endif
     // Been pressed. For how long?
-#ifdef DEBUG_OUTPUT_BUTTONS
-    Serial.println("BUTTON: Been pressed. For how long?");
+    #ifdef DEBUG_OUTPUT_BUTTONS
+    Serial.println("BUTTON: Been pressed for how long?");
     Serial.print("BUTTON: millis_at_last_loop: "); Serial.println(millis_at_last_loop);
     Serial.print("BUTTON: millis_at_last_transition: "); Serial.println(millis_at_last_transition);
-    Serial.print("BUTTON: millis_at_last_loop - millis_at_last_transition: "); Serial.println((millis_at_last_loop - millis_at_last_transition));
-    Serial.print("BUTTON: long_press_ms: "); Serial.println(long_press_ms);
-#endif
+    Serial.print("BUTTON: Pressed for: "); Serial.println((millis_at_last_loop - millis_at_last_transition));
+    Serial.print("BUTTON: long_press_ms is: "); Serial.println(long_press_ms);
+    #endif
     // Check if the time between the last transition and the starting tick count is greater or equal to the long press time
     if (millis_at_last_loop - millis_at_last_transition >= long_press_ms)
     {
       // Long pressed. Did we just make a transition? -> this would trigger the menu or power off stuff!
-#ifdef DEBUG_OUTPUT_BUTTONS
+      #ifdef DEBUG_OUTPUT_BUTTONS
       Serial.println("BUTTON: Long pressed. Did we just make a transition?");
-#endif
-      
+      #endif      
       // Check if the previous state was "down_long_edge" or "down_long"
       // If yes, set the member variable button_state to "down_long"
       if (previous_state == down_long_edge || previous_state == down_long)
       {
-#ifdef DEBUG_OUTPUT_BUTTONS
-        Serial.println("BUTTON: Long Pressed - Previous state was down_long_edge or down_long!");
-#endif
-        // No, we already detected the edge.
-#ifdef DEBUG_OUTPUT_BUTTONS
-Serial.println("BUTTON: No, we already detected the edge in the last loop.");
-#endif        
-#ifdef DEBUG_OUTPUT_BUTTONS
+        #ifdef DEBUG_OUTPUT_BUTTONS
+        Serial.println("BUTTON: Long Pressed - Previous state was down_long_edge or down_long! Change button_state to DOWN_LONG or keep it there.");        
+        // No, we already detected the edge.        
+        Serial.println("BUTTON: Set to edge? No! We already detected the edge in the last loop. Set to down_long.");
         Serial.print("BUTTON: millis_at_last_loop: ");Serial.println(millis_at_last_loop);
         Serial.print("BUTTON: millis_at_last_transition: ");Serial.println(millis_at_last_transition);
         Serial.print("BUTTON: millis_at_last_loop - millis_at_last_transition: ");Serial.println((millis_at_last_loop - millis_at_last_transition));
         Serial.println("BUTTON: Long Pressed - Previous state was down_long_edge or down_long! Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to DOWN_LONG.");
-#endif
+        #endif
         button_state = down_long;
       }
-      // If no, set the member button state to "down_long_edge"
+      // If not, set the member button state to "down_long_edge"
       else
       {
-#ifdef DEBUG_OUTPUT_BUTTONS
+        #ifdef DEBUG_OUTPUT_BUTTONS
         Serial.println("BUTTON: Long Pressed - Previous state was NOT down_long_edge or down_long!");
-#endif
-        // Previous state was something else, so this is the transition.
+        // Previous state was something else, so this is the transition!
+        Serial.println("BUTTON: Set to edge? Yes! Previous state was NOT down_long_edge or down_long. Set to down_long_edge now!");
         // down -> down_long_edge does NOT update millis_at_last_transition.
-        // We'd rather know how long it's been down than been down_long.
-#ifdef DEBUG_OUTPUT_BUTTONS
+        // We'd rather know how long it's been down than been down_long.        
         Serial.print("BUTTON: millis_at_last_loop: ");Serial.println(millis_at_last_loop);
         Serial.print("BUTTON: millis_at_last_transition: ");Serial.println(millis_at_last_transition);
         Serial.print("BUTTON: millis_at_last_loop - millis_at_last_transition: ");Serial.println((millis_at_last_loop - millis_at_last_transition));
         Serial.println("BUTTON: Long Pressed - Previous state was NOT down_long_edge or down_long! Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to DOWN_LONG_EDGE.");
-#endif
+        #endif
         button_state = down_long_edge;
       }
     } // if (millis_at_last_loop - millis_at_last_transition >= long_press_ms)    
     else
     // Not yet long pressed
     {
-#ifdef DEBUG_OUTPUT_BUTTONS
-      Serial.println("BUTTON: Not yet long pressed!");
-#endif
+      #ifdef DEBUG_OUTPUT_BUTTONS
+      Serial.println("BUTTON: Not yet long pressed! Change button_state to DOWN or keep it there.");
       // Not yet long pressed
-#ifdef DEBUG_OUTPUT_BUTTONS
       Serial.print("BUTTON: millis_at_last_loop: ");Serial.println(millis_at_last_loop);
       Serial.print("BUTTON: millis_at_last_transition: ");Serial.println(millis_at_last_transition);
       Serial.print("BUTTON: millis_at_last_loop - millis_at_last_transition: ");Serial.println((millis_at_last_loop - millis_at_last_transition));
       Serial.println("BUTTON: Not yet long pressed. Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to DOWN.");
-#endif
+      #endif
       button_state = down;
     }
   }
-  // Check if the button WAS pressed while in the last loop and is NOT pressed NOT
-  // So the button was released just now (CLICK or LONG CLICK)
+  // Check if the button WAS pressed while in the last loop and is NOT pressed NOW
+  // So the button was released just now (means CLICK or LONG CLICK)
   else if (down_last_time == true && down_now == false)
   {
     // Just released. From how long?
-#ifdef DEBUG_OUTPUT_BUTTONS
+    #ifdef DEBUG_OUTPUT_BUTTONS
     Serial.println("-----------------------------------------");
     Serial.println("BUTTON: Just Released! From how long?");
-#endif
-    
+    #endif    
     // Check if the previous state was "down_long_edge" or "down_long"
     // So we know if the button was long pressed -> LONG CLICK
     if (previous_state == down_long_edge || previous_state == down_long)
     {
-#ifdef DEBUG_OUTPUT_BUTTONS
-      Serial.println("BUTTON: Just Released from a LONG PRESS - Previous state was down_long_edge or down_long!");
-#endif
+      #ifdef DEBUG_OUTPUT_BUTTONS
+      Serial.println("BUTTON: Just Released from a LONG PRESS - Previous state WAS down_long_edge or down_long!");
       // Just released from a long press.
-#ifdef DEBUG_OUTPUT_BUTTONS
       Serial.print("BUTTON: millis_at_last_loop: ");Serial.println(millis_at_last_loop);
       Serial.print("BUTTON: millis_at_last_transition: ");Serial.println(millis_at_last_transition);
       Serial.print("BUTTON: millis_at_last_loop - millis_at_last_transition: ");Serial.println((millis_at_last_loop - millis_at_last_transition));
       Serial.println("BUTTON: Just Released from a long press. Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to UP_LONG_EDGE.");
-#endif
+      #endif
       button_state = up_long_edge;
     }
     else
     // If the previous state was NOT "down_long_edge" or "down_long"
     // So the button was short pressed -> set the member button state to "up_edge" -> CLICK
     {
-#ifdef DEBUG_OUTPUT_BUTTONS
-      Serial.println("BUTTON: Just Released - Previous state was NOT down_long_edge or down_long!");
-#endif
+      #ifdef DEBUG_OUTPUT_BUTTONS
+      Serial.println("BUTTON: Just Released from a SHORT press - Previous state was NOT down_long_edge or down_long!");
       // Just released from a short press.
-#ifdef DEBUG_OUTPUT_BUTTONS
       Serial.print("BUTTON: millis_at_last_loop: ");Serial.println(millis_at_last_loop);
       Serial.print("BUTTON: millis_at_last_transition: ");Serial.println(millis_at_last_transition);
       Serial.print("BUTTON: millis_at_last_loop - millis_at_last_transition: ");Serial.println((millis_at_last_loop - millis_at_last_transition));
-      Serial.print("BUTTON: Just Released from a short press. Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to UP_EDGE.");
-#endif
+      Serial.println("BUTTON: Just Released from a short press. Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to UP_EDGE.");
+      #endif
       button_state = up_edge;
     }
     // Store the current tick count in the member variable millis_at_last_transition
     millis_at_last_transition = millis_at_last_loop;
-#ifdef DEBUG_OUTPUT_BUTTONS
+    #ifdef DEBUG_OUTPUT_BUTTONS
     Serial.print("BUTTON: millis_at_last_transition set to: ");Serial.println(millis_at_last_transition);
-#endif
+    #endif
   }
 
   // Check if the previous state is NOT equal to the current state
   // This means that the button state has changed in this loop
   // So set the member variable state_changed to true
   state_changed = previous_state != button_state;
-#ifdef DEBUG_OUTPUT_BUTTONS
+  #ifdef DEBUG_OUTPUT_BUTTONS
   if (state_changed) {
+    Serial.println("-----------------------------------------");
     Serial.println("BUTTON: State changed!");
     Serial.print("BUTTON: previous state was: ");Serial.println(state_str[previous_state]);
     Serial.print("BUTTON: current state is: ");Serial.println(state_str[button_state]);
     Serial.println("-----------------------------------------");
   }
-#endif
+  #endif
 
-// Store the current down state in the member variable down_last_time (true or false)
+  // Store the current down state in the member variable down_last_time (true or false)
   down_last_time = down_now;
-#ifdef DEBUG_OUTPUT_BUTTONS
-if (down_last_time) {
+  #ifdef DEBUG_OUTPUT_BUTTONS
+  if (down_last_time) {
     Serial.println("BUTTON: down_last_time: Set to true!");    
   }
-#endif
+  #endif
 }
 
 const String Button::state_str[Button::num_states] =

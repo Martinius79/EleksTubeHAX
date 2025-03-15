@@ -138,24 +138,24 @@ void Menu::loop(Buttons &buttons)
     // Go idle.
     state = idle;
     state_changed = true;
-#ifdef DEBUG_OUTPUT_MENU
+    #ifdef DEBUG_OUTPUT_MENU
     Serial.println("MENU: Go idle if the user hasn't pressed a button in a long time.");
     Serial.println("-----------------------------------------------------------------------------------");
-#endif
+    #endif
     return;
   }
 
   // Menu is idle. A button is pressed, go into the menu, but don't act on the button press. It just wakes up the menu.
-  if (state == idle && (mode_state == Button::down_edge))
+  if (state == idle && (mode_state == Button::up_edge))
   {
     state = states(1); // Start at the beginning of the menu.
 
     millis_last_button_press = millis();
     state_changed = true;
-#ifdef DEBUG_OUTPUT_MENU
+    #ifdef DEBUG_OUTPUT_MENU
     Serial.println("MENU: Menu is idle. A button is pressed, go into the menu (STATE CHANGED!), but don't act on the button press. It just wakes up the menu.");
     Serial.print("MENU: menu state is now: ");Serial.println(state);
-#endif
+    #endif
     return;
   }
 
@@ -167,16 +167,16 @@ void Menu::loop(Buttons &buttons)
 
     millis_last_button_press = millis();
     state_changed = true;
-#ifdef DEBUG_OUTPUT_MENU
+    #ifdef DEBUG_OUTPUT_MENU
     Serial.println("MENU: In a menu, and button LONG pressed! -> simulate right button press!");
     Serial.println("-----------------------------------------------------------------------------------");
-#endif
+    #endif
     return;
   }
 
   // In a menu, and button SHORT pressed! -> go to next menu option
   // Go to the next menu option
-  if (state != idle && mode_state == Button::down_edge)
+  if (state != idle && mode_state == Button::up_edge)
   {
     uint8_t new_state = (uint8_t(state) + 1) % num_states;
     if (new_state == 0)
@@ -187,11 +187,11 @@ void Menu::loop(Buttons &buttons)
 
     millis_last_button_press = millis();
     state_changed = true;
-#ifdef DEBUG_OUTPUT_MENU
+    #ifdef DEBUG_OUTPUT_MENU
     Serial.println("MENU: In a menu, and button SHORT pressed!");
     Serial.print("MENU: Go to the next menu option! New menu_state: ");Serial.println(state);
     Serial.println("-----------------------------------------------------------------------------------");
-#endif
+    #endif
     return;
   }
 
