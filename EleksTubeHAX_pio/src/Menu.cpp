@@ -91,14 +91,14 @@ void Menu::loop(Buttons &buttons)
   if (state != idle && (left_state == Button::down_edge || right_state == Button::down_edge))
   {
     // Pressing both left and right at the same time cancels out?  Sure, why not...
-    if (left_state == Button::down_edge && !buttons.left.isDownLongPending())
+    if (left_state == Button::down_edge)
     {
 #ifdef DEBUG_OUTPUT_MENU
       Serial.println("MENU: In a menu, and a left (negative change value) button has been pressed!");
 #endif
       change--;
     }
-    if (right_state == Button::down_edge && !buttons.right.isDownLongPending())
+    if (right_state == Button::down_edge)
     {
 #ifdef DEBUG_OUTPUT_MENU
       Serial.println("MENU: In a menu, and a right (positive change value) button has been pressed!");
@@ -176,7 +176,7 @@ void Menu::loop(Buttons &buttons)
 
   // In a menu, and button SHORT pressed! -> go to next menu option
   // Go to the next menu option
-  if (state != idle && mode_state == Button::down_edge && !buttons.mode.isDownLongPending())
+  if (state != idle && mode_state == Button::down_edge)
   {
     uint8_t new_state = (uint8_t(state) + 1) % num_states;
     if (new_state == 0)

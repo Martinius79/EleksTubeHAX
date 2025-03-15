@@ -130,24 +130,11 @@ Serial.println("BUTTON: No, we already detected the edge in the last loop.");
 #endif
         button_state = down_long;
       }
-      else if (previous_state == down || previous_state == down_long_pending) // Check for pending long press
-      {
-#ifdef DEBUG_OUTPUT_BUTTONS
-        Serial.println("BUTTON: Long Pressed - Previous state was down or down_long_pending!");
-#endif
-        // Previous state was down or down_long_pending, so this is the transition.
-#ifdef DEBUG_OUTPUT_BUTTONS
-        Serial.print("BUTTON: millis_at_last_loop: ");Serial.println(millis_at_last_loop);
-        Serial.print("BUTTON: millis_at_last_transition: ");Serial.println(millis_at_last_transition);
-        Serial.print("BUTTON: millis_at_last_loop - millis_at_last_transition: ");Serial.println((millis_at_last_loop - millis_at_last_transition));
-        Serial.println("BUTTON: Long Pressed - Previous state was down or down_long_pending! Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to DOWN_LONG_EDGE.");
-#endif
-        button_state = down_long_edge;
-      }
+      // If no, set the member button state to "down_long_edge"
       else
       {
 #ifdef DEBUG_OUTPUT_BUTTONS
-        Serial.println("BUTTON: Long Pressed - Previous state was NOT down_long_edge, down_long, down or down_long_pending!");
+        Serial.println("BUTTON: Long Pressed - Previous state was NOT down_long_edge or down_long!");
 #endif
         // Previous state was something else, so this is the transition.
         // down -> down_long_edge does NOT update millis_at_last_transition.
@@ -156,9 +143,9 @@ Serial.println("BUTTON: No, we already detected the edge in the last loop.");
         Serial.print("BUTTON: millis_at_last_loop: ");Serial.println(millis_at_last_loop);
         Serial.print("BUTTON: millis_at_last_transition: ");Serial.println(millis_at_last_transition);
         Serial.print("BUTTON: millis_at_last_loop - millis_at_last_transition: ");Serial.println((millis_at_last_loop - millis_at_last_transition));
-        Serial.println("BUTTON: Long Pressed - Previous state was NOT down_long_edge, down_long, down or down_long_pending! Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to DOWN_LONG_PENDING.");
+        Serial.println("BUTTON: Long Pressed - Previous state was NOT down_long_edge or down_long! Change button_state from ");Serial.print(state_str[button_state]);Serial.println(" to DOWN_LONG_EDGE.");
 #endif
-        button_state = down_long_pending; // Set to pending long press
+        button_state = down_long_edge;
       }
     } // if (millis_at_last_loop - millis_at_last_transition >= long_press_ms)    
     else
