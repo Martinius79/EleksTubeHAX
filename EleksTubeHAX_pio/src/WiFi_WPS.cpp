@@ -31,56 +31,58 @@ void wpsInitConfig()
 }
 #endif
 
-void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info){
-  switch(event){
-    case ARDUINO_EVENT_WIFI_STA_START:
-      WifiState = disconnected;
-      Serial.println("Station Mode Started");
-      break;
-    case ARDUINO_EVENT_WIFI_STA_CONNECTED: // IP not yet assigned
-      Serial.println("Connected to AP: " + String(WiFi.SSID()));
-      break;     
-    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-      Serial.print("Got IP: ");
-      Serial.println(WiFi.localIP());
-      WifiState = connected;
-      break;
-    case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-      WifiState = disconnected;
-      Serial.print("WiFi lost connection. Reason: ");
-      Serial.println(info.wifi_sta_disconnected.reason);
-      WifiReconnect();
-      break;
-#ifdef WIFI_USE_WPS   ////  WPS code      
-    case ARDUINO_EVENT_WPS_ER_SUCCESS:
-      WifiState = wps_success;
-      Serial.println("WPS Successful, stopping WPS and connecting to: " + String(WiFi.SSID()));
-      esp_wifi_wps_disable();
-      delay(10);
-      WiFi.begin();
-      break;
-    case ARDUINO_EVENT_WPS_ER_FAILED:
-      WifiState = wps_failed;
-      Serial.println("WPS Failed, retrying");
-      esp_wifi_wps_disable();
-      wpsInitConfig();
-      esp_wifi_wps_enable(&wps_config);
-      esp_wifi_wps_start(0);
-      break;
-    case ARDUINO_EVENT_WPS_ER_TIMEOUT:
-      Serial.println("WPS Timeout, retrying");
-      tfts.setTextColor(TFT_RED, TFT_BLACK);      
-      tfts.print("/");  // retry
-      tfts.setTextColor(TFT_BLUE, TFT_BLACK);
-      esp_wifi_wps_disable();
-      wpsInitConfig();
-      esp_wifi_wps_enable(&wps_config);
-      esp_wifi_wps_start(0);
-      WifiState = wps_active;
-      break;
- #endif     
-    default:
-      break;
+void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info)
+{
+  switch (event)
+  {
+  case ARDUINO_EVENT_WIFI_STA_START:
+    WifiState = disconnected;
+    Serial.println("Station Mode Started");
+    break;
+  case ARDUINO_EVENT_WIFI_STA_CONNECTED: // IP not yet assigned
+    Serial.println("Connected to AP: " + String(WiFi.SSID()));
+    break;
+  case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+    Serial.print("Got IP: ");
+    Serial.println(WiFi.localIP());
+    WifiState = connected;
+    break;
+  case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+    WifiState = disconnected;
+    Serial.print("WiFi lost connection. Reason: ");
+    Serial.println(info.wifi_sta_disconnected.reason);
+    WifiReconnect();
+    break;
+#ifdef WIFI_USE_WPS ////  WPS code
+  case ARDUINO_EVENT_WPS_ER_SUCCESS:
+    WifiState = wps_success;
+    Serial.println("WPS Successful, stopping WPS and connecting to: " + String(WiFi.SSID()));
+    esp_wifi_wps_disable();
+    delay(10);
+    WiFi.begin();
+    break;
+  case ARDUINO_EVENT_WPS_ER_FAILED:
+    WifiState = wps_failed;
+    Serial.println("WPS Failed, retrying");
+    esp_wifi_wps_disable();
+    wpsInitConfig();
+    esp_wifi_wps_enable(&wps_config);
+    esp_wifi_wps_start(0);
+    break;
+  case ARDUINO_EVENT_WPS_ER_TIMEOUT:
+    Serial.println("WPS Timeout, retrying");
+    tfts.setTextColor(TFT_RED, TFT_BLACK);
+    tfts.print("/"); // retry
+    tfts.setTextColor(TFT_BLUE, TFT_BLACK);
+    esp_wifi_wps_disable();
+    wpsInitConfig();
+    esp_wifi_wps_enable(&wps_config);
+    esp_wifi_wps_start(0);
+    WifiState = wps_active;
+    break;
+#endif
+  default:
+    break;
   }
 }
 
@@ -94,15 +96,19 @@ void WifiBegin()
 
 #ifdef WIFI_USE_WPS // WPS code
   // no data is saved, start WPS imediatelly
-  if (stored_config.config.wifi.WPS_connected != StoredConfig::valid) {
+  if (stored_config.config.wifi.WPS_connected != StoredConfig::valid)
+  {
     // Config is invalid, probably a new device which never had its config written or flash was erased.
     Serial.println("Loaded Wifi config is invalid. No known WiFi network! Starting Wi-Fi Protected Setup (WPS)...");
-    WiFiStartWps();  // loop until connected or timeout reached
-    if (WifiState != connected) {
-      WifiState = disconnected;      
+    WiFiStartWps(); // loop until connected or timeout reached
+    if (WifiState != connected)
+    {
+      WifiState = disconnected;
       return; // exit loop, exit procedure, continue clock startup
     }
-  } else {
+  }
+  else
+  {
     // data is saved, connect now
     // WiFi credentials are known, connect
     tfts.println("Joining WiFi");
@@ -121,7 +127,8 @@ void WifiBegin()
       delay(500);
       tfts.print(">");
       Serial.print(">");
-      if ((millis() - StartTime) > (WIFI_CONNECT_TIMEOUT_SEC * 1000)) {
+      if ((millis() - StartTime) > (WIFI_CONNECT_TIMEOUT_SEC * 1000))
+      {
         tfts.setTextColor(TFT_RED, TFT_BLACK);
         tfts.println("\nTIMEOUT!");
         tfts.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -153,18 +160,21 @@ void WifiBegin()
     }
   }
   WifiState = connected;
-#endif  
-  
-  if (WifiState == connected) {
-  tfts.println("\nConnected! IP:");
-  tfts.println(WiFi.localIP());
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(WiFi.SSID());
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  delay(200);
-  } else {
+#endif
+
+  if (WifiState == connected)
+  {
+    tfts.println("\nConnected! IP:");
+    tfts.println(WiFi.localIP());
+    Serial.println("");
+    Serial.print("Connected to ");
+    Serial.println(WiFi.SSID());
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+    delay(200);
+  }
+  else
+  {
     Serial.println("Connecting to WiFi failed! No WiFi! Clock will not show actual time!");
   }
 }
@@ -189,13 +199,11 @@ void WiFiStartWps()
   Serial.print("Saving config! Triggered from WPS start...");
   stored_config.save();
   Serial.println("Done.");
-   
+
   tfts.setTextColor(TFT_GREEN, TFT_BLACK);
   tfts.println("WPS STARTED!");
   tfts.setTextColor(TFT_RED, TFT_BLACK);
   tfts.println("PRESS WPS BUTTON ON THE ROUTER");
-
-  unsigned long StartTime = millis();
 
   unsigned long StartTime = millis();
 
@@ -210,25 +218,32 @@ void WiFiStartWps()
 
   wpsInitConfig();
   esp_wifi_wps_enable(&wps_config);
-  esp_wifi_wps_start(0);  
+  esp_wifi_wps_start(0);
 
   // loop until connected or timeout reached
   tfts.setTextColor(TFT_BLUE, TFT_BLACK);
-  while (WifiState != connected && ((millis() - StartTime) < (WIFI_WPS_CONNECT_TIMEOUT_SEC * 1000))) {
+  while (WifiState != connected && ((millis() - StartTime) < (WIFI_WPS_CONNECT_TIMEOUT_SEC * 1000)))
+  {
     delay(2000);
     tfts.print(">");
     Serial.print(">");
   }
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-  if (WifiState == connected) {
-    Serial.println(); Serial.print("WPS connected to: "); Serial.println(WiFi.SSID());
-    memset(&stored_config.config.wifi.password, 0, sizeof(stored_config.config.wifi.password));                  // Since the password cannot be retrieved from WPS, overwrite it completly
-  stored_config.config.wifi.password[0] = '\0'; // Since the password cannot be retrieved from WPS, set it to an empty string
-    stored_config.config.wifi.WPS_connected = StoredConfig::valid; // Mark the configuration as valid
-    Serial.println(); Serial.print("Saving config! Triggered from WPS success...");
+  if (WifiState == connected)
+  {
+    Serial.println();
+    Serial.print("WPS connected to: ");
+    Serial.println(WiFi.SSID());
+    memset(&stored_config.config.wifi.password, 0, sizeof(stored_config.config.wifi.password)); // Since the password cannot be retrieved from WPS, overwrite it completly
+    stored_config.config.wifi.password[0] = '\0';                                               // Since the password cannot be retrieved from WPS, set it to an empty string
+    stored_config.config.wifi.WPS_connected = StoredConfig::valid;                              // Mark the configuration as valid
+    Serial.println();
+    Serial.print("Saving config! Triggered from WPS success...");
     stored_config.save();
     Serial.println("Done.");
-  } else {
+  }
+  else
+  {
     tfts.setTextColor(TFT_RED, TFT_BLACK);
     tfts.println("WPS FAILED! NO WiFi");
     Serial.println("WPS FAILED! Going on without WiFi.");
