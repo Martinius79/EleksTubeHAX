@@ -2,7 +2,9 @@
 #define mqtt_client_H_
 
 #include "GLOBAL_DEFINES.h"
+#include <FS.h>
 
+#ifdef MQTT_ENABLED
 extern bool MqttConnected;
 
 // commands from server
@@ -12,7 +14,7 @@ extern bool MqttCommandBackPower;
 extern bool MqttCommandPowerReceived;
 extern bool MqttCommandMainPowerReceived;
 extern bool MqttCommandBackPowerReceived;
-extern int  MqttCommandState;
+extern int MqttCommandState;
 extern bool MqttCommandStateReceived;
 extern uint8_t MqttCommandBrightness;
 extern uint8_t MqttCommandMainBrightness;
@@ -67,5 +69,6 @@ void MqttLoopFrequently();
 void MqttLoopInFreeTime();
 void MqttReportBackEverything(bool force);
 
+#endif // MQTT_ENABLED
 
 #endif /* mqtt_client_H_ */
