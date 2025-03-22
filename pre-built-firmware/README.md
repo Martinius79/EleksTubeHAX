@@ -23,7 +23,7 @@ Disabled:
 
 General:
 
-- 6 different sets of clock faces present. See [data](https://github.com/SmittyHalibut/EleksTubeHAX/tree/main/EleksTubeHAX_pio/data).
+- 6 different sets of clock faces present. See [data](https://github.com/aly-fly/EleksTubeHAX/tree/main/EleksTubeHAX_pio/data).
 - BMP mode active for the given clock faces
 - CORE_DEBUG_LEVEL=5 - This produces diagnostic messages from the ESP32 "operating system" in case of an error over the serial interface.
 
@@ -31,7 +31,7 @@ General:
 
 **Always backup YOUR clock firmware version as first step!**
 
-Save your original firmware using the `_ESP32 save flash 4MB.cmd` by changing the COM port to the number, your clock uses.
+Save your original firmware using the `_ESP32 save flash 4MB.cmd` (or 8MB version for the IPSTUBEs) by changing the COM port to the number, your clock uses.
 
 Rename and store the `backup1.bin` on a save location.
 
@@ -44,11 +44,12 @@ They are updated from time to time in the repository, so version number may vary
 
 | clock model | firmware image file |
 |--|--|  
-| EleksTube IPS - Orginal Version | `FW_Elekstube_HAX_1.0_original.bin` |
-| EleksTube IPS - Gen2 models | `FW_Elekstube_HAX_1.0_Gen2-1.bin` |
-| SI HAI IPS | `FW_SI_HAI_CLOCK_HAX_1.0.bin` |
-| NovelLife SE version | `FW_NovelLife_SE_HAX_1.0.bin` |
-| PunkCyber/RGB Glow Tube DIY | `FW_PunkCyber_Glow_PCBway_HAX_1.0.bin` |
+| EleksTube IPS - Orginal Version | `FW_Elekstube_Original_HAX_1.0.0.bin` |
+| EleksTube IPS - Gen2 models | `FW_Elekstube_Gen2_HAX_1.0.0.bin` |
+| SI HAI IPS | `FW_SI_HAI_CLOCK_HAX_1.0.0.bin` |
+| NovelLife SE version | `FW_NovelLife_SE_HAX_1.0.0.bin` |
+| PunkCyber/RGB Glow Tube DIY | `FW_PunkCyber_HAX_1.0.0.bin` |
+| IPSTUBE - Model H401 and H402| `FW_IPSTUBE_HAX_1.0.0.bin` |
 
 Note: All "Original" EleksTube clocks, sold after July 2022 are "Gen2" versions. See [Note on EleksTube website](https://elekstube.com/blogs/news/instructions-on-elekstube-clock-for-gen2-systems). But always check the PCB version of your clock!
 
@@ -65,13 +66,13 @@ The CMD file should look like this:
 ```esptool --port COM5 --baud 921600 write_flash --erase-all 0x0000 FW_Elekstube_HAX_1.0_Gen2-1.bin```
 
 Note: Most clocks will go into to the "download mode" automatically when esptool is trying to write to it.
-Some clocks needs a button pressed while the powering phase (plugging the USB cable) to enter this mode.
+Some clocks needs a button pressed while the powering phase (plugging the USB cable) to enter this mode, like the IPSTUBE ones. 
 
 ## 5. Download the newest firmware files
 
 Everytime a commit is done to the main branch of this repo, a GitHub action is triggered and a workflow run builds all firmware files.
 
-All workflow runs of the GutHub action can be found under [EleksTubeHAX generate firmware files]("https://github.com/SmittyHalibut/EleksTubeHAX/actions/workflows/pio-build-and-publish-all-firmware-files.yml")
+All workflow runs of the GutHub action can be found under [EleksTubeHAX generate firmware files](https://github.com/aly-fly/EleksTubeHAX/actions/workflows/pio-build-and-publish-all-firmware-files.yml)
 
 Should look like:
 
@@ -79,7 +80,7 @@ Should look like:
 
 The first entry is always the newest.
 
-If you click on the workflow run, you will be able to donwload either all firmwares at once, by downloading the `all-firmware-vX.X.X`, or the file for your clock seperately.
+If you click on the workflow run, you will be able to donwload either all firmwares at once, by downloading the `all-firmware-vX.X.X`, or the file for your clock seperately. Where X.X.X is the actual version number.
 
 ![GitHub Actions Artifact view](../documentation/ImagesMD/GitHubActionsArtifactView.png)
 

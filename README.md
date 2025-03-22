@@ -18,6 +18,9 @@
 - **NovelLife SE Clock**
   - With gesture sensor  
 - **PunkCyber IPS Clock f/k/a RGB Glow Tube DIY Clock**
+- **IPSTUBE Clock - Model H401 and H402**
+  - With and without bottom LED stripe
+  - With and without hardware dimming
 
 ##### Notes
 
@@ -25,6 +28,7 @@
 - All "Original EleksTube" clocks sold after July 2022 are "Gen2" versions. Refer to the [Blog post on EleksTube website](https://elekstube.com/blogs/news/instructions-on-elekstube-clock-for-gen2-systems) for more details.
 - Newer versions from EleksTube, such as PR1 and PR2, Pro and special editions (Pink etc.), are based on the base Gen2 version and sometimes called Gen3, because the original firmware version is already at Version 3.x for them. 
 - The "basic" version is now officially called "**EleksTube IPS Classic Edition**"
+- In 2024, the IPSTUBE clocks became the cheapest and most widely available "clone" variant of the EleksTube clocks on the market. They are offered by a wide range of sellers and under many different names, but they all have the "IPSTUBE" logo printed on the front. Most listings include words like Nixie, Tube, Clock, LED, Light, RGB, IPS, and Glow in the description.
 
 ### 1.3 Purchasing Information
 
@@ -49,6 +53,10 @@ NovelLife SE
 ![NovelLife SE clock](/documentation/ImagesMD/NovelLife_SE.jpg)
 PunkCyber IPS
 ![PunkCyber / RGB Glow tube](/documentation/ImagesMD/PunkCyber_IPS_clock_PCB.jpg)
+IPSTUBE - H401
+![IPSTUBE clock - Model H401](/documentation/ImagesMD/IPSTUBE_H401_PCB.jpg)
+IPSTUBE - H402
+![IPSTUBE clock - Model H402](/documentation/ImagesMD/IPSTUBE_H402_PCB.jpg)
 
 For detailed pictures for most of the clocks see the `documentation` subfolder.
 
@@ -102,6 +110,22 @@ Some clock models have specific functionatlities or hardware specials which are 
 - No buttons on the clock, only a gesture sensor
 - Gesture sensor is supported by simulating the buttons like the other clocks have
 
+#### 3.2.2 IPSTUBE Clock - Model H401 and H402
+
+- This model has a 8MB flash memory, so either more clock faces can be stored on the clock or in a better quality (i.e. no palettization/conversion needed).
+
+##### 3.2.2.1 One button menu
+
+- The clock has only one button, so there is a special menu mode active for this model.
+
+##### 3.2.2.2 LCD stripe
+
+- Some versions of this model have a LED stripe with 28 RGB LEDs installed on the bottom.
+
+##### 3.2.2.3 Dimmable displays
+
+- newer versions (after mid 2024) of the IPSTUBE clocks can do hardware dimming on the displays and turn off the displays completely
+
 Note: See "Known problems/Limitations" for more info.
 
 ## 4. Quick Start - Backup and Pre-Build images
@@ -140,13 +164,13 @@ Windows device manager COM port example:<br>
 #### 2) Save your original firmware
 
 To read from (or write to) the clock, it needs to be in the "download mode". Most clocks will go into this mode automatically, when the ESPTool tries to read or write to them.
-Some clocks needs a button pressed while the powering phase (plugging the USB cable).
+Some clocks needs a button pressed while the powering phase (plugging the USB cable), like the IPSTUBEs.
 
 ##### Windows users:
 
 - In the folder ```pre-built-firmware``` of this repo you have the `esptool.exe`, which is used to talk to the ESP32 in your clock over the USB-Serial chip on the board of the clock.
 - Open Device Manager and find out which virtual COM port represents your clock.
-- Modify file `_ESP32 save flash 4MB.cmd` with your COM port number.
+- Modify file `_ESP32 save flash 4MB.cmd` with your COM port number (or 8MB version for the IPSTUBEs).
 - Run the CMD file.
 - It will generate a file named `backup1.bin`. Rename it and save it to a safe place!
 - This is your precious backup!
@@ -194,7 +218,7 @@ For more info ask your favorite search engine or AI Chatbot :)
 ### 4.6 Lost firmware file
 
 If you lost your orginal firmware file and wants to restore the orginal firmware you normaly have a problem, because even if you get a backup file from another user, it is locked to the MAC address of the other ESP32 MAC.
-Under some conditions, it should be possible to change the encoded MAC address in the firmware. This worked for EleksTube Gen1 clocks. See [Issue 8](https://github.com/SmittyHalibut/EleksTubeHAX/issues/8).
+Under some conditions, it should be possible to change the encoded MAC address in the firmware. This worked for EleksTube Gen1 clocks. See [Issue 8](https://github.com/aly-fly/EleksTubeHAX/issues/8).
 
 Note: There is no gurantee, that you are able to change the MAC address in the firmware file successfully! If the orginal manufacturer decides to encode the MAC address or hide it, the descriped method will not work!
 
@@ -238,15 +262,17 @@ The EspressIF 32 development platform for PlatformIO is required to support the 
 
 Tested on version 6.0.9 from the [PlatformIO registry](https://registry.platformio.org/platforms/platformio/espressif32).
 
-#### 5.3.2 Build environment
+#### 5.3.2 PIO build environment
 
-The default environment for this project is using the "board" definition of the orginal "Espressif ESP32 Dev Module" named "esp32dev".
+The default PIO environment for this project is namend "EleksTubeHax" using the board definition of the orginal "Espressif ESP32 Dev Module" named "esp32dev".
+The IPSTUBE needs to use the "EleksTubeHax8MB" environment with a custom board definition ("Espressif ESP32 Dev Module 8MB") named esp32dev8MB.
 
-Flash size settings are already configured in the partition table file.
+Flash partition size settings are already configured in the following files.
 
 | filename | environment | flash size | app part size | data part size |
 |----------|-------------|------------|---------------|----------------|
-| `partition_noOta_1Mapp_3Mspiffs.csv` | esp32dev | 4.0 MB | 1.2 MB | 2.8 MB |
+| `partition_noOta_1Mapp_3Mspiffs.csv` | EleksTubeHax | 4.0 MB | 1.2 MB | 2.8 MB |
+| `partition_noOta_1Mapp_7Mspiffs.csv` | EleksTubeHax8MB | 8.0 MB | 1.2 MB | 6.8 MB |
 
 No OTA partition, one app partition, one data partition as SPIFFS to store the images of the clock faces.
 
@@ -295,7 +321,7 @@ The supplied `script_configure_tft_lib.py` automatically takes care of the libra
 
 If you have issues with the scripts, copy the files manually every time the `TFT_eSPI` library is updated.
 
-#### 5.3.5 Configure the `APDS9960` library (NovelLife SE)
+#### 5.3.5 Configure the `APDS9960` library (for NovelLife SE)
 
 The supplied `script_adjust_gesture_sensor_lib.py` modifies some files of the APDS9960 library before building. It adds the support for the ID of the used (cloned) gesture chip (needed for NovelLife SE with gesture sensor only).
 
@@ -304,7 +330,7 @@ The supplied `script_adjust_gesture_sensor_lib.py` modifies some files of the AP
 Make sure you configured everything for your clock in the `_USER_DEFINES.h` in the `src` folder:
 
 - Rename/Copy `_USER_DEFINES - empty.h` to `_USER_DEFINES.h`
-- Select the target hardware platform (Elekstube, Elekstube Gen 2, NovelLife, SI_HAI or PunkCyber) by uncommenting the appropriate hardware define (only ONE clock type can be defined at a time, so comment out the unwanted)
+- Select the target hardware platform (Elekstube, Elekstube Gen 2, NovelLife, SI_HAI or PunkCyber, IPSTUBE) by uncommenting the appropriate hardware define (only ONE clock type can be defined at a time, so comment out the unwanted)
 - Select if you prefer WPS or hardcoded credentials for WiFi (comment '#define WIFI_USE_WPS' line and enter your WiFi network credentials to the other lines and uncomment them)
 - Select image type for the clock faces to store: Bitmap files (.BMP) or .CLK files (uncomment #define USE_CLK_FILES)
 
@@ -321,7 +347,7 @@ Connect the clock to your computer via a USB cable. You'll see, that a new seria
 PlatformIO will automatically select the right port for uploading (in most cases).
 
 Most clocks will go into to the download mode automatically, when PlatformIO is trying to upload the builded firmware files.
-Some clocks needs a button pressed while the powering phase (plugging the USB cable).
+Some clocks needs a button pressed while the powering phase (plugging the USB cable), like the IPSTUBEs.
 
  **Note**: If you have Bluetooth virtual ports on your machine, it might hang and you must manually select the COM port in the `platformio.ini`, see [Upload options](https://docs.platformio.org/en/latest/projectconf/sections/env/options/upload/index.html).
 
@@ -335,11 +361,13 @@ At this point, it should build cleanly and upload successfully.
 
 Example output from a successfull build:
 
-![PlatfromIO Build Output](/documentation/ImagesMD/PlatformIOBuildOutput.png)
+![PlatformIO Build Output](/documentation/ImagesMD/PlatformIOBuildOutput.png)
 
 Example output from a successfull upload:
 
 ![PlatformIO Upload Output](/documentation/ImagesMD/PlatformIOUploadOutput.png)
+
+Note: For IPSTUBE clocks use "EleksTubeHax8MB" environment
 
 **Note**: On auto-reset clocks, you'll see the clock boot up after upload. It will go into the setup routine and ask for WPS or connecting to the configured WiFi network. On some clocks, you need to to a manual reset (power off/on cylce)
 
@@ -361,16 +389,18 @@ Note: All files in the `data` directory will be packed into the SPIFFS flash ima
 
 ##### 5.4.2.1 Generate and upload
 
-- In PlatformIO extension go to "Project Tasks" and expand: esp32dev -> Platform
+- In PlatformIO extension go to "Project Tasks" and expand: EleksTubeHax -> Platform
 - Select "Build Filesystem Image" first
 - Then connect the clock in download mode
 - Click "Upload Filesystem Image"
 
-![alt text](/documentation/ImagesMD/PlatformIOBuildFilesystem.png)
+![PlatformIO Build Filesystem](/documentation/ImagesMD/PlatformIOBuildFilesystem.png)
 
 This will upload the files to the SPIFFS filesystem on the ESP32 (flash of the clock).
 
 Note: The data will stay there, even if you re-upload the real firmware to the app partition, because the data partition is not overriden or modified by that.
+
+Note: For IPSTUBE clocks use "EleksTubeHax" environment
 
 ### 5.4.3 Check if clock is working
 
@@ -387,7 +417,7 @@ Additionally, you need to uncomment the line `-D CREATE_FIRMWAREFILE` in the pla
 
 If you now build the project in PlatformIO via the "Build" command, the normal build will takes place and afterwards, a helper script will call the build for the SPIFFS data partition and then merge the existing single files together to one file.
 
-The output file is written to the default output dir of the build. Usually the subfolder `.pio\build\esp32dev\` in the project folder.
+The output file is written to the default output dir of the build. Usually the subfolder `.pio\build\EleksTubeHax\` in the project folder (or `.pio\build\EleksTubeHax8MB`).
 
 The firmware file will be named like `<CLOCKNAME>_combined.bin` (e.g. Elekstube_CLOCK_Gen2_combined.bin).
 
@@ -395,7 +425,7 @@ This file can be flashed with the `esptool.exe` with the `write_flash` option.
 
 E.g. assuming you are using the `esptool.exe` in the pre-build-firmware folder:
 
-```esptool.exe --chip esp32 --port COM5 --baud 921600 --before default_reset --after hard_reset write_flash 0x0000 ..\EleksTubeHAX_pio\.pio\build\esp32dev\Elekstube_CLOCK_Gen2_combined.bin --erase-all```
+```esptool.exe --chip esp32 --port COM5 --baud 921600 --before default_reset --after hard_reset write_flash 0x0000 ..\EleksTubeHAX_pio\.pio\build\EleksTubeHax\Elekstube_CLOCK_Gen2_combined.bin --erase-all```
 
 ### 5.5.1 Helper script
 
@@ -587,6 +617,40 @@ The defined gestures and there button equivalents are:
 - Moving the finger/hand from directly above the sensor (from 5-8 cm away) toward the sensor (up to about 1 cm away) is the “near” gesture.
 - Moving from close by the sensor (coming from the front and putting the finger/hand in 1cm distance over the sensor) to a bit more far away (5-7cm distance) is the "far" gesture.
 
+##### 6.3 One button menu for IPSTUBE clocks
+
+The IPSTUBE clocks have only one button, so there are some limitations at the moment.
+
+- Short pressing the button brings up the menu.
+- Short pressing while in the menu changes the menu scope (next menu point).
+- Long pressing (at least 0.5 seconds) changes the value of the currently selected menu scope.
+
+This makes navigating through the menus a bit "unhandy." The values always change "to the right" because the long button press emulates a "right button" press in the menu. This limits the selection of values (e.g., for the absolute color values). The selection loops back to the first value after reaching the last value.
+
+##### 6.4 No real display turn-off or dimming for some IPSTUBE clocks
+
+Depending on the board version (PCB revision) of the IPSTUBE models (H401 and H402), transistor Q1 may or may not be present on the board.
+
+- If the transistor is present, the displays can be fully turned on and off like on other clocks, and hardware dimming is possible.
+- If the transistor is not present, the TFT LCDs cannot be turned on or off via software without modifying the hardware. Only software dimming (alpha blending) is available.
+
+It seems that only the early versions of the clocks lack the transistor. All versions seen after mid-2024 appear to have it.
+
+By default, the code assumes that the transistor is present and that the displays are dimmable. This will not damage your clock, even if the transistor is missing, but display dimming will be completely disabled!
+
+If the dimming is not working with your clock, you need to comment the line `#define DIM_WITH_ENABLE_PIN_PWM` in the `GLOBAL_DEFINES.h` and rebuild and upload the firmware.
+
+See also the code comments for more infos in the `GLOBAL_DEFINES.h` for the IPSTUBEs.
+
+#### 6.5 LCD stripe on the bottom for some IPSTUBE clocks
+
+Some versions of the IPSTUBEs have a LED stripe with 28 RGB LEDs installed on the bottom.
+
+- The stripe extends the six LEDs at the bottom of the LCDs, known as the "backlight".
+- Currently, the stripe follows the backlight configuration (modes, colors, etc.).
+- All models have a 3-pin socket on the board, so theoretically, the stripe can be retrofitted using any WS2812B-based LED stripe with some modifications. However, the recess in the metal cover is missing, preventing the light from shining through.
+- By default, only six LEDs are set. To enable the full LED stripe, change the value of `NUM_BACKLIGHT_LEDS` to `34` in `GLOBAL_DEFINES.h`.
+
 ## 7. Development Process/History
 
 See [Old Readme File](/README_OLD.md) for details.
@@ -610,7 +674,7 @@ See [EleksTube instructions](https://wiki.eleksmaker.com/doku.php?id=ips)
 
 **Short story**: CH340 chip is missing.
 
-**Long story**: The original version of the "PunkCyber IPS Clock" was buyable from PCBWay as "RGB Glow Tube DIY Clock" and is no longer available from there (see [PCBWay | RGB Glow Clock]('https://www.pcbway.com/project/gifts_detail/RGB_Glow_Tube_Clock_907ad35c.html')). This version had a CH340 chip soldered and two USB-C ports, where the right one was working, to communicate with a PC via the USB-UART chip.
+**Long story**: The original version of the "PunkCyber IPS Clock" was buyable from PCBWay as "RGB Glow Tube DIY Clock" and is no longer available from there (see [PCBWay | RGB Glow Clock](https://www.pcbway.com/project/gifts_detail/RGB_Glow_Tube_Clock_907ad35c.html)). This version had a CH340 chip soldered and two USB-C ports, where the right one was working, to communicate with a PC via the USB-UART chip.
 
 The clock is still available to buy from other resellers. It is already assembled and in a box, sold as "PunkCyber IPS Clock".
 
@@ -678,7 +742,9 @@ Successful backup:
 
 ![PunkCyber successfull backup](/documentation/ImagesMD/PunkCyber_backup_successful.jpg)
 
-Thanks to @Fastdruid for finding a good way to overcome this problem! (see [Issue 62]('https://github.com/SmittyHalibut/EleksTubeHAX/issues/62'))
+Thanks to @Fastdruid for finding a good way to overcome this problem! (see [Issue 62](https://github.com/aly-fly/EleksTubeHAX/issues/62))
+
+**Note** Even with components soldered onto the existing solder headers, I was not able to get the auto-download mode working again. I guess I am missing something here. I will try again when I have more time.
 
 #### 8.2 EleksTube Gen1: 5V on CH340 and ESP32
 

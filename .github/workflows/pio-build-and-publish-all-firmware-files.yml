@@ -27,7 +27,7 @@ jobs:
     needs: set-version
     strategy:
       matrix:
-        hardware: ['Elekstube_CLOCK', 'Elekstube_CLOCK_Gen2', 'SI_HAI_CLOCK', 'NovelLife_SE_CLOCK', 'PunkCyber_CLOCK']
+        hardware: ['Elekstube_CLOCK', 'Elekstube_CLOCK_Gen2', 'SI_HAI_CLOCK', 'NovelLife_SE_CLOCK', 'PunkCyber_CLOCK', 'IPSTUBE_CLOCK']
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.set-version.outputs.VERSION }}
@@ -73,35 +73,62 @@ jobs:
         echo "Modified platformio.ini content:"
         cat "./EleksTubeHAX_pio/platformio.ini"
 
-    - name: Build PlatformIO Project for 4MB flash
+    - name: Build PlatformIO Project (for devices with 8MB flash)
+      if: ${{ matrix.hardware == 'IPSTUBE_CLOCK' }}
+      run: pio run --environment EleksTubeHax8MB
+      working-directory: ./EleksTubeHAX_pio
+
+    - name: Build PlatformIO Project (for devices with 4MB flash)
+      if: ${{ matrix.hardware != 'IPSTUBE_CLOCK' }}
       run: pio run --environment EleksTubeHax
       working-directory: ./EleksTubeHAX_pio
 
     - name: Rename firmware files
-      run: |
-        cd EleksTubeHAX_pio/.pio/build/EleksTubeHax/
+      run: |        
         echo "Rename firmware files!"
         if [ "${{ matrix.hardware }}" = "Elekstube_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_Elekstube_HAX_${{ env.VERSION }}_original.bin"
           mv *_combined.bin "FW_Elekstube_HAX_${{ env.VERSION }}_original.bin"
         elif [ "${{ matrix.hardware }}" = "Elekstube_CLOCK_Gen2" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_Elekstube_HAX_${{ env.VERSION }}_Gen2-1.bin"
           mv *_combined.bin "FW_Elekstube_HAX_${{ env.VERSION }}_Gen2-1.bin"
         elif [ "${{ matrix.hardware }}" = "SI_HAI_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_SI_HAI_CLOCK_HAX_${{ env.VERSION }}.bin"
           mv *_combined.bin "FW_SI_HAI_CLOCK_HAX_${{ env.VERSION }}.bin"
         elif [ "${{ matrix.hardware }}" = "NovelLife_SE_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_NovelLife_SE_HAX_${{ env.VERSION }}.bin"
           mv *_combined.bin "FW_NovelLife_SE_HAX_${{ env.VERSION }}.bin"
         elif [ "${{ matrix.hardware }}" = "PunkCyber_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
           echo "move *_combined.bin to FW_PunkCyber_Glow_PCBway_HAX_${{ env.VERSION }}.bin"
           mv *_combined.bin "FW_PunkCyber_Glow_PCBway_HAX_${{ env.VERSION }}.bin"
+        elif [ "${{ matrix.hardware }}" = "IPSTUBE_CLOCK" ]; then
+          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax8MB
+          echo "move *_combined.bin to FW_IPSTUBE_HAX_${{ env.VERSION }}.bin"
+          mv *_combined.bin "FW_IPSTUBE_HAX_${{ env.VERSION }}.bin"
+        else
+          echo "Unknown hardware: ${{ matrix.hardware }}"
+          exit 1
         fi
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
+      if: ${{ matrix.hardware == 'IPSTUBE_CLOCK' }}
       with:
-        name: firmware-${{ matrix.hardware }}
+        name: firmware-${{ matrix.hardware }}        
+        path: |
+          EleksTubeHAX_pio/.pio/build/EleksTubeHax8MB/FW_*.bin
+        if-no-files-found: error
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      if: ${{ matrix.hardware != 'IPSTUBE_CLOCK' }}
+      with:
+        name: firmware-${{ matrix.hardware }}        
         path: |
           EleksTubeHAX_pio/.pio/build/EleksTubeHax/FW_*.bin
         if-no-files-found: error

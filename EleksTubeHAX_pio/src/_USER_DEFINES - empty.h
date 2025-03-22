@@ -12,16 +12,17 @@
 
 // ************* Type of the clock hardware  *************
 #define HARDWARE_Elekstube_CLOCK // uncomment for the original Elekstube clock
-// #define HARDWARE_Elekstube_CLOCK_Gen2  // uncomment for the original Elekstube clock Gen2.1 (ESP32 Pico D4 Chip)
-// #define HARDWARE_SI_HAI_CLOCK  // uncomment for the SI HAI copy of the clock
-// #define HARDWARE_NovelLife_SE_CLOCK  // uncomment for the NovelLife SE version; non-SE not tested
-// #define HARDWARE_PunkCyber_CLOCK  // uncomment for the PunkCyber / RGB Glow tube / PCBway clock
+// #define HARDWARE_Elekstube_CLOCK_Gen2 // uncomment for the original Elekstube clock Gen2.1 (ESP32 Pico D4 Chip)
+// #define HARDWARE_SI_HAI_CLOCK         // uncomment for the SI HAI copy of the clock
+// #define HARDWARE_NovelLife_SE_CLOCK   // uncomment for the NovelLife SE version (Gesture only) - tested and working!; Non-SE version (Buttons only) NOT tested!; Pro version (Buttons and Gesture) NOT tested!
+// #define HARDWARE_PunkCyber_CLOCK      // uncomment for the PunkCyber / RGB Glow tube / PCBway clock
+// #define HARDWARE_IPSTUBE_CLOCK        // uncomment for the IPSTUBE clock models (H401 and H402)
 
 // ************* Clock font file type selection (.clk or .bmp)  *************
 // #define USE_CLK_FILES   // select between .CLK and .BMP images
 
 // ************* Display Dimming / Night time operation *************
-#define DIMMING                      // uncomment to enable hardware dimming
+#define DIMMING                      // uncomment to enable dimming in the given time period between NIGHT_TIME and DAY_TIME
 #define NIGHT_TIME 22                // dim displays at 10 pm
 #define DAY_TIME 7                   // full brightness after 7 am
 #define BACKLIGHT_DIMMED_INTENSITY 1 // 0..7
@@ -38,7 +39,7 @@
 
 //  *************  Geolocation  *************
 // Get your API Key on https://www.abstractapi.com/ (login) --> https://app.abstractapi.com/api/ip-geolocation/tester (key) *************
-// #define GEOLOCATION_ENABLED    // enable after creating an account and copying Geolocation API below:
+// #define GEOLOCATION_ENABLED // enable after creating an account and copying Geolocation API below:
 #define GEOLOCATION_API_KEY "__enter_your_api_key_here__"
 
 // ************* MQTT config *************
@@ -73,10 +74,10 @@
 #define MQTT_PASSWORD "__enter_your_api_key_here__"  // Password from Smartnest or API key (under MY Account)
 #define MQTT_CLIENT "__enter_your_device_id_here__"  // Device Id from Smartnest
 // #define MQTT_USE_TLS                                 // Use TLS for MQTT connection. Setting a root CA certificate is needed!
-                                                     // Don't forget to copy the correct certificate file into the 'data' folder and rename it to mqtt-ca-root.pem!
-                                                     // Example CA cert (Let's Encrypt CA cert) can be found in the 'data - other graphics' subfolder in the root of this repo
+// Don't forget to copy the correct certificate file into the 'data' folder and rename it to mqtt-ca-root.pem!
+// Example CA cert (Let's Encrypt CA cert) can be found in the 'data - other graphics' subfolder in the root of this repo
 
 // ************* Optional temperature sensor *************
-// #define ONE_WIRE_BUS_PIN   4  // DS18B20 connected to GPIO4; comment this line if sensor is not connected
+// #define ONE_WIRE_BUS_PIN 4 // DS18B20 connected to GPIO4; comment this line if sensor is not connected
 
 #endif // USER_DEFINES_H_

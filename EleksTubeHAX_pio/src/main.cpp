@@ -75,11 +75,13 @@ void setup()
   Serial.println("");
   Serial.println(FIRMWARE_VERSION);
   Serial.println("In setup().");
-  
+
   Serial.print("Init NVS flash partition usage...");
   esp_err_t ret = nvs_flash_init(); // Initialize NVS
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    Serial.println("");Serial.println("No free pages in or newer version of NVS partition found. Erasing NVS flash partition...");
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+  {
+    Serial.println("");
+    Serial.println("No free pages in or newer version of NVS partition found. Erasing NVS flash partition...");
     ESP_ERROR_CHECK(nvs_flash_erase());
     ret = nvs_flash_init();
   }
@@ -242,7 +244,7 @@ void loop()
 #ifdef HARDWARE_Elekstube_CLOCK // original EleksTube hardware and direct clones need a reinit to wake up the displays properly
         tfts.reinit();
 #else
-       tfts.enableAllDisplays(); // for all other clocks, just enable the displays
+        tfts.enableAllDisplays(); // for all other clocks, just enable the displays
 #endif
         updateClockDisplay(TFTs::force); // redraw all the clock digits -> needed because the displays was blanked before turning off
         backlights.PowerOn();
@@ -319,7 +321,7 @@ void loop()
   {
     MqttCommandMainBrightnessReceived = false;
     tfts.dimming = MqttCommandMainBrightness;
-    tfts.InvalidateImageInBuffer();
+    tfts.ProcessUpdatedDimming();
     updateClockDisplay(TFTs::force);
   }
 
@@ -463,6 +465,8 @@ void loop()
   HandleGestureInterupt();
 #endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+// if the device has one button only,, no power button functionality is needed!
+#ifndef ONE_BUTTON_ONLY_MENU
   // Power button: If in menu, exit menu. Else turn off displays and backlight.
   if (buttons.power.isDownEdge() && (menu.getState() == Menu::idle))
   { // Power button was pressed: if in the menu, exit menu, else turn off displays and backlight.
@@ -484,6 +488,7 @@ void loop()
       backlights.PowerOn();
     }
   }
+#endif // ONE_BUTTON_ONLY_MENU
 
   menu.loop(buttons); // Must be called after buttons.loop()
   backlights.loop();
@@ -904,14 +909,14 @@ void checkDimmingNeeded()
     { // check if it is in the defined night time
       Serial.println("Set to night time mode (dimmed)!");
       tfts.dimming = TFT_DIMMED_INTENSITY;
-      tfts.InvalidateImageInBuffer();
+      tfts.ProcessUpdatedDimming();
       backlights.setDimming(true);
     }
     else
     {
-      Serial.println("Set to day time mode (normal brightness)!");
+      Serial.println("Set to day time mode (max brightness)!");
       tfts.dimming = 255; // 0..255
-      tfts.InvalidateImageInBuffer();
+      tfts.ProcessUpdatedDimming();
       backlights.setDimming(false);
     }
     updateClockDisplay(TFTs::force); // redraw all the clock digits -> software dimming will be done here
