@@ -11,7 +11,7 @@
 // 日期起始时间(这里为啥要减掉八个小时,因为用的日期所在时区和国内时区相差8小时,所以需要减掉八小时的时区时间)
 // Date start time (why subtract 8 hours here, because the time zone of the date is 8 hours away from the domestic time zone, so subtract 8 hours from the time zone)
 // If you are not a Chinese , change "(8*60*60)" to your country time difference 
-#define SECONDS_FROM_1970_TO_2000 946684800 - (8 * 60 * 60)
+#define SECONDS_FROM_1970_TO_2000 946684800 - (0 * 60 * 60)
 //
 static const uint8_t daysInMonth[] PROGMEM = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
