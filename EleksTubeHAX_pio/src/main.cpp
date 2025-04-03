@@ -66,67 +66,8 @@ void GestureStart();
 void HandleGestureInterupt(void);   // only for NovelLife SE
 void GestureInterruptRoutine(void); // only for NovelLife SE
 void HandleGesture(void);           // only for NovelLife SE
-void scanI2CBus();
-void scanI2CBus2();
 #endif                              // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-void scanI2CBus() {
-  byte error, address;
-  int nDevices = 0;
-  Serial.println("Scanning I2C bus...");
-
-  for(address = 1; address < 127; address++ ) {
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
-
-    if (error == 0) {
-      Serial.print("I2C device FOUND at 0x");
-      if (address < 16)
-        Serial.print("0");
-      Serial.println(address, HEX);
-      nDevices++;
-    } else if (error == 4) {
-      Serial.print("Unknown error at address 0x");
-      if(address < 16)
-        Serial.print("0");
-      Serial.println(address, HEX);
-    }
-  }
-
-  if (nDevices == 0)
-    Serial.println("No I2C devices found.");
-  else
-    Serial.println("done.");
-}
-
-void scanI2CBus2() {
-  byte error, address;
-  int nDevices = 0;
-  Serial.println("Scanning I2C bus...");
-
-  for(address = 1; address < 127; address++ ) {
-    Wire1.beginTransmission(address);
-    error = Wire1.endTransmission();
-
-    if (error == 0) {
-      Serial.print("I2C device FOUND at 0x");
-      if (address < 16)
-        Serial.print("0");
-      Serial.println(address, HEX);
-      nDevices++;
-    } else if (error == 4) {
-      Serial.print("Unknown error at address 0x");
-      if(address < 16)
-        Serial.print("0");
-      Serial.println(address, HEX);
-    }
-  }
-
-  if (nDevices == 0)
-    Serial.println("No I2C devices found.");
-  else
-    Serial.println("done.");
-}
 
 void setup()
 {
@@ -135,12 +76,6 @@ void setup()
   Serial.println("");
   Serial.println(FIRMWARE_VERSION);
   Serial.println("In setup().");
-
-  //Wire.begin(); // setup I2C for the RX8025T RTC chip
-  //scanI2CBus(); // Scan the I2C bus for devices
-
-  //Wire1.begin(33, 32); // setup I2C for the RX8025T RTC chip
-  //scanI2CBus2(); // Scan the I2C bus for devices
 
   Serial.print("Init NVS flash partition usage...");
   esp_err_t ret = nvs_flash_init(); // Initialize NVS
