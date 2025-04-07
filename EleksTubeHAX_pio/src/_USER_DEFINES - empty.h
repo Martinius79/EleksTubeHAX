@@ -8,7 +8,8 @@
 #ifndef USER_DEFINES_H_
 #define USER_DEFINES_H_
 
-// #define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
+#define DEBUG_OUTPIUT_RTC
 
 // ************* Type of the clock hardware  *************
 #define HARDWARE_Elekstube_CLOCK // uncomment for the original Elekstube clock

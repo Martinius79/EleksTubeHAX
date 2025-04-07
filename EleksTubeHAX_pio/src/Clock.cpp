@@ -70,18 +70,52 @@ void RtcSet(uint32_t tt)
 }
 #else // for if defined(HARDWARE_SI_HAI_CLOCK) || defined(HARDWARE_IPSTUBE_CLOCK)
 // Alternatively for the DS1307 RTC chip
-#include <DS1307RTC.h>
+//#include <DS1307RTC.h>
+#include <RTClib.h>
 
-void RtcBegin() {}
+RTC_DS3231 RTC; // DS3231, works also with DS1307 oder PCF8523
+
+void RtcBegin()
+{
+#ifdef DEBUG_OUTPUT_RTC
+  Serial.println("DEBUG_OUTPUT_RTC: RtcBegin() for DS3231 RTC entered.");
+#endif
+  if (!RTC.begin())
+  {
+    Serial.println("NO supported RTC found!");
+  }
+  else
+  {
+#ifdef DEBUG_OUTPUT_RTC
+    Serial.println("DEBUG_OUTPUT_RTC: RTC found!");
+#endif
+  }
+  //Wire.begin(); // Standard: GPIO21 (SDA) & GPIO22 (SCL) for ESP32
+
+  // check if RTC reports a power failure
+  //RTC.lostPower() returns true if the power was lost and the time needs to be set
+  bool bPowerLost = 0;
+  bPowerLost = RTC.lostPower(); // check if RTC lost power
+#ifdef DEBUG_OUTPUT_RTC
+  Serial.print("DEBUG_OUTPUT_RTC: RTC power lost = ");
+  Serial.println(bPowerLost);
+#endif
+  if (bPowerLost)
+  {
+    Serial.println("DEBUG_OUTPUT_RTC: RTC reports power was lost! Setting time to default value.");
+    RTC.adjust(DateTime(2023, 1, 1, 0, 0, 0)); // set the RTC time to a default value
+  }
+}
 
 uint32_t RtcGet()
 {
-#ifdef DEBUG_OUTPUT
-  Serial.println("RtcGet() for DS1307 RTC chip entered.");
+#ifdef DEBUG_OUTPUT_RTC
+  Serial.println("DEBUG_OUTPUT_RTC: RtcGet() for DS3231 RTC entered.");
 #endif
-  uint32_t returnvalue = RTC.get();
-#ifdef DEBUG_OUTPUT
-  Serial.print("RtcGet() = ");
+  DateTime now = RTC.now(); // convert to unix time
+  uint32_t returnvalue = now.unixtime();
+#ifdef DEBUG_OUTPUT_RTC
+  Serial.print("DEBUG_OUTPUT_RTC: DS3231 RTC now.unixtime() = ");
   Serial.println(returnvalue);
 #endif
   return returnvalue;
@@ -89,23 +123,46 @@ uint32_t RtcGet()
 
 void RtcSet(uint32_t tt)
 {
-#ifdef DEBUG_OUTPUT
-  Serial.println("RtcSet() for DS1307 RTC chip entered.");
-  Serial.print("Trying to set time now to: ");
+#ifdef DEBUG_OUTPUT_RTC
+  Serial.println("DEBUG_OUTPUT_RTC: RtcSet() for DS3231 RTC entered.");
+  Serial.print("DEBUG_OUTPUT_RTC: Attempting to set DS3231 RTC to: ");
   Serial.println(tt);
 #endif
 
-  bool re = RTC.set(tt);
-  if (!re)
+  DateTime timetoset(tt); // convert to unix time
+  RTC.adjust(timetoset);  // set the RTC time
+#ifdef DEBUG_OUTPUT
+  Serial.println("DEBUG_OUTPUT_RTC: DS3231 RTC time updated.");
+#endif
+}
+
+float RtcGetTemp()
+{
+#ifdef DEBUG_OUTPUT_RTC
+  Serial.println("DEBUG_OUTPUT_RTC: RtcGetTemp() for DS3231 RTC entered.");
+#endif
+  float temperature = RTC.getTemperature(); // get the temperature from the RTC chip
+#ifdef DEBUG_OUTPUT_RTC
+  Serial.print("DEBUG_OUTPUT_RTC: DS3231 RTC temperature = ");
+  Serial.print(temperature);
+  Serial.println(" °C");
+#endif // DEBUG_OUTPUT_RTC
+  if (temperature < -40 || temperature > 125)
   {
-    Serial.println("RTC set failed!");
+    Serial.println("DEBUG_OUTPUT_RTC: DS3231 RTC temperature is invalid!");
+    temperature = 0; // set to 0 if invalid
   }
   else
   {
-    Serial.println("RTC set OK!");
+    Serial.println("DEBUG_OUTPUT_RTC: DS3231 RTC temperature is valid!");
   }
+  return temperature;
 }
+
 #endif // end of RTC chip selection, else of (if defined(HARDWARE_SI_HAI_CLOCK) || defined(HARDWARE_IPSTUBE_CLOCK))
+
+
+//-------------------------------------------------------------------------------------------------
 
 void Clock::begin(StoredConfig::Config::Clock *config_)
 {
@@ -192,6 +249,7 @@ time_t Clock::syncProvider()
         millis_last_ntp = millis(); // store the last time we tried to get NTP time
 
         Serial.println("Using NTP time!");
+        RtcGetTemp(); // get the temperature from the RTC chip
         return ntp_now;
       }
       else
@@ -204,7 +262,7 @@ time_t Clock::syncProvider()
     Serial.println("No WiFi, using RTC time.");
     return rtc_now;
   }
-  Serial.println("Using RTC time.");
+  Serial.println("Using RTC time.");  
   return rtc_now;
 }
 
