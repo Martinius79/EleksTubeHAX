@@ -93,12 +93,12 @@ void WifiBegin()
   WiFi.mode(WIFI_STA);
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
   WiFi.setHostname(DEVICE_NAME);
+  WiFi.setAutoReconnect(false); // disable auto reconnect - we do it manually
 
 #ifdef WIFI_USE_WPS // WPS code
   // no data is saved, start WPS imediatelly
   if (stored_config.config.wifi.WPS_connected != StoredConfig::valid)
-  {
-    // Config is invalid, probably a new device never had its config written.
+  { // Config is invalid, probably a new device never had its config written.
     Serial.println("Loaded Wifi config is invalid. Not connecting to WiFi.");
     WiFiStartWps(); // infinite loop until connected
   }
@@ -170,6 +170,7 @@ void WifiReconnect()
 {
   if ((WifiState == disconnected) && ((millis() - TimeOfWifiReconnectAttempt) > WIFI_RETRY_CONNECTION_SEC * 1000))
   {
+    Serial.println("");
     Serial.println("Attempting WiFi reconnection...");
     WiFi.reconnect();
     TimeOfWifiReconnectAttempt = millis();
