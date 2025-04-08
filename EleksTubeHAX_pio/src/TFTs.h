@@ -14,7 +14,7 @@
 class TFTs : public TFT_eSPI
 {
 public:
-  TFTs() : TFT_eSPI(), chip_select(), enabled(false)
+  TFTs() : TFT_eSPI(), chip_select(), TFTsEnabled(false)
   {
 #ifndef HARDWARE_IPSTUBE_CLOCK
     for (uint8_t digit = 0; digit < NUM_DIGITS; digit++)
@@ -40,7 +40,6 @@ public:
   void clear();
   void showNoWifiStatus();
   void showNoMqttStatus();
-  void showTemperature();
 
   void setDigit(uint8_t digit, uint8_t value, show_t show = yes);
   uint8_t getDigit(uint8_t digit) { return digits[digit]; }
@@ -56,7 +55,7 @@ public:
   void enableAllDisplays();
   void disableAllDisplays();
   void toggleAllDisplays();
-  bool isEnabled() { return enabled; }
+  bool isEnabled() { return TFTsEnabled; }
 
   // Making chip_select public so we don't have to proxy all methods, and the caller can just use it directly.
   ChipSelect chip_select;
@@ -71,7 +70,7 @@ public:
 
 private:
   uint8_t digits[NUM_DIGITS];
-  bool enabled;
+  bool TFTsEnabled = false;
 
   bool FileExists(const char *path);
   int8_t CountNumberOfClockFaces();

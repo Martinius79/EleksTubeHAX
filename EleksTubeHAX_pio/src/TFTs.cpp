@@ -1,7 +1,6 @@
 #include "TFTs.h"
 #include "WiFi_WPS.h"
-#include "Mqtt_client_ips.h"
-#include "TempSensor.h"
+#include "MQTT_client_ips.h"
 
 void TFTs::begin()
 {
@@ -33,7 +32,7 @@ void TFTs::begin()
 
 void TFTs::reinit()
 {
-  if (!enabled) // perform re-init only if displays are actually off. HA sends ON command together with clock face change which causes flickering.
+  if (!TFTsEnabled) // perform re-init only if displays are actually off. HA sends ON command together with clock face change which causes flickering.
   {
 #ifndef TFT_SKIP_REINIT
     // Start with all displays selected.
@@ -105,7 +104,7 @@ void TFTs::showNoMqttStatus()
 void TFTs::enableAllDisplays()
 {
   // Turn "power" on to displays.
-  enabled = true;
+  TFTsEnabled = true;
 #ifndef DIM_WITH_ENABLE_PIN_PWM
   digitalWrite(TFT_ENABLE_PIN, ACTIVATEDISPLAYS);
 #else
@@ -117,7 +116,7 @@ void TFTs::enableAllDisplays()
 void TFTs::disableAllDisplays()
 {
   // Turn "power" off to displays.
-  enabled = false;
+  TFTsEnabled = false;
 #ifndef DIM_WITH_ENABLE_PIN_PWM
   digitalWrite(TFT_ENABLE_PIN, DEACTIVATEDISPLAYS);
 #else
@@ -128,7 +127,7 @@ void TFTs::disableAllDisplays()
 
 void TFTs::toggleAllDisplays()
 {
-  if (enabled)
+  if (TFTsEnabled)
   {
     disableAllDisplays();
   }
@@ -138,51 +137,30 @@ void TFTs::toggleAllDisplays()
   }
 }
 
-void TFTs::showTemperature()
-{
-#ifdef ONE_WIRE_BUS_PIN
-  if (fTemperature > -30)
-  { // only show if temperature is valid
-    chip_select.setHoursOnes();
-    setTextColor(TFT_CYAN, TFT_BLACK);
-    fillRect(0, TFT_HEIGHT - 17, TFT_WIDTH, 17, TFT_BLACK);
-    setCursor(5, TFT_HEIGHT - 17, 2); // Font 2. 16 pixel high
-    print("T: ");
-    print(sTemperatureTxt);
-    print(" C");
-  }
-#ifdef DEBUG_OUTPUT
-  Serial.println("Temperature to LCD");
-#endif
-#endif
-}
-
 void TFTs::setDigit(uint8_t digit, uint8_t value, show_t show)
 {
-  uint8_t old_value = digits[digit];
-  digits[digit] = value;
+  if (TFTsEnabled)
+  { // only do this, if the displays are enabled
+    uint8_t old_value = digits[digit];
+    digits[digit] = value;
 
-  if (show != no && (old_value != value || show == force))
-  {
-    showDigit(digit);
-
-    if (digit == SECONDS_ONES)
-      if (WifiState != connected)
-      {
-        showNoWifiStatus();
-      }
-
-#ifdef MQTT_ENABLED
-    if (digit == SECONDS_TENS)
-      if (!MqttConnected)
-      {
-        showNoMqttStatus();
-      }
-#endif
-
-    if (digit == HOURS_ONES)
+    if (show != no && (old_value != value || show == force))
     {
-      showTemperature();
+      showDigit(digit);
+
+      if (digit == SECONDS_ONES)
+        if (WifiState != connected)
+        {
+          showNoWifiStatus();
+        }
+
+#if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
+      if (digit == SECONDS_TENS)
+        if (!MQTTConnected)
+        {
+          showNoMqttStatus();
+        }
+#endif
     }
   }
 }
@@ -193,7 +171,7 @@ void TFTs::setDigit(uint8_t digit, uint8_t value, show_t show)
 
 void TFTs::showDigit(uint8_t digit)
 {
-  if (enabled)
+  if (TFTsEnabled)
   { // only do this, if the displays are enabled
     chip_select.setDigit(digit);
 
@@ -222,7 +200,7 @@ void TFTs::LoadNextImage()
 {
   if (NextFileRequired != FileInBuffer)
   {
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
     Serial.println("Preload next img");
 #endif
     LoadImageIntoBuffer(NextFileRequired);
@@ -239,7 +217,7 @@ void TFTs::ProcessUpdatedDimming()
 #ifdef DIM_WITH_ENABLE_PIN_PWM
   // hardware dimming is done via PWM on the pin defined by TFT_ENABLE_PIN
   // ONLY for IPSTUBE clocks in the moment! Other clocks may be damaged!
-  if (enabled)
+  if (TFTsEnabled)
   {
     ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(dimming));
   }
@@ -302,7 +280,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   char filename[10];
   sprintf(filename, "/%d.bmp", file_index);
 
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("Loading: ");
   Serial.println(filename);
 #endif
@@ -353,7 +331,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t x = (TFT_WIDTH - w) / 2;
   int16_t y = (TFT_HEIGHT - h) / 2;
 
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
   Serial.print(" image W, H, BPP: ");
   Serial.print(w);
   Serial.print(", ");
@@ -448,7 +426,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   FileInBuffer = file_index;
 
   bmpFS.close();
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img load time: ");
   Serial.println(millis() - StartTime);
 #endif
@@ -488,7 +466,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   char filename[10];
   sprintf(filename, "/%d.clk", file_index);
 
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("Loading: ");
   Serial.println(filename);
 #endif
@@ -532,7 +510,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t x = (TFT_WIDTH - w) / 2;
   int16_t y = (TFT_HEIGHT - h) / 2;
 
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
   Serial.print(" image W, H: ");
   Serial.print(w);
   Serial.print(", ");
@@ -587,7 +565,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   FileInBuffer = file_index;
 
   bmpFS.close();
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img load time: ");
   Serial.println(millis() - StartTime);
 #endif
@@ -599,7 +577,7 @@ void TFTs::DrawImage(uint8_t file_index)
 {
 
   uint32_t StartTime = millis();
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
   Serial.println("");
   Serial.print("Drawing image: ");
   Serial.println(file_index);
@@ -607,7 +585,7 @@ void TFTs::DrawImage(uint8_t file_index)
   // check if file is already loaded into buffer; skip loading if it is. Saves 50 to 150 msec of time.
   if (file_index != FileInBuffer)
   {
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
     Serial.println("Not preloaded; loading now...");
 #endif
     LoadImageIntoBuffer(file_index);
@@ -618,7 +596,7 @@ void TFTs::DrawImage(uint8_t file_index)
   pushImage(0, 0, TFT_WIDTH, TFT_HEIGHT, reinterpret_cast<uint16_t *>(UnpackedImageBuffer));
   setSwapBytes(oldSwapBytes);
 
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img transfer time: ");
   Serial.println(millis() - StartTime);
 #endif
