@@ -241,7 +241,7 @@ time_t Clock::syncProvider()
       {
         Serial.print(".");
         time_t ntp_now = ntpTimeClient.getEpochTime();
-        Serial.println("Done!");
+        Serial.println("NTP query done.");
         Serial.print("NTP time = ");
         Serial.println(ntpTimeClient.getFormattedTime());
         rtc_now = RtcGet(); // Get the RTC time again, because it may have changed in the meantime
@@ -273,7 +273,7 @@ time_t Clock::syncProvider()
         return ntp_now;
       }
       else
-      {                     // NTP return not valid
+      { // NTP return value is not valid
         rtc_now = RtcGet(); // Get the RTC time again, because it may have changed in the meantime
         Serial.println("Invalid NTP response, using RTC time.");
         return rtc_now;

@@ -67,7 +67,6 @@ void GestureInterruptRoutine(void); // only for NovelLife SE
 void HandleGesture(void);           // only for NovelLife SE
 #endif                              // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-
 void setup()
 {
   Serial.begin(115200);
