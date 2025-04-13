@@ -296,6 +296,7 @@ void MQTTReportState(bool forceUpdateEverything)
     JsonDocument state;
     state["state"] = MQTTStatusMainPower == 0 ? MQTT_STATE_OFF : MQTT_STATE_ON;
     state["brightness"] = MQTTStatusMainBrightness;
+    state["color_mode"] = "brightness";
     state["effect"] = tfts.clockFaceToName(MQTTStatusMainGraphic);
 
     if (!MQTTPublish(concat3(MQTT_CLIENT, "/", TopicFront), &state, MQTT_RETAIN_STATE_MESSAGES))
