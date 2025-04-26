@@ -165,10 +165,10 @@ void setup()
   // Setup the clock.  It needs WiFi to be established already.
   tfts.setTextColor(TFT_MAGENTA, TFT_BLACK);
   tfts.print("Clock start...");
-  Serial.print("Clock start...");
+  Serial.println("Clock start-up...");
   uclock.begin(&stored_config.config.uclock);
   tfts.println("Done!");
-  Serial.println("Done!");
+  Serial.println("Clock start-up done!");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
 #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
@@ -772,14 +772,14 @@ void loop()
     }
   }
 #ifdef DEBUG_OUTPUT
-  if (time_in_loop <= 1)
+  if (time_in_loop <= 2) // if the loop time is less than 2ms, we don't need to print it in detail
     Serial.print(".");
   else
   {
-    Serial.print("time spent in loop (ms): ");
+    Serial.print("time spent in loop (ms): "); // print the time spent in the loop
     Serial.println(time_in_loop);
   }
-#endif
+#endif // DEBUG_OUTPUT
 }
 
 #ifdef HARDWARE_NovelLife_SE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
