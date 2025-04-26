@@ -25,12 +25,28 @@ void ChipSelect::begin()
   digitalWrite(CSSR_LATCH_PIN, LOW);
   update();
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::begin - Initializing ChipSelect...");
+#endif
   // Initialize all six different pins for the CS of each LCD as OUTPUT and set it to HIGH (disabled)
   for (int i = 0; i < numLCDs; ++i)
   {
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::begin - Initializing pin: ");
+    Serial.print(lcdEnablePins[i]);
+    Serial.print(" as OUTPUT and set to HIGH (disabled)");
+#endif
     pinMode(lcdEnablePins[i], OUTPUT);
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::begin - calling digitalWrite() with HIGH (disabled) for pin: ");
+    Serial.println(lcdEnablePins[i]);
+#endif
     digitalWrite(lcdEnablePins[i], HIGH);
   }
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::begin - Initialized ALL CS pins as OUTPUT and set to HIGH (disabled)");
+  Serial.println("ChipSelect::begin - Finished!");
+#endif
 #endif
 }
 
@@ -39,7 +55,14 @@ void ChipSelect::clear(bool update_)
 #ifndef HARDWARE_IPSTUBE_CLOCK
   setDigitMap(all_off, update_);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::clear - Setting all CS pins to HIGH (disabled) by calling disableAllCSPins()");
+#endif
   disableAllCSPins();
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::clear - All CS pins disabled");
+  Serial.println("ChipSelect::clear - Finished!");
+#endif
 #endif
 }
 
@@ -48,7 +71,14 @@ void ChipSelect::setAll(bool update_)
 #ifndef HARDWARE_IPSTUBE_CLOCK
   setDigitMap(all_on, update_);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::setAll - Setting all CS pins to LOW (enabled) by calling enableAllCSPins()");
+#endif
   enableAllCSPins();
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::setAll - All CS pins enabled");
+  Serial.println("ChipSelect::setAll - Finished!");
+#endif
 #endif
 }
 
@@ -60,6 +90,12 @@ void ChipSelect::setDigit(uint8_t digit, bool update_)
   if (update_)
     update();
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::setDigit - digit to activate: ");
+  Serial.println(digit);
+  Serial.print("ChipSelect::setDigit - Selected digit from last run or elsewhere ('old' currentLCD): ");
+  Serial.println(currentLCD);
+#endif
   // Set the actual currentLCD value for the given digit and activate the corresponding LCD
 
   // first deactivate the current LCD
@@ -69,6 +105,11 @@ void ChipSelect::setDigit(uint8_t digit, bool update_)
   // activate the new one
   enableDigitCSPins(digit);
   // NO UPDATE, cause update enables and disables the pin, but needs to be "enabled", while eTFT_SPI is writing into it.
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::setDigit - Activated digit ('new' currentLCD): ");
+  Serial.println(digit);
+  Serial.println("ChipSelect::setDigit - Finished!");
+#endif
 #endif
 }
 
@@ -90,7 +131,16 @@ void ChipSelect::update()
   // for IPSTUBE clocks, the CS pin is already pulled to LOW by the "setDigit" function and stays there, till another "setDigit" is called.
   // so all writing done by the eTFT_SPI lib functions in the time, the pin is low, will write out directly to the LCD.
   //"Update" never will work, because, if pin was HIGH, no writing was done.
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::update - Current LCD: ");
+  Serial.println(currentLCD);
+  Serial.print("ChipSelect::update - Calling digitalWrite() with HIGH (disabled) for pin: ");
+  Serial.println(lcdEnablePins[currentLCD]);  
+#endif
   digitalWrite(lcdEnablePins[currentLCD], LOW);
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::update - Finished!");
+#endif
 #endif
 }
 
@@ -99,6 +149,10 @@ bool ChipSelect::isSecondsOnes()
 #ifndef HARDWARE_IPSTUBE_CLOCK
   return ((digits_map & SECONDS_ONES_MAP) > 0);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::isSecondsOnes - Current LCD: ");
+  Serial.println(currentLCD);
+#endif
   return true;
 #endif
 }
@@ -108,6 +162,10 @@ bool ChipSelect::isSecondsTens()
 #ifndef HARDWARE_IPSTUBE_CLOCK
   return ((digits_map & SECONDS_TENS_MAP) > 0);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::isSecondsTens - Current LCD: ");
+  Serial.println(currentLCD);
+#endif
   return true;
 #endif
 }
@@ -117,6 +175,10 @@ bool ChipSelect::isMinutesOnes()
 #ifndef HARDWARE_IPSTUBE_CLOCK
   return ((digits_map & MINUTES_ONES_MAP) > 0);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::isMinutesOnes - Current LCD: ");
+  Serial.println(currentLCD);
+#endif
   return true;
 #endif
 }
@@ -126,6 +188,10 @@ bool ChipSelect::isMinutesTens()
 #ifndef HARDWARE_IPSTUBE_CLOCK
   return ((digits_map & MINUTES_TENS_MAP) > 0);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::isMinutesTens - Current LCD: ");
+  Serial.println(currentLCD);
+#endif
   return true;
 #endif
 }
@@ -135,6 +201,10 @@ bool ChipSelect::isHoursOnes()
 #ifndef HARDWARE_IPSTUBE_CLOCK
   return ((digits_map & HOURS_ONES_MAP) > 0);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::isHoursOnes - Current LCD: ");
+  Serial.println(currentLCD);
+#endif
   return true;
 #endif
 }
@@ -144,6 +214,10 @@ bool ChipSelect::isHoursTens()
 #ifndef HARDWARE_IPSTUBE_CLOCK
   return ((digits_map & HOURS_TENS_MAP) > 0);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::isHoursTens - Current LCD: ");
+  Serial.println(currentLCD);
+#endif
   return true;
 #endif
 }
@@ -151,37 +225,81 @@ bool ChipSelect::isHoursTens()
 void ChipSelect::enableAllCSPins()
 {
 #ifdef HARDWARE_IPSTUBE_CLOCK
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::enableAllCSPins - Enabling all CS pins...");
+#endif
   // enable each LCD
   for (int i = 0; i < numLCDs; ++i)
   {
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::enableAllCSPins - calling digitalWrite() with LOW (enabled) for pin: ");
+    Serial.println(lcdEnablePins[i]);
+#endif
     digitalWrite(lcdEnablePins[i], LOW);
   }
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::enableAllCSPins - All CS pins enabled");
+  Serial.println("ChipSelect::enableAllCSPins - Finished!");
+#endif
 #endif
 }
 
 void ChipSelect::disableAllCSPins()
 {
 #ifdef HARDWARE_IPSTUBE_CLOCK
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::disableAllCSPins - Disabling all CS pins...");
+#endif
   // disable each LCD
   for (int i = 0; i < numLCDs; ++i)
   {
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::disableAllCSPins - calling digitalWrite() with HIGH (disabled) for pin: ");
+    Serial.println(lcdEnablePins[i]);
+#endif
     digitalWrite(lcdEnablePins[i], HIGH);
   }
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::disableAllCSPins - All CS pins disabled");
+  Serial.println("ChipSelect::disableAllCSPins - Finished!");
+#endif
 #endif
 }
 
 void ChipSelect::enableDigitCSPins(uint8_t digit)
 {
 #ifdef HARDWARE_IPSTUBE_CLOCK
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+Serial.print("ChipSelect::enableDigitCSPins - Digit to enable: ");
+Serial.println(digit);
+Serial.print("ChipSelect::enableDigitCSPins - Current LCD: ");
+Serial.println(currentLCD);
+Serial.print("ChipSelect::enableDigitCSPins - calling digitalWrite() with LOW (enabled) for pin: ");
+Serial.println(lcdEnablePins[digit]);
+#endif
   // enable the LCD for the given digit
   digitalWrite(lcdEnablePins[digit], LOW);
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::enableDigitCSPins - Finished!");
+#endif
 #endif
 }
 
 void ChipSelect::disableDigitCSPins(uint8_t digit)
 {
 #ifdef HARDWARE_IPSTUBE_CLOCK
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::disableDigitCSPins - Digit to disable: ");
+  Serial.println(digit);
+  Serial.print("ChipSelect::disableDigitCSPins - Current LCD: ");
+  Serial.println(currentLCD);
+  Serial.print("ChipSelect::disableDigitCSPins - calling digitalWrite() with HIGH (disabled) for pin: ");
+  Serial.println(lcdEnablePins[digit]);
+#endif
   // disable the LCD for the given digit
   digitalWrite(lcdEnablePins[digit], HIGH);
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::disableDigitCSPins - Finished!");
+#endif
 #endif
 }
