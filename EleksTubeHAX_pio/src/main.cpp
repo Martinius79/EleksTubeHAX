@@ -75,6 +75,18 @@ void setup()
   Serial.println(FIRMWARE_VERSION);
   Serial.println("In setup().");
 
+  uint32_t actualCPUFreq = getCpuFrequencyMhz(); // Get the CPU frequency to see if we need to set it.
+  Serial.print("CPU Frequency: ");
+  Serial.println(actualCPUFreq);
+  if (actualCPUFreq != 240)
+  {
+    Serial.println("CPU Frequency not set to 240 MHz!");
+    Serial.println("Setting CPU Frequency to 240 MHz.");
+    setCpuFrequencyMhz(240); // Setze die CPU-Frequenz auf 240 MHz
+    Serial.print("CPU Frequency set to: ");
+    Serial.println(getCpuFrequencyMhz()); // Get the CPU frequency to see if we need to set it.
+  }
+
   Serial.print("Init NVS flash partition usage...");
   esp_err_t ret = nvs_flash_init(); // Initialize NVS
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -96,6 +108,28 @@ void setup()
 
   // Setup the displays (TFTs) initaly and show bootup message(s)
   tfts.begin(); // and count number of clock faces available
+
+  // for (uint8_t i = 0; i < NUM_DIGITS; i++)
+  // {
+  //   Serial.print("Testing CS pin for display ");
+  //   Serial.println(i);
+  //     tfts.setDigit(i, false); // Activate the CS pin for the current display
+
+  //     Serial.println("Beginning SPI transaction for display ");        
+  //     SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
+  //     uint8_t testData[3] = {0xFF, 0x00, 0xAA}; // Example data
+  //     SPI.transfer(testData, sizeof(testData));
+  //     Serial.println("SPI transaction completed for display ");
+  //     SPI.endTransaction();
+  //     Serial.println("Ending SPI transaction for display ");
+
+  //     Serial.println("disableDigitCSPins for display ");
+  //     tfts.chip_select.disableDigitCSPins(i); // Deactivate the CS pin (using 'deselect' instead of 'disable')
+
+  //     Serial.println("Waiting for 11.5 seconds to observe the result for display ");
+  //     delay(500); // Wait to observe the result
+  // }
+
   tfts.fillScreen(TFT_BLACK);
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
   tfts.setCursor(0, 0, 2); // Font 2. 16 pixel high
@@ -203,6 +237,10 @@ void setup()
   uclock.loop();
   updateClockDisplay(TFTs::force); // Draw all the clock digits
   Serial.println("Setup finished.");
+
+
+ 
+
 }
 
 void loop()

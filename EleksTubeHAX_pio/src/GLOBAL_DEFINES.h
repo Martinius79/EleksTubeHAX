@@ -408,7 +408,7 @@
 #define TFT_MOSI (GPIO_NUM_32) // pin 12 is GPIO32
 #define TFT_SCLK (GPIO_NUM_33) // pin 13 is GPIO33
 
-#define TFT_CS (-1)           // MUST be -1 for IPSTUBE clocks -> chipselect class does the magic also without a shift register
+#define TFT_CS -1           // MUST be -1 for IPSTUBE clocks -> chipselect class does the magic also without a shift register
 #define TFT_DC (GPIO_NUM_25)  // pin 14 is GPIO25 - Data Command, aka Register Select or RS
 #define TFT_RST (GPIO_NUM_26) // pin 15 is GPIO26 - Connect reset to ensure display initialises
 
@@ -426,9 +426,10 @@
 
 #define SMOOTH_FONT
 
-#define SPI_FREQUENCY 40000000
+#define SPI_FREQUENCY 40000000 // 27MHz is the default for the ESP32, but 40MHz is also supported and faster
+// #define SPI_FREQUENCY 80000000 // 80MHz is the maximum for the ESP32, but not all displays support this speed!
 
-#define SPI_READ_FREQUENCY 20000000
+#define SPI_READ_FREQUENCY 10000000 // 20MHz is the maximum for the ESP32, but not all displays support this speed!
 
 /*
  * To make the Library not over-write all this:
