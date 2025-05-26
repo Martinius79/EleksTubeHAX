@@ -15,6 +15,7 @@
 
 #include <RTC_RX8025T.h>
 #include <Wire.h>
+#include "../../src/GLOBAL_DEFINES.h" // For debug macros
 
 #define _BV2(bit) (1 << (bit))
 
@@ -97,9 +98,7 @@ void RX8025T::init(uint32_t rtcSDA, uint32_t rtcSCL, TwoWire &wireBus)
 {
   i2cBus = &wireBus; // Assign the passed TwoWire instance to the member variable
 
-#ifdef DEBUG_OUTPUT_RTC  
-  Serial.println("DEBUG_OUTPUT_RTC: RX8025T RTC SDA pin: " + String(rtcSDA) + " and SCL pin: " + String(rtcSCL));
-#endif
+  DBG_RTC(String("DEBUG_OUTPUT_RTC: RX8025T RTC SDA pin: ") + String(rtcSDA) + " and SCL pin: " + String(rtcSCL));
 
   if (rtcSDA != -1 && rtcSCL != -1)
   {
@@ -115,9 +114,7 @@ void RX8025T::init(uint32_t rtcSDA, uint32_t rtcSCL, TwoWire &wireBus)
 
   if (statusReg & mask)
   {
-#ifdef DEBUG_OUTPUT_RTC
-    Serial.println("DEBUG_OUTPUT_RTC: Resetting RX8025T due to VLF or VDET flag.");
-#endif
+    DBG_RTC("DEBUG_OUTPUT_RTC: Resetting RX8025T due to VLF or VDET flag.");
     writeRTC(RX8025T_RTC_CONTROL, _BV(RESET)); // Reset module
   }
 
@@ -138,10 +135,8 @@ time_t RX8025T::get()
 
   if (read(tm))
   {
-#ifdef DEBUG_OUTPUT_RTC
-        Serial.println("DEBUG_OUTPUT_RTC: Failed to read time from RX8025T.");
-#endif
-        return 0;
+    DBG_RTC("DEBUG_OUTPUT_RTC: Failed to read time from RX8025T.");
+    return 0;
   }
   
   return makeTime(tm);
@@ -170,10 +165,7 @@ uint8_t RX8025T::read(tmElements_t &tm)
   i2cBus->write((uint8_t)RX8025T_SECONDS);
   if (uint8_t e = i2cBus->endTransmission())
   {
-#ifdef DEBUG_OUTPUT_RTC
-    Serial.print("DEBUG_OUTPUT_RTC: I2C error during read: ");
-    Serial.println(e);
-#endif
+    DBG_RTC(String("DEBUG_OUTPUT_RTC: I2C error during read: ") + e);
     return e;
   }
 
@@ -249,10 +241,7 @@ uint8_t RX8025T::readRTC(uint8_t addr, uint8_t *values, uint8_t nBytes)
   i2cBus->write(addr);
   if (uint8_t e = i2cBus->endTransmission())
   {
-#ifdef DEBUG_OUTPUT_RTC
-    Serial.print("DEBUG_OUTPUT_RTC: I2C error during read: ");
-    Serial.println(e);
-#endif
+    DBG_RTC(String("DEBUG_OUTPUT_RTC: I2C error during read: ") + e);
     return e;
   }
 

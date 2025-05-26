@@ -8,7 +8,7 @@ void TFTs::begin()
   chip_select.setAll(); // Start with all displays selected
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
-  // if hardware dimming is used, we need to attach the pin to a PWM channel  
+  // if hardware dimming is used, we need to attach the pin to a PWM channel
   ledcSetup(TFT_ENABLE_PIN, 20000, 8); // 20 kHz PWM, 8-Bit resolution
   ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL); // Attach the pin to the PWM channel
 #else
@@ -200,9 +200,7 @@ void TFTs::LoadNextImage()
 {
   if (NextFileRequired != FileInBuffer)
   {
-#ifdef DEBUG_OUTPUT_IMAGES
-    Serial.println("Preload next img");
-#endif
+    DBG_IMG("DEBUG_OUTPUT_IMAGES: Preload next img");
     LoadImageIntoBuffer(NextFileRequired);
   }
 }
@@ -214,7 +212,7 @@ void TFTs::InvalidateImageInBuffer()
 
 void TFTs::ProcessUpdatedDimming()
 {
-#ifdef DIM_WITH_ENABLE_PIN_PWM
+#ifdef DIM_WITH_ENABLE_PIN_PWM // hardware dimming
   // hardware dimming is done via PWM on the pin defined by TFT_ENABLE_PIN
   // ONLY for IPSTUBE clocks in the moment! Other clocks may be damaged!
   if (TFTsEnabled)
@@ -223,10 +221,10 @@ void TFTs::ProcessUpdatedDimming()
   }
   else
   {
-    // no dimming means 255 (full brightness)
+    // TFTs are switched off, set PWM to 255 (off) by use dimming value 0
     ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(0));
   }
-#else
+#else // software dimming
   // "software" dimming is done via alpha blending in the image drawing function
   // signal that the image in the buffer is invalid and needs to be reloaded and refilled
   InvalidateImageInBuffer();
@@ -280,17 +278,13 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   char filename[10];
   sprintf(filename, "/%d.bmp", file_index);
 
-#ifdef DEBUG_OUTPUT_IMAGES
-  Serial.print("Loading: ");
-  Serial.println(filename);
-#endif
+  DBG_IMG(String("DEBUG_OUTPUT_IMAGES: Loading: ") + filename);
 
   // Open requested file on SD card
   bmpFS = SPIFFS.open(filename, "r");
   if (!bmpFS)
   {
-    Serial.print("File not found: ");
-    Serial.println(filename);
+    DBG_IMG(String("DEBUG_OUTPUT_IMAGES: File not found: ") + filename);
     return (false);
   }
 
@@ -331,20 +325,9 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t x = (TFT_WIDTH - w) / 2;
   int16_t y = (TFT_HEIGHT - h) / 2;
 
-#ifdef DEBUG_OUTPUT_IMAGES
-  Serial.print(" image W, H, BPP: ");
-  Serial.print(w);
-  Serial.print(", ");
-  Serial.print(h);
-  Serial.print(", ");
-  Serial.println(bitDepth);
-  Serial.print(" dimming: ");
-  Serial.println(dimming);
-  Serial.print(" offset x, y: ");
-  Serial.print(x);
-  Serial.print(", ");
-  Serial.println(y);
-#endif
+  DBG_IMG(String("DEBUG_OUTPUT_IMAGES: Image W, H, BPP: ") + w + ", " + h + ", " + bitDepth +
+           "\n dimming: " + dimming +
+           "\n offset x, y: " + x + ", " + y);
   if (read32(bmpFS) != 0 || (bitDepth != 24 && bitDepth != 1 && bitDepth != 4 && bitDepth != 8))
   {
     Serial.println("BMP format not recognized.");
@@ -426,10 +409,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   FileInBuffer = file_index;
 
   bmpFS.close();
-#ifdef DEBUG_OUTPUT_IMAGES
-  Serial.print("img load time: ");
-  Serial.println(millis() - StartTime);
-#endif
+  DBG_IMG(String("DEBUG_OUTPUT_IMAGES: Image load time: ") + (millis() - StartTime));
   return (true);
 }
 #endif
@@ -466,17 +446,13 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   char filename[10];
   sprintf(filename, "/%d.clk", file_index);
 
-#ifdef DEBUG_OUTPUT_IMAGES
-  Serial.print("Loading: ");
-  Serial.println(filename);
-#endif
+  DBG_IMG(String("DEBUG_OUTPUT_IMAGES: Loading: ") + filename);
 
   // Open requested file on SD card
   bmpFS = SPIFFS.open(filename, "r");
   if (!bmpFS)
   {
-    Serial.print("File not found: ");
-    Serial.println(filename);
+    DBG_IMG(String("DEBUG_OUTPUT_IMAGES: File not found: ") + filename);
     return (false);
   }
 
@@ -510,18 +486,9 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t x = (TFT_WIDTH - w) / 2;
   int16_t y = (TFT_HEIGHT - h) / 2;
 
-#ifdef DEBUG_OUTPUT_IMAGES
-  Serial.print(" image W, H: ");
-  Serial.print(w);
-  Serial.print(", ");
-  Serial.println(h);
-  Serial.print(" dimming: ");
-  Serial.println(dimming);
-  Serial.print(" offset x, y: ");
-  Serial.print(x);
-  Serial.print(", ");
-  Serial.println(y);
-#endif
+  DBG_IMG(String("DEBUG_OUTPUT_IMAGES: Image W, H: ") + w + ", " + h +
+           "\n dimming: " + dimming +
+           "\n offset x, y: " + x + ", " + y);
 
   uint8_t lineBuffer[w * 2];
 
@@ -565,10 +532,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   FileInBuffer = file_index;
 
   bmpFS.close();
-#ifdef DEBUG_OUTPUT_IMAGES
-  Serial.print("img load time: ");
-  Serial.println(millis() - StartTime);
-#endif
+  DBG_IMG(String("DEBUG_OUTPUT_IMAGES: Image load time: ") + (millis() - StartTime));
   return (true);
 }
 #endif
@@ -577,17 +541,11 @@ void TFTs::DrawImage(uint8_t file_index)
 {
 
   uint32_t StartTime = millis();
-#ifdef DEBUG_OUTPUT_IMAGES
-  Serial.println("");
-  Serial.print("Drawing image: ");
-  Serial.println(file_index);
-#endif
+  DBG_IMG("\nDEBUG_OUTPUT_IMAGES: Drawing image: " + String(file_index));
   // check if file is already loaded into buffer; skip loading if it is. Saves 50 to 150 msec of time.
   if (file_index != FileInBuffer)
   {
-#ifdef DEBUG_OUTPUT_IMAGES
-    Serial.println("Not preloaded; loading now...");
-#endif
+    DBG_IMG("DEBUG_OUTPUT_IMAGES: Not preloaded; loading now...");
     LoadImageIntoBuffer(file_index);
   }
 
@@ -596,10 +554,7 @@ void TFTs::DrawImage(uint8_t file_index)
   pushImage(0, 0, TFT_WIDTH, TFT_HEIGHT, reinterpret_cast<uint16_t *>(UnpackedImageBuffer));
   setSwapBytes(oldSwapBytes);
 
-#ifdef DEBUG_OUTPUT_IMAGES
-  Serial.print("img transfer time: ");
-  Serial.println(millis() - StartTime);
-#endif
+  DBG_IMG("DEBUG_OUTPUT_IMAGES: Image transfer time: " + String(millis() - StartTime) + " ms\n-------");
 }
 
 // These read 16- and 32-bit types from the SD card file.

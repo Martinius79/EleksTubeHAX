@@ -738,8 +738,7 @@ void loop()
     Serial.print(".");
   else
   {
-    Serial.print("time spent in loop (ms): "); // print the time spent in the loop
-    Serial.println(time_in_loop);
+    Serial.println("time spent in loop: " + String(time_in_loop) + " ms");
   }
 #endif // DEBUG_OUTPUT
 }

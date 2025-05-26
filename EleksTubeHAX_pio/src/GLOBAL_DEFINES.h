@@ -70,14 +70,14 @@
 
 // Define the activate and deactivate state for the diplay power transistor
 // also define, how the dimming value is calculated
-#ifndef HARDWARE_IPSTUBE_CLOCK
-#define ACTIVATEDISPLAYS HIGH  // Activate is HIGH for the IPSTUBEs
-#define DEACTIVATEDISPLAYS LOW // Deactivate is LOW for the IPSTUBEs
+#ifndef HARDWARE_IPSTUBE_CLOCK // for all clocks, except HARDWARE_IPSTUBE_CLOCK
+#define ACTIVATEDISPLAYS HIGH  // Activate is HIGH
+#define DEACTIVATEDISPLAYS LOW // Deactivate is LOW
 #define CALCDIMVALUE(x) (x)    // Dimming value is directly used for software dimming
-#else
-#define ACTIVATEDISPLAYS LOW      // Activate is LOW for the Elekstube
-#define DEACTIVATEDISPLAYS HIGH   // Deactivate is HIGH for the Elekstube
-#define CALCDIMVALUE(x) (255 - x) // Dimming value is inverted for hardware dimming
+#else // only for HARDWARE_IPSTUBE_CLOCK in the moment
+#define ACTIVATEDISPLAYS LOW      // Activate is LOW for the IPSTUBEs
+#define DEACTIVATEDISPLAYS HIGH   // Deactivate is HIGH for the IPSTUBEs
+#define CALCDIMVALUE(x) (255 - x) // Dimming value is "inverted" for hardware dimming for IPSTUBEs
 #endif
 
 #ifdef HARDWARE_SI_HAI_CLOCK // SI HAI IPS Clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -358,7 +358,7 @@
 // EXCEPT: The Q1 transistor is present!
 // Then the GPIO4 pin is connected to the transistor and Ground of the LCDs is running through the transistor, so the LCDs can be turned on and off AND dimmed!
 #define TFT_ENABLE_PIN (GPIO_NUM_4) // pin 24 is GPIO4
-// if transistor is present and we want hardware dimming, we need to choose a PWM channel for this, can always be defines, even if not used
+// if transistor is present and we want hardware dimming, we need to choose a PWM channel for this, can always be defined, even if not used
 #define TFT_PWM_CHANNEL 0
 
 // Skip reinitialization
@@ -438,5 +438,24 @@
 #define concat3(first, second, third) first second third
 #define concat4(first, second, third, fourth) first second third fourth
 #define concat5(first, second, third, fourth, fifth) first second third fourth fifth
+
+// ************ debug output macros *********************
+#ifdef DEBUG_OUTPUT_IMAGES
+  #define DBG_IMG(...) Serial.println(__VA_ARGS__)
+#else
+  #define DBG_IMG(...)
+#endif
+
+#ifdef DEBUG_OUTPUT_MQTT
+  #define DBG_MQTT(...) Serial.println(__VA_ARGS__)
+#else
+  #define DBG_MQTT(...)
+#endif
+
+#ifdef DEBUG_OUTPUT_RTC
+  #define DBG_RTC(...) Serial.println(__VA_ARGS__)
+#else
+  #define DBG_RTC(...)
+#endif
 
 #endif /* GLOBAL_DEFINES_H_ */

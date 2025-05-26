@@ -21,6 +21,7 @@
  */
 
 #include "MQTT_client_ips.h"
+#include "GLOBAL_DEFINES.h" // Für DBG_MQTT Makro
 
 #if defined(MQTT_PLAIN_ENABLED) && defined(MQTT_HOME_ASSISTANT)
 #error "Both MQTT modes can't be enabled at the same time!"
@@ -229,31 +230,23 @@ bool MQTTPublish(const char *Topic, const char *Message, const bool Retain)
 
   bool ok = MQTTclient.publish(Topic, Message, Retain);
 
-#ifdef DEBUG_OUTPUT_MQTT
-  if (ok)
   {
-    Serial.print("DEBUG: TX MQTT: Topic: ");
-    Serial.print(Topic);
-    Serial.print(" - Message: ");
-    Serial.print(Message);
-    Serial.print(" - Retain: ");
-    Serial.println(Retain ? "true" : "false");
+    if (ok)
+    {
+      DBG_MQTT(String("DEBUG_OUTPUT_MQTT: TX MQTT: ") + Topic + " - Message: " + Message + " - Retain: " + (Retain ? "true" : "false"));
+    }
+    else
+    {
+      DBG_MQTT(String("DEBUG_OUTPUT_MQTT: TX MQTT Error for topic: ") + Topic);
+    }
   }
-  else
-  {
-    Serial.print("DEBUG: TX MQTT Error for topic: ");
-    Serial.println(Topic);
-  }
-#endif
   return ok;
 }
 
 bool MQTTPublish(const char *Topic, JsonDocument *Json, const bool Retain)
 {
-  size_t buffSize = measureJson(*Json) + 3; // Discovery Light = about 720 bytes
-#ifdef DEBUG_OUTPUT_MQTT
-  Serial.printf("DEBUG: TX MQTT message JSON size: %d\n", buffSize);
-#endif
+  size_t buffSize = measureJson(*Json) + 3; // Discovery Light = about 720 bytes  
+  DBG_MQTT(String("DEBUG_OUTPUT_MQTT: TX MQTT message JSON size: ") + buffSize);
   char *buffer = (char *)malloc(buffSize);
   if (buffer == NULL)
   {
@@ -449,12 +442,7 @@ bool MQTTStart(bool restart)
     else
     {
       LastTimeTriedToConnect = millis();
-#ifdef DEBUG_OUTPUT_MQTT
-      Serial.println("DEBUG: Set MQTT broker to: ");
-      Serial.print(MQTT_BROKER);
-      Serial.print(":");
-      Serial.println(MQTT_PORT);
-#endif
+      DBG_MQTT(String("DEBUG_OUTPUT_MQTT: Set MQTT broker to: ") + MQTT_BROKER + ":" + String(MQTT_PORT));
       MQTTclient.setServer(MQTT_BROKER, MQTT_PORT);
       MQTTclient.setCallback(MQTTCallback);
       MQTTclient.setBufferSize(2048);
@@ -489,18 +477,14 @@ bool MQTTStart(bool restart)
       return false; // do not continue if not connected
     } // connect failed
 
-#ifdef DEBUG_OUTPUT_MQTT
-    Serial.println("DEBUG: subscribing to MQTT topics...");
-#endif
+    DBG_MQTT("DEBUG_OUTPUT_MQTT: subscribing to MQTT topics...");
 
 #ifdef MQTT_PLAIN_ENABLED
     bool ok = MQTTclient.subscribe(concat2(MQTT_CLIENT, "/directive/#")); // Subscribes only to messages send to the device
     if (!ok)
       Serial.println("Error subscribing to /directive messages!");
-#ifdef DEBUG_OUTPUT_MQTT
-    Serial.println("DEBUG: Subscribed to /directive/# messages sent to the device.");
-    Serial.println("DEBUG: Sending initial status messages...");
-#endif
+    DBG_MQTT("DEBUG_OUTPUT_MQTT: Subscribed to /directive/# messages sent to the device.");
+    DBG_MQTT("DEBUG_OUTPUT_MQTT: Sending initial status messages...");
     // send initial status messages
     MQTTReportAvailability(MQTT_ALIVE_MSG_ONLINE);                                                                          // Reports that the device is online
     MQTTPublish(concat2(MQTT_CLIENT, "/report/firmware"), FIRMWARE_VERSION, MQTT_RETAIN_STATE_MESSAGES);                    // Reports the firmware version
@@ -518,24 +502,15 @@ bool MQTTStart(bool restart)
     MQTTclient.subscribe(concat4(MQTT_CLIENT, "/", TopicBreath, "/set"));
     MQTTclient.subscribe(concat4(MQTT_CLIENT, "/", TopicPulse, "/set"));
     MQTTclient.subscribe(concat4(MQTT_CLIENT, "/", TopicRainbow, "/set"));
-#ifdef DEBUG_OUTPUT_MQTT
-    Serial.println("DEBUG: subscribed to topics: ");
-    Serial.print(concat4(MQTT_CLIENT, "/", TopicFront, "/set"));
-    Serial.println(", ");
-    Serial.print(concat4(MQTT_CLIENT, "/", TopicBack, "/set"));
-    Serial.println(", ");
-    Serial.print(concat4(MQTT_CLIENT, "/", Topic12hr, "/set"));
-    Serial.println(", ");
-    Serial.print(concat4(MQTT_CLIENT, "/", TopicBlank0, "/set"));
-    Serial.println(", ");
-    Serial.print(concat4(MQTT_CLIENT, "/", TopicBreath, "/set"));
-    Serial.println(", ");
-    Serial.print(concat4(MQTT_CLIENT, "/", TopicPulse, "/set"));
-    Serial.println(", ");
-    Serial.print(concat4(MQTT_CLIENT, "/", TopicRainbow, "/set"));
-    Serial.println(", ");
-    Serial.println(TopicHAstatus);
-#endif // DEBUG_OUTPUT_MQTT
+
+    DBG_MQTT(String("DEBUG_OUTPUT_MQTT: Subscribed to topics: ") + TopicHAstatus + ", " +
+             concat4(MQTT_CLIENT, "/", TopicFront, "/set") + ", " +
+             concat4(MQTT_CLIENT, "/", TopicBack, "/set") + ", " +
+             concat4(MQTT_CLIENT, "/", Topic12hr, "/set") + ", " +
+             concat4(MQTT_CLIENT, "/", TopicBlank0, "/set") + ", " +
+             concat4(MQTT_CLIENT, "/", TopicBreath, "/set") + ", " +
+             concat4(MQTT_CLIENT, "/", TopicPulse, "/set") + ", " +
+             concat4(MQTT_CLIENT, "/", TopicRainbow, "/set") + "," + TopicHAstatus);
 #endif // MQTT_HOME_ASSISTANT
   }
   return true;
@@ -560,14 +535,9 @@ void checkIfMQTTIsConnected()
 
 void MQTTCallback(char *topic, byte *payload, unsigned int length)
 {
-#ifdef DEBUG_OUTPUT_MQTT
-  Serial.println("");
-  Serial.println("DEBUG: Entering MQTTCallback...");
-  Serial.print("DEBUG: Received topic: ");
-  Serial.println(topic);
-  Serial.print("DEBUG: Payload length: ");
-  Serial.println(length);
-#endif
+  DBG_MQTT("\nDEBUG_OUTPUT_MQTT: Entering MQTTCallback...");
+  DBG_MQTT(String("DEBUG_OUTPUT_MQTT: Received topic: ") + topic);
+  DBG_MQTT(String("DEBUG_OUTPUT_MQTT: Payload length: ") + length);
 
   const size_t bufferSize = 256; // Use a fixed-size character buffer for the payload (adjust size as needed)
   char message[bufferSize];
@@ -585,15 +555,9 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
     Serial.println("WARNING: MQTT Payload too long, truncated!");
   }
 
-#ifdef DEBUG_OUTPUT_MQTT
-  Serial.print("DEBUG: Converted payload to char array: ");
-  Serial.println(message);
-  Serial.println("DEBUG: Processing MQTT message...");
-  Serial.print("DEBUG: RX MQTT: ");
-  Serial.print(topic);
-  Serial.print(" ");
-  Serial.println(message);
-#endif
+  DBG_MQTT(String("DEBUG_OUTPUT_MQTT: Converted payload to char array: ") + message);
+  DBG_MQTT("DEBUG_OUTPUT_MQTT: Processing MQTT message...";);
+  DBG_MQTT(String("DEBUG_OUTPUT_MQTT: RX MQTT: ") + topic + " " + message;);
 
 #ifdef MQTT_PLAIN_ENABLED
   // Check if topic ends with "/directive/powerState"
@@ -628,7 +592,6 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
 
 #ifdef MQTT_HOME_ASSISTANT
   if (strcmp(topic, TopicHAstatus) == 0) // Process "homeassistant/status" messages -> react if Home Assistant is online or offline
-
   {
     if (strcmp(message, "online") == 0)
     {
@@ -663,8 +626,7 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
       DeserializationError err = deserializeJson(doc, payload, length);
       if (err)
       {
-        Serial.print("DEBUG: JSON deserialization error in main/set: ");
-        Serial.println(err.c_str());
+        DBG_MQTT(String("DEBUG_OUTPUT_MQTT: JSON deserialization error in main/set: ") + err.c_str());
         return;
       }
       if (doc["state"].is<const char *>())
@@ -691,8 +653,7 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
         DeserializationError err = deserializeJson(doc, payload, length);
         if (err)
         {
-          Serial.print("DEBUG: JSON deserialization error in back/set: ");
-          Serial.println(err.c_str());
+          DBG_MQTT(String("DEBUG_OUTPUT_MQTT: JSON deserialization error in back/set: ") + err.c_str());
           return;
         }
         if (doc["state"].is<const char *>())
@@ -725,8 +686,7 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
           DeserializationError err = deserializeJson(doc, payload, length);
           if (err)
           {
-            Serial.print("DEBUG: JSON error in use_twelve_hours/set: ");
-            Serial.println(err.c_str());
+            DBG_MQTT(String("DEBUG_OUTPUT_MQTT: JSON deserialization error in use_twelve_hours/set: ") + err.c_str());
             return;
           }
           if (doc["state"].is<const char *>())
@@ -743,8 +703,7 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
             DeserializationError err = deserializeJson(doc, payload, length);
             if (err)
             {
-              Serial.print("DEBUG: JSON error in blank_zero_hours/set: ");
-              Serial.println(err.c_str());
+              DBG_MQTT(String("DEBUG_OUTPUT_MQTT: JSON deserialization error in blank_zero_hours/set: ") + err.c_str());
               return;
             }
             if (doc["state"].is<const char *>())
@@ -761,8 +720,7 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
               DeserializationError err = deserializeJson(doc, payload, length);
               if (err)
               {
-                Serial.print("DEBUG: JSON error in pulse_bpm/set: ");
-                Serial.println(err.c_str());
+                DBG_MQTT(String("DEBUG_OUTPUT_MQTT: JSON deserialization error in pulse_bpm/set: ") + err.c_str());
                 return;
               }
               if (doc["state"].is<uint8_t>())
@@ -779,8 +737,7 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
                 DeserializationError err = deserializeJson(doc, payload, length);
                 if (err)
                 {
-                  Serial.print("DEBUG: JSON error in breath_bpm/set: ");
-                  Serial.println(err.c_str());
+                  DBG_MQTT(String("DEBUG_OUTPUT_MQTT: JSON deserialization error in breath_bpm/set: ") + err.c_str());                  
                   return;
                 }
                 if (doc["state"].is<uint8_t>())
@@ -797,8 +754,7 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
                   DeserializationError err = deserializeJson(doc, payload, length);
                   if (err)
                   {
-                    Serial.print("DEBUG: JSON error in rainbow_duration/set: ");
-                    Serial.println(err.c_str());
+                    DBG_MQTT(String("DEBUG_OUTPUT_MQTT: JSON deserialization error in rainbow_duration/set: ") + err.c_str());
                     return;
                   }
                   if (doc["state"].is<float>())
@@ -821,9 +777,7 @@ void MQTTCallback(char *topic, byte *payload, unsigned int length)
   }
 #endif // MQTT_HOME_ASSISTANT
 
-#ifdef DEBUG_OUTPUT_MQTT
-  Serial.println("DEBUG: Exiting MQTTCallback...");
-#endif
+  DBG_MQTT("DEBUG_OUTPUT_MQTT: Exiting MQTTCallback...");
 } // end of MQTTCallback
 
 void MQTTLoopFrequently()
@@ -906,11 +860,8 @@ void MQTTReportBackOnChange()
     // Home Assistant reporting
     if (!discoveryReported) // Check if discovery messages are already sent
     {
-#ifdef DEBUG_OUTPUT_MQTT
-      Serial.println("");
-      Serial.println("DEBUG: Disovery messages not sent yet!");
-      Serial.println("DEBUG: Sending discovery messages...");
-#endif
+      DBG_MQTT("\nDEBUG: Disovery messages not sent yet!");
+      DBG_MQTT("DEBUG: Sending discovery messages...");
       discoveryReported = MQTTReportDiscovery();
       if (!discoveryReported)
       {
@@ -926,19 +877,13 @@ void MQTTPeriodicReportBack()
 { // Report/Send all device states with a limiter to not report too often
   if (((millis() - lastTimeSent) > (MQTT_REPORT_STATUS_EVERY_SEC * 1000)) && MQTTclient.connected())
   {
-#ifdef DEBUG_OUTPUT_MQTT
-    Serial.println("");
-    Serial.println("DEBUG: Sending periodic MQTT report...");
-#endif
+    DBG_MQTT("\nDEBUG: Entering MQTTPeriodicReportBack...");    
     MQTTConnected = MQTTclient.connected(); // Check regularly if still connected to the MQTT broker
 #ifdef MQTT_HOME_ASSISTANT
     if (!discoveryReported) // Check if discovery messages are already sent
     {
-#ifdef DEBUG_OUTPUT_MQTT
-      Serial.println("");
-      Serial.println("DEBUG: Disovery messages not sent yet!");
-      Serial.println("DEBUG: Sending discovery messages...");
-#endif
+      DBG_MQTT("\nDEBUG: Disovery messages not sent yet!");
+      DBG_MQTT("DEBUG: Sending discovery messages...");
       discoveryReported = MQTTReportDiscovery();
       if (!discoveryReported)
       {
@@ -1181,12 +1126,7 @@ bool MQTTReportDiscovery()
 bool MQTTReportAvailability(const char *status)
 {
   availabilityReported = MQTTclient.publish(concat3(MQTT_CLIENT, "/", MQTT_ALIVE_TOPIC), status, MQTT_RETAIN_ALIVE_MESSAGES); // normally published with 'retain' flag set to true
-#ifdef DEBUG_OUTPUT_MQTT
-  Serial.print("DEBUG: Sent availability: ");
-  Serial.print(concat3(MQTT_CLIENT, "/", MQTT_ALIVE_TOPIC));
-  Serial.print(" ");
-  Serial.println(status);
-#endif
+  DBG_MQTT(String("DEBUG_OUTPUT_MQTT: Sent availability: ") + concat3(MQTT_CLIENT, "/", MQTT_ALIVE_TOPIC) + " " + status);
   return availabilityReported;
 }
 
@@ -1206,4 +1146,4 @@ bool endsWith(const char *str, const char *suffix) // Helper function to check i
   return (strcmp(str + (strLen - suffixLen), suffix) == 0);
 }
 
-#endif // defined (MQTT_PLAIN_ENABLED) || defined (MQTT_HOME_ASSISTANT)
+#endif // defined (MQTT_PLAIN_ENABLED) || defined (MQTT_HOME_ASSISTANT
