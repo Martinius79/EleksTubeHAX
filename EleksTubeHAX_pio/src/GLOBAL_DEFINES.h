@@ -140,11 +140,76 @@
 #define USER_SETUP_LOADED
 #endif // SI HAI IPS Clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+#ifdef HARDWARE_Xunfeng_CLOCK // EleksTube Clone by Xunfeng XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// uses ESP32-S2-WROOM module
+
+// WS2812 (or compatible) LEDs on the back of the display modules.
+//TODO: UNKNOWN PIN YET!
+#define BACKLIGHTS_PIN (-1)
+//TODO: UNKNOWN NUMBER OF LEDs YET! -> same IPS panels as Elekstube, so same number of LEDs assumed.
+#define NUM_BACKLIGHT_LEDS 6 // 6 LEDs on the bottom of every LCD. 
+
+// Buttons, active low, externally pulled up (with actual resistors!) -> don't set intenal pull-ups!
+#define BUTTON_LEFT_PIN (GPIO_NUM_7) //correct (from rsj001)
+#define BUTTON_MODE_PIN (GPIO_NUM_6) //correct (from rsj001)
+#define BUTTON_RIGHT_PIN (GPIO_NUM_5) //correct (from rsj001)
+#define BUTTON_POWER_PIN (GPIO_NUM_4) //correct (from rsj001)
+
+// I2C to DS3231 RTC.
+#define RTC_SCL_PIN (GPIO_NUM_33) //correct??? (from rsj001)
+#define RTC_SDA_PIN (GPIO_NUM_34) //correct??? (from rsj001)
+
+// Chip Select shift register, to select the display
+#define CSSR_DATA_PIN (GPIO_NUM_13) //correct??? (from rsj001)
+#define CSSR_CLOCK_PIN (GPIO_NUM_16 )//correct??? (from rsj001) // like original Elekstube
+#define CSSR_LATCH_PIN (GPIO_NUM_15) //correct??? (from rsj001) // STcp was IO17 in original Elekstube
+
+// Power for all TFT displays are grounded through a MOSFET so they can all be turned off.
+// Active HIGH.
+#define TFT_ENABLE_PIN (21) //correct (from rsj001) // was 27 on elekstube
+
+// configure library \TFT_eSPI\User_Setup.h
+// ST7789 135 x 240 display with no chip select line
+#define ST7789_DRIVER // Configure all registers
+#define TFT_WIDTH 135
+#define TFT_HEIGHT 240
+
+//TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// order of PINs for SPI to displays are unknown yet, so we need to try and error!
+// SPI to displays
+#define TFT_MOSI (GPIO_NUM_9)
+#define TFT_SCLK (GPIO_NUM_10)
+#define TFT_DC (GPIO_NUM_11)   // Data Command, aka Register Select or RS
+#define TFT_RST (GPIO_NUM_12)  // Connect reset to ensure display initialises
+
+#define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
+#define TFT_CS -1              // Not connected -> via shift register
+#define TFT_MISO -1
+
+#define CGRAM_OFFSET // Library will add offsets required
+// #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+#define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters
+#define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters
+// #define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
+// #define LOAD_FONT7  // Font 7. 7 segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
+// #define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
+// #define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
+// #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
+#define SMOOTH_FONT
+
+#define SPI_FREQUENCY 40000000
+// To make the TFT_eSPI library not over-write all this with its default settings:
+#define USER_SETUP_LOADED
+
+#endif // SI HAI IPS Clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
 #ifdef HARDWARE_NovelLife_SE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 // WS2812 (or compatible) LEDs on the back of the display modules.
 #define BACKLIGHTS_PIN (GPIO_NUM_12)
-#define NUM_BACKLIGHT_LEDS (6) // 6 LEDs on the bottom of every LCD.
+#define NUM_BACKLIGHT_LEDS 6 // 6 LEDs on the bottom of every LCD.
 
 // No Buttons on SE verion!!!
 // Set to pins, which should always be HIGH!
@@ -167,7 +232,7 @@
 
 // Power for all TFT displays are grounded through a MOSFET so they can all be turned off.
 // Active HIGH.
-#define TFT_ENABLE_PIN GPIO_NUM_4 /// Was 27 on elekstube
+#define TFT_ENABLE_PIN (GPIO_NUM_4) // Was 27 on elekstube
 
 // configure library \TFT_eSPI\User_Setup.h
 // ST7789 135 x 240 display with no chip select line
@@ -182,7 +247,6 @@
 #define TFT_CS -1              // Not connected -> via shift register
 #define TFT_DC (GPIO_NUM_25)   // Data Command, aka Register Select or RS
 #define TFT_RST (GPIO_NUM_26)  // Connect reset to ensure display initialises
-#define SPI_FREQUENCY 40000000 // 40MHz SPI speed
 
 #define CGRAM_OFFSET // Library will add offsets required
 // #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
@@ -195,7 +259,7 @@
 // #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
 #define SMOOTH_FONT
 
-#define SPI_FREQUENCY 40000000
+#define SPI_FREQUENCY 40000000 // 40 MHz SPI frequency
 // To make the TFT_eSPI library not over-write all this with its default settings:
 #define USER_SETUP_LOADED
 #endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
