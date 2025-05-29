@@ -145,7 +145,7 @@
 
 // WS2812 (or compatible) LEDs on the back of the display modules.
 //TODO: UNKNOWN PIN YET!
-#define BACKLIGHTS_PIN (-1)
+#define BACKLIGHTS_PIN (GPIO_NUM_26)
 //TODO: UNKNOWN NUMBER OF LEDs YET! -> same IPS panels as Elekstube, so same number of LEDs assumed.
 #define NUM_BACKLIGHT_LEDS 6 // 6 LEDs on the bottom of every LCD. 
 
@@ -166,7 +166,7 @@
 
 // Power for all TFT displays are grounded through a MOSFET so they can all be turned off.
 // Active HIGH.
-#define TFT_ENABLE_PIN (21) //correct (from rsj001) // was 27 on elekstube
+#define TFT_ENABLE_PIN (GPIO_NUM_21) //correct (from rsj001) // was 27 on elekstube
 
 // configure library \TFT_eSPI\User_Setup.h
 // ST7789 135 x 240 display with no chip select line
