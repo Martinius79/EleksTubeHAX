@@ -145,28 +145,28 @@
 
 // WS2812 (or compatible) LEDs on the back of the display modules.
 //TODO: UNKNOWN PIN YET!
+// Maybe a different LED type, no WS2812???
 #define BACKLIGHTS_PIN (GPIO_NUM_26)
-//TODO: UNKNOWN NUMBER OF LEDs YET! -> same IPS panels as Elekstube, so same number of LEDs assumed.
 #define NUM_BACKLIGHT_LEDS 6 // 6 LEDs on the bottom of every LCD. 
 
 // Buttons, active low, externally pulled up (with actual resistors!) -> don't set intenal pull-ups!
-#define BUTTON_LEFT_PIN (GPIO_NUM_7) //correct (from rsj001)
-#define BUTTON_MODE_PIN (GPIO_NUM_6) //correct (from rsj001)
-#define BUTTON_RIGHT_PIN (GPIO_NUM_5) //correct (from rsj001)
-#define BUTTON_POWER_PIN (GPIO_NUM_4) //correct (from rsj001)
+#define BUTTON_LEFT_PIN (GPIO_NUM_7)
+#define BUTTON_MODE_PIN (GPIO_NUM_6)
+#define BUTTON_RIGHT_PIN (GPIO_NUM_5)
+#define BUTTON_POWER_PIN (GPIO_NUM_4)
 
 // I2C to DS3231 RTC.
-#define RTC_SCL_PIN (GPIO_NUM_33) //correct??? (from rsj001)
-#define RTC_SDA_PIN (GPIO_NUM_34) //correct??? (from rsj001)
+#define RTC_SCL_PIN (GPIO_NUM_33)
+#define RTC_SDA_PIN (GPIO_NUM_34)
 
 // Chip Select shift register, to select the display
-#define CSSR_DATA_PIN (GPIO_NUM_13) //correct??? (from rsj001)
-#define CSSR_CLOCK_PIN (GPIO_NUM_16 )//correct??? (from rsj001) // like original Elekstube
-#define CSSR_LATCH_PIN (GPIO_NUM_15) //correct??? (from rsj001) // STcp was IO17 in original Elekstube
+#define CSSR_DATA_PIN (GPIO_NUM_13)
+#define CSSR_CLOCK_PIN (GPIO_NUM_16 )
+#define CSSR_LATCH_PIN (GPIO_NUM_15)
 
 // Power for all TFT displays are grounded through a MOSFET so they can all be turned off.
 // Active HIGH.
-#define TFT_ENABLE_PIN (GPIO_NUM_21) //correct (from rsj001) // was 27 on elekstube
+#define TFT_ENABLE_PIN (GPIO_NUM_21)
 
 // configure library \TFT_eSPI\User_Setup.h
 // ST7789 135 x 240 display with no chip select line
@@ -174,8 +174,6 @@
 #define TFT_WIDTH 135
 #define TFT_HEIGHT 240
 
-//TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// order of PINs for SPI to displays are unknown yet, so we need to try and error!
 // SPI to displays
 #define TFT_MOSI (GPIO_NUM_9)
 #define TFT_SCLK (GPIO_NUM_10)
@@ -183,8 +181,8 @@
 #define TFT_RST (GPIO_NUM_12)  // Connect reset to ensure display initialises
 
 #define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
-#define TFT_CS -1              // Not connected -> via shift register
-#define TFT_MISO -1
+#define TFT_CS -1 // Not connected -> via shift register
+#define TFT_MISO -1 // Only MOSI/SDA pin is used, no separate MISO pin
 
 #define CGRAM_OFFSET // Library will add offsets required
 // #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
@@ -201,7 +199,7 @@
 // To make the TFT_eSPI library not over-write all this with its default settings:
 #define USER_SETUP_LOADED
 
-#endif // SI HAI IPS Clock XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#endif // HARDWARE_Xunfeng_CLOCK XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
 

@@ -18,7 +18,7 @@
 // #define HARDWARE_Elekstube_CLOCK // uncomment for the original Elekstube clock
 // #define HARDWARE_Elekstube_CLOCK_Gen2 // uncomment for the original Elekstube clock Gen2.1 (ESP32 Pico D4 Chip)
 // #define HARDWARE_SI_HAI_CLOCK         // uncomment for the SI HAI copy of the clock
-#define HARDWARE_Xunfeng_CLOCK      // uncomment for the Xunfeng EleksTube Clone (ESP32-S2-WROOM module) - UNTESTED! -> Use env EleksTubeHaxXunfeng to compile!
+#define HARDWARE_Xunfeng_CLOCK      // uncomment for the Xunfeng EleksTube Clone (ESP32-S2-WROOM module)-> Use env EleksTubeHaxXunfeng to compile! -> Backlight LED not working yet!
 // #define HARDWARE_NovelLife_SE_CLOCK   // uncomment for the NovelLife SE version (Gesture only) - tested and working!; Non-SE version (Buttons only) NOT tested!; Pro version (Buttons and Gesture) NOT tested!
 // #define HARDWARE_PunkCyber_CLOCK      // uncomment for the PunkCyber / RGB Glow tube / PCBway clock
 // #define HARDWARE_IPSTUBE_CLOCK        // uncomment for the IPSTUBE clock models (H401 and H402)
