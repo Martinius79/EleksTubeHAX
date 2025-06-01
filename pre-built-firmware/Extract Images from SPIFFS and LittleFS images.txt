@@ -4,7 +4,7 @@ Generate partion table CSV
 & "XXX\arduino-esp32\tools\gen_esp32part.exe" 'YYY\pre-built-firmware\partitions.bin' input_partitions.csv
 check the size and starting of the SPIFFS partion
 Extract with DD
-start 2424832 = 0x25000
+start 2424832 = 0x250000
 size 1664K = 1664K x 1024 = 1703936
 dd if=FW.bin skip=2424832 of=SPIFFS.bin bs=1 count=1703936
 
@@ -33,3 +33,28 @@ LittleFS Configuration:
 if you KNOW the values for the littlefs already you can also use mklittlefs
 
 & "FFF\AppData\Local\Arduino15\packages\esp32\tools\mklittlefs\3.0.0-gnu12-dc7f933\mklittlefs.exe" --list --block 4096 --size 1703936 .\SPIFFS.bin
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+for xunfeng image:
+
+
+& "C:\Program Files\Git\usr\bin\dd.exe" if="C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\original_xunfeng_esp32_s2.bin" skip=32768 of="C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\partitions.bin" bs=1 count=3072
+
+& "C:\Users\HomePC2\.platformio\packages\framework-arduinoespressif32@src-537c58760dafe7fcc8a1d9bbcf00b6f6\tools\gen_esp32part.exe" "C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\partitions.bin" input_partitions.csv
+
+# ESP-IDF Partition Table
+# Name, Type, SubType, Offset, Size, Flags
+nvs,data,nvs,0x9000,24K,
+phy_init,data,phy,0xf000,4K,
+factory,app,factory,0x10000,384K,
+storage,data,spiffs,0x70000,2372K,
+custom,data,spiffs,0x2c1000,1276K,
+
+
+& "C:\Program Files\Git\usr\bin\dd.exe" if="C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\original_xunfeng_esp32_s2.bin" skip=458752 of=SPIFFS1.bin bs=1 count=2428928
+& "C:\Program Files\Git\usr\bin\dd.exe" if="C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\original_xunfeng_esp32_s2.bin" skip=2887680 of=SPIFFS2.bin bs=1 count=1306624
+
+
+& "D:\Dev\GIT\PythonDis\EleksTube IPS_NTP_NEW_GEN2_20220627\EleksTube IPS.exe_extracted\mkspiffs.exe" -u .\ExtractDir1 .\SPIFFS1.bin
