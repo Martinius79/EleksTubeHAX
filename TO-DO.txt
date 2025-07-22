@@ -10,8 +10,9 @@
 Martinius:
 
 Fix BUG:
-If power is off, the displays changed, switch on again
-If MQTT is on, but not reachable, always three seconds hanging clock
+1) If power is off, the displays changed, switch on again
+2) If MQTT is on, but not reachable, always three seconds hanging clock
+3) If client ID is present two times, Wifi drops on MQTT message sent (discovery i.e.) -> Infinite loop -> protect against that
 
 change menu order -> clock face selection first!
 
@@ -55,4 +56,4 @@ Generate some easy "clock faces" programatically, like seven segment display wit
 directly connected -> generate also "letters" https://de.wikipedia.org/wiki/Segmentanzeige
 moving texts in the displays...
 
-
+Implement an Alarm clock -> Buzz for the ones with a buzzer -> blink on display, if no buzzer
