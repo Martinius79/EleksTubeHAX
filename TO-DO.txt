@@ -4,7 +4,7 @@
 - Temperature sensor readout in a single block.
 - Limit IP Geolocation to every Sunday (copy code from the fork)
 - Add static zime zone data if IP Geo is disabled  (copy code from the fork)
-
+- Use ipinfo.io for online timezone check, instead of abstractapi.com
 
 
 Martinius:
