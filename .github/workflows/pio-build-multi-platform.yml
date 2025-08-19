@@ -48,10 +48,6 @@ jobs:
     - name: Install PlatformIO Core
       run: pip install --upgrade platformio
 
-    - name: Build PlatformIO Project for 4MB flash
-      run: pio run --environment EleksTubeHax
-      working-directory: ./EleksTubeHAX_pio
-
-    - name: Build PlatformIO Project for 8MB flash
-      run: pio run --environment EleksTubeHax8MB
+    - name: Build PlatformIO Project (all environments)
+      run: pio run
       working-directory: ./EleksTubeHAX_pio
