@@ -9,6 +9,9 @@ _USER_DEFINES.h
 .vscode/
 **/.vscode/
 
+# ignore the auto generated .gitignore file in the PIO folder
+EleksTubeHax_pio/.gitignore
+
 # But allow specific VS Code files to be committed
 !.vscode/extensions.json
 !.vscode/tasks.json
