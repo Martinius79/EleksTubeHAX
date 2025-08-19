@@ -28,25 +28,29 @@ jobs:
       - name: Discover PlatformIO environments
         id: discover_envs
         run: |
-          echo "Parsing PlatformIO environments from platformio.ini"
-          python3 - <<'EOF'
-            import re, json, pathlib, os
-            ini_path = pathlib.Path('EleksTubeHAX_pio') / 'platformio.ini'
-            env_names = []
-            pattern = re.compile(r'^\[env:([^\]]+)\]')
-            with ini_path.open(encoding='utf-8') as f:
-              for line in f:
-                m = pattern.match(line.strip())
-                if m:
-                  env_names.append(m.group(1))
-            if not env_names:
-              raise SystemExit('No [env:<name>] sections found in platformio.ini')
-            print('Discovered environments:', env_names)
-            json_list = json.dumps(env_names)
-            with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as gh:
-              gh.write(f"ENV_MATRIX={json_list}\n")
-            EOF
-          echo "Discovered environments JSON will be available as output."
+          set -e
+          INI="EleksTubeHAX_pio/platformio.ini"
+          echo "Parsing PlatformIO environments from $INI"
+          # Extract lines like [env:Name]
+          ENV_LIST=$(grep -E '^\[env:[^]]+\]' "$INI" | sed -E 's/^\[env:([^]]+)\]/\1/')
+          if [ -z "$ENV_LIST" ]; then
+            echo "No environments found!" >&2
+            exit 1
+          fi
+          echo "Found environments:" $ENV_LIST
+          # Build JSON array manually (avoid needing jq)
+          JSON='['
+          first=1
+          for e in $ENV_LIST; do
+            if [ $first -eq 0 ]; then JSON+=','; fi
+            JSON+='"'"$e"'"'
+            first=0
+          done
+          JSON+=']'
+          echo "ENV_MATRIX=$JSON" >> $GITHUB_OUTPUT
+          echo "Exported ENV_MATRIX=$JSON"
+          # (Optional) show for debug
+          echo "Matrix JSON: $JSON"
 
   build-firmware:
     needs: set-version
