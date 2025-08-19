@@ -13,7 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.set_version.outputs.VERSION }}
+      ENV_MATRIX: ${{ steps.discover_envs.outputs.ENV_MATRIX }}
     steps:
+      - name: Checkout repository (needed to parse platformio.ini)
+        uses: actions/checkout@v4
       - name: Set version number
         id: set_version
         run: |
@@ -22,12 +25,34 @@ jobs:
           BUILD_NUMBER=${{ github.run_number }}
           VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${BUILD_NUMBER}"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+      - name: Discover PlatformIO environments
+        id: discover_envs
+        run: |
+          echo "Parsing PlatformIO environments from platformio.ini"
+          python3 - <<'EOF'
+            import re, json, pathlib, os
+            ini_path = pathlib.Path('EleksTubeHAX_pio') / 'platformio.ini'
+            env_names = []
+            pattern = re.compile(r'^\[env:([^\]]+)\]')
+            with ini_path.open(encoding='utf-8') as f:
+              for line in f:
+                m = pattern.match(line.strip())
+                if m:
+                  env_names.append(m.group(1))
+            if not env_names:
+              raise SystemExit('No [env:<name>] sections found in platformio.ini')
+            print('Discovered environments:', env_names)
+            json_list = json.dumps(env_names)
+            with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as gh:
+              gh.write(f"ENV_MATRIX={json_list}\n")
+            EOF
+          echo "Discovered environments JSON will be available as output."
 
   build-firmware:
     needs: set-version
     strategy:
       matrix:
-        hardware: ['Elekstube_CLOCK', 'Elekstube_CLOCK_Gen2', 'SI_HAI_CLOCK', 'NovelLife_SE_CLOCK', 'PunkCyber_CLOCK', 'IPSTUBE_CLOCK']
+        envName: ${{ fromJson(needs.set-version.outputs.ENV_MATRIX) }}
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.set-version.outputs.VERSION }}
@@ -44,15 +69,6 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-
-    - name: Modify _USER_DEFINES.h file
-      run: |
-        echo "Copy _USER_DEFINES - empty.h to _USER_DEFINES.h"
-        cp "./EleksTubeHAX_pio/src/_USER_DEFINES - empty.h" "./EleksTubeHAX_pio/src/_USER_DEFINES.h"
-        echo "Modify _USER_DEFINES.h for hardware: ${{ matrix.hardware }}"
-        python3 ./EleksTubeHAX_pio/script_modify_user_defines.py "${{ matrix.hardware }}"
-        echo "Modified _USER_DEFINES.h content:"
-        cat "./EleksTubeHAX_pio/src/_USER_DEFINES.h"
 
     - name: Update FIRMWARE_VERSION in GLOBAL_DEFINES.h
       run: |
@@ -73,64 +89,41 @@ jobs:
         echo "Modified platformio.ini content:"
         cat "./EleksTubeHAX_pio/platformio.ini"
 
-    - name: Build PlatformIO Project (for devices with 8MB flash)
-      if: ${{ matrix.hardware == 'IPSTUBE_CLOCK' }}
-      run: pio run --environment EleksTubeHax8MB
+    - name: Build PlatformIO environment
+      run: pio run --environment ${{ matrix.envName }}
       working-directory: ./EleksTubeHAX_pio
 
-    - name: Build PlatformIO Project (for devices with 4MB flash)
-      if: ${{ matrix.hardware != 'IPSTUBE_CLOCK' }}
-      run: pio run --environment EleksTubeHax
-      working-directory: ./EleksTubeHAX_pio
-
-    - name: Rename firmware files
-      run: |        
-        echo "Rename firmware files!"
-        if [ "${{ matrix.hardware }}" = "Elekstube_CLOCK" ]; then
-          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
-          echo "move *_combined.bin to FW_Elekstube_HAX_${{ env.VERSION }}_original.bin"
-          mv *_combined.bin "FW_Elekstube_HAX_${{ env.VERSION }}_original.bin"
-        elif [ "${{ matrix.hardware }}" = "Elekstube_CLOCK_Gen2" ]; then
-          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
-          echo "move *_combined.bin to FW_Elekstube_HAX_${{ env.VERSION }}_Gen2-1.bin"
-          mv *_combined.bin "FW_Elekstube_HAX_${{ env.VERSION }}_Gen2-1.bin"
-        elif [ "${{ matrix.hardware }}" = "SI_HAI_CLOCK" ]; then
-          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
-          echo "move *_combined.bin to FW_SI_HAI_CLOCK_HAX_${{ env.VERSION }}.bin"
-          mv *_combined.bin "FW_SI_HAI_CLOCK_HAX_${{ env.VERSION }}.bin"
-        elif [ "${{ matrix.hardware }}" = "NovelLife_SE_CLOCK" ]; then
-          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
-          echo "move *_combined.bin to FW_NovelLife_SE_HAX_${{ env.VERSION }}.bin"
-          mv *_combined.bin "FW_NovelLife_SE_HAX_${{ env.VERSION }}.bin"
-        elif [ "${{ matrix.hardware }}" = "PunkCyber_CLOCK" ]; then
-          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax
-          echo "move *_combined.bin to FW_PunkCyber_Glow_PCBway_HAX_${{ env.VERSION }}.bin"
-          mv *_combined.bin "FW_PunkCyber_Glow_PCBway_HAX_${{ env.VERSION }}.bin"
-        elif [ "${{ matrix.hardware }}" = "IPSTUBE_CLOCK" ]; then
-          cd EleksTubeHAX_pio/.pio/build/EleksTubeHax8MB
-          echo "move *_combined.bin to FW_IPSTUBE_HAX_${{ env.VERSION }}.bin"
-          mv *_combined.bin "FW_IPSTUBE_HAX_${{ env.VERSION }}.bin"
-        else
-          echo "Unknown hardware: ${{ matrix.hardware }}"
+    - name: Rename firmware file
+      run: |
+        set -e
+        ENV_NAME="${{ matrix.envName }}"
+        VERSION="${{ env.VERSION }}"
+        BUILD_DIR="EleksTubeHAX_pio/.pio/build/${ENV_NAME}"
+        echo "Searching for combined firmware in $BUILD_DIR"
+        ls -1 "$BUILD_DIR" || true
+        cd "$BUILD_DIR"
+        FILE=$(ls *_combined.bin 2>/dev/null | head -n1 || true)
+        if [ -z "$FILE" ]; then
+          echo "No *_combined.bin file found! Listing contents:" && ls -al
           exit 1
         fi
+        case "$ENV_NAME" in
+          EleksTubeGen1)   TARGET="FW_Elekstube_HAX_${VERSION}_original.bin" ;;
+          EleksTubeGen2)   TARGET="FW_Elekstube_HAX_${VERSION}_Gen2-1.bin" ;;
+          SI_HAI)          TARGET="FW_SI_HAI_CLOCK_HAX_${VERSION}.bin" ;;
+          PunkCyber)       TARGET="FW_PunkCyber_Glow_PCBway_HAX_${VERSION}.bin" ;;
+          IPSTUBE)         TARGET="FW_IPSTUBE_HAX_${VERSION}.bin" ;;
+          *)               TARGET="FW_${ENV_NAME}_HAX_${VERSION}.bin" ;;
+        esac
+        echo "Renaming $FILE -> $TARGET"
+        mv "$FILE" "$TARGET"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
-      if: ${{ matrix.hardware == 'IPSTUBE_CLOCK' }}
       with:
-        name: firmware-${{ matrix.hardware }}        
+        name: firmware-${{ matrix.envName }}
         path: |
-          EleksTubeHAX_pio/.pio/build/EleksTubeHax8MB/FW_*.bin
-        if-no-files-found: error
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      if: ${{ matrix.hardware != 'IPSTUBE_CLOCK' }}
-      with:
-        name: firmware-${{ matrix.hardware }}        
-        path: |
-          EleksTubeHAX_pio/.pio/build/EleksTubeHax/FW_*.bin
+          EleksTubeHAX_pio/.pio/build/${{ matrix.envName }}/FW_*.bin
         if-no-files-found: error
 
   combine-artifacts:
