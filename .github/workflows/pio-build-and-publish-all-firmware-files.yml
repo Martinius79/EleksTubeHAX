@@ -74,6 +74,12 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Copy empty _USER_DEFINES.h file
+      run: |
+        echo "Copy _USER_DEFINES - empty.h to _USER_DEFINES.h"
+        cp "./EleksTubeHAX_pio/src/_USER_DEFINES - empty.h" "./EleksTubeHAX_pio/src/_USER_DEFINES.h"        
+        cat "./EleksTubeHAX_pio/src/_USER_DEFINES.h"
+
     - name: Update FIRMWARE_VERSION in GLOBAL_DEFINES.h
       run: |
         echo "Updating FIRMWARE_VERSION in GLOBAL_DEFINES.h"
