@@ -65,55 +65,6 @@ def parse_partition_table(partition_csv_path):
 
     return offsets
 
-def extract_hardware_name(user_defines_path):
-    """
-    Extracts the active hardware name from the _User_defines.h file.
-
-    :param user_defines_path: Path to the _User_defines.h file.
-    :return: Hardware name as a string.
-    """
-    if not os.path.isfile(user_defines_path):
-        print(f"[Error] _User_defines.h file not found: {user_defines_path}")
-        env.Exit(1)
-
-    with open(user_defines_path, 'r') as f:
-        lines = f.readlines()
-
-    in_hardware_section = False
-    hardware_name = None
-
-    for line in lines:
-        stripped_line = line.strip()
-
-        # Check if we've reached the "Type of the clock hardware" section
-        if 'Type of the clock hardware' in stripped_line:
-            in_hardware_section = True
-            continue  # Move to the next line
-
-        if in_hardware_section:
-            # If we encounter an empty line or a comment that marks the end of the section, exit the section
-            if stripped_line == '' or 'End of hardware types' in stripped_line:
-                break
-
-            # Ignore commented lines (single-line comments)
-            if stripped_line.startswith('//') or stripped_line.startswith('/*') or stripped_line.startswith('*'):
-                continue
-
-            # Ignore lines that have inline comments
-            line_without_comments = line.split('//')[0].split('/*')[0].strip()
-
-            # Match the #define statement
-            define_match = re.match(r'#define\s+(HARDWARE_\w+)', line_without_comments)
-            if define_match:
-                hardware_name = define_match.group(1)
-                break  # Found the active hardware define
-
-    if hardware_name:
-        return hardware_name
-    else:
-        print("[Error] Active hardware define not found in the 'Type of the clock hardware' section.")
-        env.Exit(1)
-
 def run_buildfs(source, target, env):
     print("\n[Post-Build] Starting SPIFFS build...")
     
@@ -166,14 +117,11 @@ def run_merge_bins(source, target, env):
     app_offset = offsets[app_partition_name]
     spiffs_offset = offsets['spiffs']
 
-    # Extract hardware name for renaming the combined binary
-    user_defines_path = os.path.join(env.subst("$PROJECT_SRC_DIR"), "_USER_DEFINES.h")
-    hardware_name = extract_hardware_name(user_defines_path)
-    print(f"[Post-Build] Hardware name before santization: {hardware_name}")
+    # Get the hardware name from the environment name
+    hardware_name = env_name
+    print(f"[Post-Build] Hardware name before sanitization: {hardware_name}")
     if hardware_name:
-        # Create a sanitized hardware name for the filename
-        hardware_name_sanitized = hardware_name.replace("HARDWARE_", "")
-        hardware_name_sanitized = re.sub(r'\W+', '_', hardware_name_sanitized)
+        hardware_name_sanitized = re.sub(r'\W+', '_', hardware_name)
     else:
         hardware_name_sanitized = "UnknownHardware"
 
