@@ -20,7 +20,8 @@
 #define TO_LITERAL(string) VALUE(string)
 
 // ************* Type of the clock hardware  *************
-// Do not uncomment, set by platform.ini file.
+// NOT NEEDED ANYMORE - DEFINED IN THE PLATFORMIO.INI
+// Keep the section for development purposes! Easier to see, which ifdef areas are activated, if defined here
 // #define HARDWARE_ELEKSTUBE_CLOCK      // Original EleksTube IPS clocks with 4MB flash
 // #define HARDWARE_ELEKSTUBE_GEN2_CLOCK // Original EleksTube clock Gen2.1 (EleksTube IPS Classic Edition/Pro/PR1/PR2, ESP32 Pico D4 Chip)
 // #define HARDWARE_SI_HAI_CLOCK         // Si Hai copy of the clock
@@ -427,6 +428,9 @@
  *   PunkCyber Clone    *
  ************************/
 #ifdef HARDWARE_PUNKCYBER_CLOCK
+#undef DEVICE_MANUFACTURER
+#undef DEVICE_MODEL
+#undef DEVICE_HW_VERSION
 #define DEVICE_MANUFACTURER "PunkCyber"
 #define DEVICE_MODEL "IPS Clock"
 #define DEVICE_HW_VERSION "1.0"

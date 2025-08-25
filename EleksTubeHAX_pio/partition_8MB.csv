@@ -1,5 +1,14 @@
-# Name,	Type,	SubType,	Offset,	Size,	Flags
-nvs,	data,	nvs,	0x9000,	0x7000,	
-app0,	app,	factory,	0x10000,	0x130000,	
-spiffs,	data,	spiffs,	0x140000,	0x6b0000,	
-coredump,	data,	coredump,	0x7f0000,	0x10000,	
+#
+# manual: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/partition-tables.html
+#
+# examples: https://github.com/espressif/arduino-esp32/tree/master/tools/partitions
+#
+# app0 must be aligned on 0x10000 (!)
+#
+# Name,       Type, SubType,  Offset,   Size,     Flags
+# part table, part, part,     0x000000, 0x009000, <- automatically generated - DO NOT un-comment!
+nvs,          data, nvs,      0x009000, 0x007000,
+app0,         app,  factory,  0x010000, 0x130000,
+spiffs,       data, spiffs,   0x140000, 0x6B0000,
+coredump,     data, coredump, 0x7F0000, 0x010000,
+# end of 8 MB flash      0x800000
