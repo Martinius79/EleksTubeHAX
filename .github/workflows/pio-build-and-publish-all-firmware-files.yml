@@ -59,7 +59,7 @@ jobs:
         cat "./EleksTubeHAX_pio/platformio.ini"
 
     - name: Build PlatformIO Project for original EleksTube IPS clocks with 4MB flash.
-      run: pio run --environment EleksTube_4MB
+      run: pio run --environment EleksTube
       working-directory: ./EleksTubeHAX_pio
 
     - name: Build PlatformIO Project for original EleksTube clock Gen2.1 (EleksTube IPS Classic Edition/Pro/PR1/PR2, ESP32 Pico D4 Chip).
@@ -79,7 +79,7 @@ jobs:
       working-directory: ./EleksTubeHAX_pio
 
     - name: Build PlatformIO Project for all clocks with 8MB flash on PCB (like the IPSTube model H401 and H402).
-      run: pio run --environment IPSTube_8MB
+      run: pio run --environment IPSTube
       working-directory: ./EleksTubeHAX_pio
 
     - name: Collect firmware bins (flatten)
