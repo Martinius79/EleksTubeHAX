@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <WiFi.h>
+#include <WiFi.h> // ESP32
 #include "StoredConfig.h"
 #include "TFTs.h"
 #include "esp_wps.h"
@@ -8,8 +8,6 @@
 #include "IPGeolocation_AO.h"
 
 extern StoredConfig stored_config;
-
-extern char UniqueDeviceName[32];
 
 WifiState_t WifiState = disconnected;
 
@@ -29,7 +27,7 @@ void wpsInitConfig()
   strcpy(wps_config.factory_info.manufacturer, ESP_MANUFACTURER);
   strcpy(wps_config.factory_info.model_number, ESP_MODEL_NUMBER);
   strcpy(wps_config.factory_info.model_name, ESP_MODEL_NAME);
-  strcpy(wps_config.factory_info.device_name, UniqueDeviceName);
+  strcpy(wps_config.factory_info.device_name, DEVICE_NAME);
 }
 #endif
 
@@ -94,7 +92,7 @@ void WifiBegin()
 
   WiFi.mode(WIFI_STA);
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
-  WiFi.setHostname(UniqueDeviceName);
+  WiFi.setHostname(DEVICE_NAME);
 
 #ifdef WIFI_USE_WPS // WPS code
   // no data is saved, start WPS imediatelly
@@ -233,7 +231,8 @@ void WiFiStartWps()
 
 bool GetGeoLocationTimeZoneOffset()
 {
-  Serial.println("\nStarting Geolocation API query...");
+  Serial.println("Starting Geolocation query...");
+  // https://app.abstractapi.com/api/ip-geolocation/    // free for 5k loopkups per month.
   IPGeolocation location(GEOLOCATION_API_KEY, "ABSTRACT");
   IPGeo IPG;
   if (location.updateStatus(&IPG))

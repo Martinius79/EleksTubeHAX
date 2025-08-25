@@ -16,124 +16,25 @@
 #include "Menu.h"
 #include "StoredConfig.h"
 #include "WiFi_WPS.h"
-
 #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
 #include "MQTT_client_ips.h"
 #endif
-
-/************************
- *   NovelLife Clone    *
- ************************/
-#ifdef HARDWARE_NOVELLIFE_CLOCK
+#ifdef HARDWARE_NOVELLIFE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // #include "Gestures.h"
 // TODO put into class
 #include <Wire.h>
 #include <SparkFun_APDS9960.h>
+#endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+// Constants
+
+// Global Variables
+#ifdef HARDWARE_NOVELLIFE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // TODO put into class
 SparkFun_APDS9960 apds = SparkFun_APDS9960();
-int volatile isr_flag = 0; // interrupt signal for gesture sensor
-
-extern Buttons buttons;
-
-void GestureStart();
-void HandleGestureInterupt(void);
-void GestureInterruptRoutine(void);
-void HandleGesture(void);
-
-void GestureStart()
-{
-  // for gesture sensor APDS9660 - Set interrupt pin on ESP32 as input
-  pinMode(GESTURE_SENSOR_INPUT_PIN, INPUT);
-
-  // Initialize interrupt service routine for interupt from APDS-9960 sensor
-  attachInterrupt(digitalPinToInterrupt(GESTURE_SENSOR_INPUT_PIN), GestureInterruptRoutine, FALLING);
-
-  // Initialize gesture sensor APDS-9960 (configure I2C and initial values)
-  if (apds.init())
-  {
-    Serial.println(F("APDS-9960 initialization complete"));
-
-    // Set Gain to 1x, bacause the cheap chinese fake APDS sensor can't handle more (also remember to extend ID check in Sparkfun libary to 0x3B!)
-    apds.setGestureGain(GGAIN_1X);
-
-    // Start running the APDS-9960 gesture sensor engine
-    if (apds.enableGestureSensor(true))
-    {
-      Serial.println(F("Gesture sensor is now running"));
-    }
-    else
-    {
-      Serial.println(F("Something went wrong during gesture sensor enablimg in the APDS-9960 library!"));
-    }
-  }
-  else
-  {
-    Serial.println(F("Something went wrong during APDS-9960 init!"));
-  }
-}
-
-// Handle Interrupt from gesture sensor and simulate a short button press (state down_edge) of the corresponding button, if a gesture is detected
-void HandleGestureInterupt()
-{
-  if (isr_flag == 1)
-  {
-    detachInterrupt(digitalPinToInterrupt(GESTURE_SENSOR_INPUT_PIN));
-    HandleGesture();
-    isr_flag = 0;
-    attachInterrupt(digitalPinToInterrupt(GESTURE_SENSOR_INPUT_PIN), GestureInterruptRoutine, FALLING);
-  }
-  return;
-}
-
-// mark, that the Interrupt of the gesture sensor was signaled
-void GestureInterruptRoutine()
-{
-  isr_flag = 1;
-  return;
-}
-
-// check which gesture was detected
-void HandleGesture()
-{
-  // Serial.println("->main::HandleGesture()");
-  if (apds.isGestureAvailable())
-  {
-    switch (apds.readGesture())
-    {
-    case DIR_UP:
-      buttons.left.setDownEdgeState();
-      Serial.println("Gesture detected! LEFT");
-      break;
-    case DIR_DOWN:
-      buttons.right.setDownEdgeState();
-      Serial.println("Gesture detected! RIGHT");
-      break;
-    case DIR_LEFT:
-      buttons.power.setDownEdgeState();
-      Serial.println("Gesture detected! DOWN");
-      break;
-    case DIR_RIGHT:
-      buttons.mode.setDownEdgeState();
-      Serial.println("Gesture detected! UP");
-      break;
-    case DIR_NEAR:
-      buttons.mode.setDownEdgeState();
-      Serial.println("Gesture detected! NEAR");
-      break;
-    case DIR_FAR:
-      buttons.power.setDownEdgeState();
-      Serial.println("Gesture detected! FAR");
-      break;
-    default:
-      Serial.println("Movement detected but NO gesture detected!");
-    }
-  }
-  return;
-}
-#endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
-
-char UniqueDeviceName[32]; // Enough space for "EleksTubeHAK-" + 4 hex chars + null
+// interupt signal for gesture sensor
+int volatile isr_flag = 0;
+#endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 Backlights backlights;
 Buttons buttons;
@@ -159,22 +60,24 @@ bool isNightTime(uint8_t current_hour);
 void checkDimmingNeeded(void);
 #endif
 void UpdateDstEveryNight(void);
+#ifdef HARDWARE_NOVELLIFE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+void GestureStart();
+void HandleGestureInterupt(void);   // only for NovelLife SE
+void GestureInterruptRoutine(void); // only for NovelLife SE
+void HandleGesture(void);           // only for NovelLife SE
+#endif                              // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 //-----------------------------------------------------------------------
 // Setup
 //-----------------------------------------------------------------------
+
 void setup()
 {
   Serial.begin(115200);
-  delay(1000); // Wait for serial monitor to catch up
-
-  Serial.println("\nSystem starting...\n");
-  Serial.println("EleksTubeHAX https://github.com/aly-fly/EleksTubeHAX");
-  Serial.printf("Firmware version: v%s.\n", FIRMWARE_VERSION);
-
-  uint64_t chipid = ESP.getEfuseMac(); // Get unique 48-bit chip ID
-  snprintf(UniqueDeviceName, sizeof(UniqueDeviceName), "%s-%04X", DEVICE_NAME, (uint16_t)(chipid & 0xFFFF));
-  Serial.printf("Set device name: \"%s\".\n", UniqueDeviceName);
+  delay(1000); // Waiting for serial monitor to catch up.
+  Serial.println("");
+  Serial.println(FIRMWARE_VERSION);
+  Serial.println("In setup().");
 
   Serial.print("Init NVS flash partition usage...");
   esp_err_t ret = nvs_flash_init(); // Initialize NVS
@@ -186,7 +89,7 @@ void setup()
     ret = nvs_flash_init();
   }
   ESP_ERROR_CHECK(ret);
-  Serial.println("Done.");
+  Serial.println("Done");
 
   stored_config.begin();
   stored_config.load();
@@ -195,8 +98,8 @@ void setup()
   buttons.begin();
   menu.begin();
 
-  // Setup the displays (TFTs) initaly and show bootup message(s).
-  tfts.begin(); // ...and count number of clock faces available...
+  // Setup the displays (TFTs) initaly and show bootup message(s)
+  tfts.begin(); // and count number of clock faces available
   tfts.fillScreen(TFT_BLACK);
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
   tfts.setCursor(0, 0, 2); // Font 2. 16 pixel high
@@ -211,7 +114,7 @@ void setup()
   tfts.println("Done!");
   Serial.println("Done!");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-#endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
+#endif
 
   // Setup WiFi connection. Must be done before setting up Clock.
   // This is done outside Clock so the network can be used for other things.
@@ -221,7 +124,7 @@ void setup()
   WifiBegin();
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
-  // Wait a bit (5x100ms = 0.5 sec) before querying NTP.
+  // wait a bit (5x100ms = 0.5 sec) before querying NTP
   for (uint8_t ndx = 0; ndx < 5; ndx++)
   {
     tfts.print(">");
@@ -232,17 +135,17 @@ void setup()
   // Setup the clock.  It needs WiFi to be established already.
   tfts.setTextColor(TFT_MAGENTA, TFT_BLACK);
   tfts.print("Clock start...");
-  Serial.println("\nClock start-up...");
+  Serial.println("Clock start-up...");
   uclock.begin(&stored_config.config.uclock);
   tfts.println("Done!");
-  Serial.println("\nClock start-up done!");
+  Serial.println("Clock start-up done!");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
 #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
-  // Setup MQTT.
+  // Setup MQTT
   tfts.setTextColor(TFT_YELLOW, TFT_BLACK);
   tfts.print("MQTT start...");
-  Serial.println("\nMQTT start...");
+  Serial.println("MQTT start...");
   MQTTStart(false);
   tfts.println("Done!");
   Serial.println("MQTT start Done!");
@@ -252,6 +155,7 @@ void setup()
 #ifdef GEOLOCATION_ENABLED
   tfts.setTextColor(TFT_CYAN, TFT_BLACK);
   tfts.println("GeoLoc query...");
+  Serial.println("GeoLoc query...");
   if (GetGeoLocationTimeZoneOffset())
   {
     tfts.print("TZ: ");
@@ -260,7 +164,7 @@ void setup()
     Serial.println(GeoLocTZoffset);
     uclock.setTimeZoneOffset(GeoLocTZoffset * 3600);
     Serial.println();
-    Serial.print("Saving config! Triggered by timezone change...");
+    Serial.print("Saving config! Triggerd by timezone change...");
     stored_config.save();
     tfts.println("Done!");
     Serial.println("Done!");
@@ -289,9 +193,9 @@ void setup()
 
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
   tfts.println("Done with Setup!");
-  Serial.println("\nDone with Setup!");
+  Serial.println("Done with Setup!");
 
-  // Leave boot up messages on screen for a few seconds (10x200ms = 2 sec).
+  // Leave boot up messages on screen for a few seconds (10x200ms = 2 sec)
   for (uint8_t ndx = 0; ndx < 10; ndx++)
   {
     tfts.print(">");
@@ -302,7 +206,7 @@ void setup()
   tfts.fillScreen(TFT_BLACK);
   uclock.loop();
   updateClockDisplay(TFTs::force); // Draw all the clock digits
-  Serial.println("Starting main loop...");
+  Serial.println("Setup finished.");
 }
 
 //-----------------------------------------------------------------------
@@ -313,8 +217,8 @@ void loop()
 {
   uint32_t millis_at_top = millis();
 
-  // Do all the maintenance work.
-  WifiReconnect(); // If not connected to WiFi, attempt to reconnect
+  // Do all the maintenance work
+  WifiReconnect(); // if not connected attempt to reconnect
 
 #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
   MQTTLoopFrequently();
@@ -526,7 +430,7 @@ void loop()
   if (lastMQTTCommandExecuted != -1)
   {
     if (((millis() - lastMQTTCommandExecuted) > (MQTT_SAVE_PREFERENCES_AFTER_SEC * 1000)) && menu.getState() == Menu::idle)
-    { // Save the config after a while (default is 60 seconds) if no new MQTT command was received and we are not in the menu.
+    { // // Save the config after a while (default is 60 seconds) if no new MQTT command was received and we are not in the menu.
       lastMQTTCommandExecuted = -1;
 
       Serial.print("Saving config...");
@@ -540,22 +444,22 @@ void loop()
 
 #ifdef HARDWARE_NOVELLIFE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   HandleGestureInterupt();
-#endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
+#endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-// if the device has one button only, no power button functionality is needed!
+// if the device has one button only,, no power button functionality is needed!
 #ifndef ONE_BUTTON_ONLY_MENU
   // Power button: If in menu, exit menu. Else turn off displays and backlight.
   if (buttons.power.isDownEdge() && (menu.getState() == Menu::idle))
   { // Power button was pressed: if in the menu, exit menu, else turn off displays and backlight.
     if (tfts.isEnabled())
-    { // check if TFT state is enabled -> switch OFF the LCDs and LED backlights
+    { // check if tft state is enabled -> switch OFF the LCDs and LED backlights
       tfts.chip_select.setAll();
-      tfts.fillScreen(TFT_BLACK); // blank the screens before turning off -> needed for all clocks without a real "power switch circuit"
+      tfts.fillScreen(TFT_BLACK); // blank the screens before turning off -> needed for all clocks without a real "power switch curcuit"
       tfts.disableAllDisplays();
       backlights.PowerOff();
     }
     else
-    {                           // TFT state is disabled -> turn ON the displays and backlights
+    {                           // tft state is disabled -> turn ON the displays and backlights
 #ifdef HARDWARE_ELEKSTUBE_CLOCK // original EleksTube hardware and direct clones need a reinit to wake up the displays properly
       tfts.reinit();
 #else
@@ -849,6 +753,99 @@ void loop()
 #endif // DEBUG_OUTPUT
 }
 
+#ifdef HARDWARE_NOVELLIFE_CLOCK // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+void GestureStart()
+{
+  // for gesture sensor APDS9660 - Set interrupt pin on ESP32 as input
+  pinMode(GESTURE_SENSOR_INPUT_PIN, INPUT);
+
+  // Initialize interrupt service routine for interupt from APDS-9960 sensor
+  attachInterrupt(digitalPinToInterrupt(GESTURE_SENSOR_INPUT_PIN), GestureInterruptRoutine, FALLING);
+
+  // Initialize gesture sensor APDS-9960 (configure I2C and initial values)
+  if (apds.init())
+  {
+    Serial.println(F("APDS-9960 initialization complete"));
+
+    // Set Gain to 1x, bacause the cheap chinese fake APDS sensor can't handle more (also remember to extend ID check in Sparkfun libary to 0x3B!)
+    apds.setGestureGain(GGAIN_1X);
+
+    // Start running the APDS-9960 gesture sensor engine
+    if (apds.enableGestureSensor(true))
+    {
+      Serial.println(F("Gesture sensor is now running"));
+    }
+    else
+    {
+      Serial.println(F("Something went wrong during gesture sensor enablimg in the APDS-9960 library!"));
+    }
+  }
+  else
+  {
+    Serial.println(F("Something went wrong during APDS-9960 init!"));
+  }
+}
+
+// Handle Interrupt from gesture sensor and simulate a short button press (state down_edge) of the corresponding button, if a gesture is detected
+void HandleGestureInterupt()
+{
+  if (isr_flag == 1)
+  {
+    detachInterrupt(digitalPinToInterrupt(GESTURE_SENSOR_INPUT_PIN));
+    HandleGesture();
+    isr_flag = 0;
+    attachInterrupt(digitalPinToInterrupt(GESTURE_SENSOR_INPUT_PIN), GestureInterruptRoutine, FALLING);
+  }
+  return;
+}
+
+// mark, that the Interrupt of the gesture sensor was signaled
+void GestureInterruptRoutine()
+{
+  isr_flag = 1;
+  return;
+}
+
+// check which gesture was detected
+void HandleGesture()
+{
+  // Serial.println("->main::HandleGesture()");
+  if (apds.isGestureAvailable())
+  {
+    switch (apds.readGesture())
+    {
+    case DIR_UP:
+      buttons.left.setDownEdgeState();
+      Serial.println("Gesture detected! LEFT");
+      break;
+    case DIR_DOWN:
+      buttons.right.setDownEdgeState();
+      Serial.println("Gesture detected! RIGHT");
+      break;
+    case DIR_LEFT:
+      buttons.power.setDownEdgeState();
+      Serial.println("Gesture detected! DOWN");
+      break;
+    case DIR_RIGHT:
+      buttons.mode.setDownEdgeState();
+      Serial.println("Gesture detected! UP");
+      break;
+    case DIR_NEAR:
+      buttons.mode.setDownEdgeState();
+      Serial.println("Gesture detected! NEAR");
+      break;
+    case DIR_FAR:
+      buttons.power.setDownEdgeState();
+      Serial.println("Gesture detected! FAR");
+      break;
+    default:
+      Serial.println("Movement detected but NO gesture detected!");
+    }
+  }
+  return;
+}
+#endif // NovelLife_SE Clone XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 void setupMenu()
 {                                  // Prepare drawing of the menu texts
   tfts.chip_select.setHoursTens(); // use most left display
@@ -918,7 +915,7 @@ void UpdateDstEveryNight()
 
 void updateClockDisplay(TFTs::show_t show)
 {
-  // Refresh, starting with seconds.
+  // refresh starting on seconds
   tfts.setDigit(SECONDS_ONES, uclock.getSecondsOnes(), show);
   tfts.setDigit(SECONDS_TENS, uclock.getSecondsTens(), show);
   tfts.setDigit(MINUTES_ONES, uclock.getMinutesOnes(), show);

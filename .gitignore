@@ -47,6 +47,10 @@ _USER_DEFINES.h
 **/EleksTubeHax_pio/.gitignore
 EleksTubeHax_pio/.gitignore
 
-# ignore artifacts from "act" (GitHub Actions locally)
+# ignore "act" files (GitHub Actions locally)
 **/.act_artifacts
+**/.actrc
+**/.act
 .act_artifacts
+.actrc
+.act
