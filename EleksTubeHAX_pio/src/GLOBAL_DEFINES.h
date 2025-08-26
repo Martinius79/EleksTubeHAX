@@ -164,7 +164,7 @@
 
 // Chip Select shift register, to select the display
 #define CSSR_DATA_PIN (GPIO_NUM_13)
-#define CSSR_CLOCK_PIN (GPIO_NUM_16 )
+#define CSSR_CLOCK_PIN (GPIO_NUM_16)
 #define CSSR_LATCH_PIN (GPIO_NUM_15)
 
 // Power for all TFT displays are grounded through a MOSFET so they can all be turned off.
