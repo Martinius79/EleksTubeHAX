@@ -35,7 +35,11 @@
 // #define GEOLOCATION_ENABLED // Enable after creating an account and copying Geolocation API below:
 #define GEOLOCATION_API_KEY "__enter_your_api_key_here__"
 
+
 // ************* MQTT plain mode config *************
+
+#define MQTT_BASE_NAME "EleksTubeHAX" // Base name of the MQTT topics
+
 // #define MQTT_PLAIN_ENABLED // Enable MQTT support for an external provider
 
 // MQTT support is limited to what an external service offers (for example SmartNest.cz).
@@ -65,10 +69,10 @@
 // Retained messages can create ghost entities that keep coming back (i.e., if you change MQTT device name)! You need to delete them manually from the broker queue!
 
 #ifdef MQTT_HOME_ASSISTANT
-#define MQTT_HOME_ASSISTANT_DISCOVERY_DEVICE_MANUFACTURER "EleksMaker" // Name of the manufacturer shown in HA
-#define MQTT_HOME_ASSISTANT_DISCOVERY_DEVICE_MODEL "Elekstube IPS"     // Name of the model shown in HA
-#define MQTT_HOME_ASSISTANT_DISCOVERY_SW_VERSION "1.1"                 // Firmware version shown in HA
-#define MQTT_HOME_ASSISTANT_DISCOVERY_HW_VERSION "2.3.04"              // Hardware version shown in HA
+#define MQTT_HOME_ASSISTANT_DISCOVERY_DEVICE_MANUFACTURER DEVICE_MANUFACTURER // Name of the manufacturer shown in HA
+#define MQTT_HOME_ASSISTANT_DISCOVERY_DEVICE_MODEL MQTT_BASE_NAME DEVICE_MANUFACTURER // Name of the model shown in HA
+#define MQTT_HOME_ASSISTANT_DISCOVERY_SW_VERSION FIRMWARE_VERSION             // Firmware version shown in HA
+#define MQTT_HOME_ASSISTANT_DISCOVERY_HW_VERSION DEVICE_HW_VERSION            // Hardware version shown in HA
 #endif
 
 // --- MQTT broker settings ---
@@ -78,7 +82,7 @@
 #define MQTT_PORT 1883                         // Broker port
 #define MQTT_USERNAME "_enter_MQTT_username_"  // Username
 #define MQTT_PASSWORD "_enter_MQTT_password_"  // Password
-#define MQTT_CLIENT "clock"                    // Device Id
+#define MQTT_CLIENT MQTT_BASE_NAME "_" DEVICE_MANUFACTURER // Device ID (i.e. from Smartnest) - This will be used as root for each topic - Local can be anything, like "EleksTubeHAX_PunkCyber"
 #endif
 
 #define MQTT_SAVE_PREFERENCES_AFTER_SEC 60 // auto save config X seconds after last MQTT configuration message received

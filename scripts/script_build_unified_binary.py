@@ -1,4 +1,4 @@
-# Combines separate bin files with their respective offsets into a single file
+# Combines separate bin files with their respective offsets into a single file.
 # This single file must then be flashed to an ESP32 node with 0x0 offset.
 from os.path import join
 import os
@@ -7,10 +7,16 @@ import subprocess
 Import("env")
 platform = env.PioPlatform()
 
+ # Always use PlatformIO's esptool
+import importlib.util
+esptool_path = os.path.join(platform.get_package_dir("tool-esptoolpy"), "esptool.py")
+spec = importlib.util.spec_from_file_location("esptool", esptool_path)
+esptool = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(esptool)
+print("Loaded esptool from:", esptool.__file__)
+print("esptool version:", getattr(esptool, '__version__', 'unknown'))
 
 env.Execute("$PYTHONEXE -m pip install intelhex")
-sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
-import esptool
 
 def pio_run_buildfs(source, target, env):
     print("script_build_unified_binary.py: Building SPIFFS filesystem image...")
@@ -34,7 +40,7 @@ def pio_run_buildfs(source, target, env):
         sys.exit(1)
     else:
         print("script_build_unified_binary.py: Successfully built SPIFFS filesystem image.")
-        print ("FLASH_EXTRA_IMAGES: ")
+        print("FLASH_EXTRA_IMAGES:")
         print(env.subst(env.get("FLASH_EXTRA_IMAGES")))
 
 
@@ -42,7 +48,7 @@ def pio_run_buildfs(source, target, env):
 def esp32_create_combined_bin(source, target, env):
     print("script_build_unified_binary.py: Generating combined binary for serial flashing...")
 
-    # The offset from begin of the file where the app0 partition starts
+    # The offset from the beginning of the file where the app0 partition starts
     # This is defined in the partition .csv file
     app_offset = env.get("ESP32_APP_OFFSET")
 
@@ -102,12 +108,11 @@ def esp32_create_combined_bin(source, target, env):
         except Exception:
             pass
 
-    # Add missing partitions to sections
+    # Add only missing SPIFFS partition to sections
     for offset, name in partition_info:
-        if offset not in section_offsets:
-            # Assume file name is name + ".bin" in build dir
+        if name.lower() == "spiffs" and offset not in section_offsets:
             part_file = os.path.join(env.subst("$BUILD_DIR"), name + ".bin")
-            print(f"[Info] Adding missing partition: {hex(offset)} | {part_file}")
+            print(f"[Info] Adding missing SPIFFS partition: {hex(offset)} | {part_file}")
             sections.append(f"{hex(offset)} {part_file}")
 
     cmd = [
@@ -127,10 +132,19 @@ def esp32_create_combined_bin(source, target, env):
     print(f" - {app_offset} | {firmware_name}")
     cmd += [app_offset, firmware_name]
 
-    print('script_build_unified_binary.py: Using esptool.py arguments: %s' %
-          ' '.join(cmd))
 
-    esptool.main(cmd)
+    print('script_build_unified_binary.py: Using esptool.py arguments: %s' %
+        ' '.join(cmd))
+
+    # Instead of esptool.main: call CLI via subprocess
+    esptool_cmd = [env.subst("$PYTHONEXE"), esptool_path] + cmd
+    print("Calling esptool via subprocess:", ' '.join(esptool_cmd))
+    result = subprocess.run(esptool_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    print(result.stdout)
+    if result.returncode != 0:
+        print("[Error] esptool failed:")
+        print(result.stderr)
+        sys.exit(result.returncode)
 
 
 my_flags = env.ParseFlags(env['BUILD_FLAGS'])
