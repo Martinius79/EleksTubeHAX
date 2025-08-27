@@ -1,6 +1,7 @@
 # Combines separate bin files with their respective offsets into a single file
 # This single file must then be flashed to an ESP32 node with 0x0 offset.
 from os.path import join
+import os
 import sys
 import subprocess
 Import("env")
@@ -33,6 +34,9 @@ def pio_run_buildfs(source, target, env):
         sys.exit(1)
     else:
         print("script_build_unified_binary.py: Successfully built SPIFFS filesystem image.")
+        print ("FLASH_EXTRA_IMAGES: ")
+        print(env.subst(env.get("FLASH_EXTRA_IMAGES")))
+
 
 
 def esp32_create_combined_bin(source, target, env):
@@ -43,25 +47,75 @@ def esp32_create_combined_bin(source, target, env):
     app_offset = env.get("ESP32_APP_OFFSET")
 
     object_file_name = env.subst("$BUILD_DIR/FW_${PROGNAME}.bin")
+    print ("FLASH_EXTRA_IMAGES: ")
+    print(env.subst(env.get("FLASH_EXTRA_IMAGES")))
     sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
     firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
     chip = env.get("BOARD_MCU")
-    flash_size = env.BoardConfig().get("upload.flash_size", "4MB")
-    flash_mode = env["__get_board_flash_mode"](env)
-    flash_freq = env["__get_board_f_flash"](env)
+
+    # Partition table file
+    # Path to the partition table CSV
+    partition_csv = env.GetProjectOption("board_build.partitions")
+    if not partition_csv:
+        print("[Error] 'board_build.partitions' not defined in platformio.ini.")
+        env.Exit(1)
+
+    # Resolve the full path to the partition CSV file
+    partition_csv_path = partition_csv
+    if not os.path.isabs(partition_csv_path):
+        partition_csv_path = os.path.join(env.subst("$PROJECT_DIR"), partition_csv_path)
+
+    # Check if the partition CSV file exists
+    if not os.path.isfile(partition_csv_path):
+        print(f"[Error] Partition CSV file '{partition_csv_path}' not found.")
+        env.Exit(1)
+    
+    # Read all partitions from CSV, store offsets and names
+    max_offset = 0
+    partition_info = []  # List of tuples: (offset, name)
+    with open(partition_csv_path, "r") as pf:
+        for line in pf:
+            line = line.strip()
+            if line.startswith("#") or not line:
+                continue
+            parts = line.split(",")
+            if len(parts) < 5:
+                continue
+            try:
+                name = parts[0].strip()
+                offset = int(parts[3], 16)
+                size = int(parts[4], 16)
+                end = offset + size
+                if end > max_offset:
+                    max_offset = end
+                partition_info.append((offset, name))
+            except Exception:
+                continue
+
+    # sections: list of "offset filename"
+    # Build a set of offsets already present in sections
+    section_offsets = set()
+    for section in sections:
+        sect_adr, sect_file = section.split(" ", 1)
+        try:
+            section_offsets.add(int(sect_adr, 0))
+        except Exception:
+            pass
+
+    # Add missing partitions to sections
+    for offset, name in partition_info:
+        if offset not in section_offsets:
+            # Assume file name is name + ".bin" in build dir
+            part_file = os.path.join(env.subst("$BUILD_DIR"), name + ".bin")
+            print(f"[Info] Adding missing partition: {hex(offset)} | {part_file}")
+            sections.append(f"{hex(offset)} {part_file}")
 
     cmd = [
         "--chip",
         chip,
-        "merge-bin",
+        "merge_bin",
         "-o",
         object_file_name,
-        "--flash-mode",
-        flash_mode,
-        "--flash-freq",
-        flash_freq,
-        "--flash-size",
-        flash_size,
     ]
 
     print("    Offset | File")
