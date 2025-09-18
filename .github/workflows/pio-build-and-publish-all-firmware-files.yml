@@ -77,7 +77,7 @@ jobs:
     - name: Copy empty _USER_DEFINES.h file
       run: |
         echo "Copy _USER_DEFINES - empty.h to _USER_DEFINES.h"
-        cp "./EleksTubeHAX_pio/src/_USER_DEFINES - empty.h" "./EleksTubeHAX_pio/src/_USER_DEFINES.h"        
+        cp "./EleksTubeHAX_pio/src/_USER_DEFINES - empty.h" "./EleksTubeHAX_pio/src/_USER_DEFINES.h"
         cat "./EleksTubeHAX_pio/src/_USER_DEFINES.h"
 
     - name: Update FIRMWARE_VERSION in GLOBAL_DEFINES.h
@@ -121,6 +121,7 @@ jobs:
           EleksTubeGen1)   TARGET="FW_Elekstube_HAX_${VERSION}_original.bin" ;;
           EleksTubeGen2)   TARGET="FW_Elekstube_HAX_${VERSION}_Gen2-1.bin" ;;
           SI_HAI)          TARGET="FW_SI_HAI_CLOCK_HAX_${VERSION}.bin" ;;
+          Xunfeng)         TARGET="FW_Xunfeng_CLOCK_HAX_${VERSION}.bin" ;;
           PunkCyber)       TARGET="FW_PunkCyber_Glow_PCBway_HAX_${VERSION}.bin" ;;
           IPSTUBE)         TARGET="FW_IPSTUBE_HAX_${VERSION}.bin" ;;
           *)               TARGET="FW_${ENV_NAME}_HAX_${VERSION}.bin" ;;
