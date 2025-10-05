@@ -92,31 +92,20 @@ jobs:
         run: platformio system info
 
       - name: Ensure pip<24 inside PlatformIO virtualenv.
+        shell: bash
         run: |
-          python - <<'PY'
-          import os
-          import pathlib
-          import subprocess
-          from textwrap import dedent
+          set -euo pipefail
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then
+            PENV_PY="$USERPROFILE\\.platformio\\penv\\Scripts\\python.exe"
+          else
+            PENV_PY="$HOME/.platformio/penv/bin/python"
+          fi
 
-          exec(dedent("""
-          import os
-          import pathlib
-          import subprocess
-
-          home = pathlib.Path.home()
-          penv = home / ".platformio" / "penv"
-          if os.name == "nt":
-              python_path = penv / "Scripts" / "python.exe"
-          else:
-              python_path = penv / "bin" / "python"
-
-          if python_path.exists():
-              subprocess.check_call([str(python_path), "-m", "pip", "install", "--upgrade", "pip<24"])
-          else:
-              print(f"No PlatformIO virtualenv python found at {python_path}, skipping pip downgrade.")
-          """))
-          PY
+          if [[ -f "$PENV_PY" ]]; then
+            "$PENV_PY" -m pip install --upgrade "pip<24"
+          else
+            echo "No PlatformIO virtualenv python found at $PENV_PY (RUNNER_OS=$RUNNER_OS), skipping pip downgrade."
+          fi
 
       - name: Ensure default _USER_DEFINES.h file exists.
         shell: bash
