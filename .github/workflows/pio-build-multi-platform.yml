@@ -122,6 +122,59 @@ jobs:
           echo "Using esptool at $ESPTOOL_PATH"
           echo "PLATFORMIO_ESPTOOLPY_PATH=$ESPTOOL_PATH" >> "$GITHUB_ENV"
 
+      - name: Shim esptool --version on Windows.
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-StrictMode -Version Latest
+          $shimDir = Join-Path $env:RUNNER_TEMP "esptool-shim"
+          New-Item -ItemType Directory -Force -Path $shimDir | Out-Null
+
+          $pythonExe = Join-Path $env:pythonLocation "python.exe"
+          if (-not (Test-Path $pythonExe)) {
+            $pythonExe = "python"
+          }
+
+          $realEsptool = $env:PLATFORMIO_ESPTOOLPY_PATH
+          if (-not $realEsptool) {
+            $candidate = Join-Path $env:USERPROFILE ".platformio\packages\tool-esptoolpy\esptool.py"
+            if (Test-Path $candidate) {
+              $realEsptool = $candidate
+            }
+          }
+
+          if (-not $realEsptool) {
+            throw "Unable to locate the real esptool executable."
+          }
+
+          $shimContent = @"
+          @echo off
+          setlocal ENABLEEXTENSIONS
+          set ""PYTHON_EXE=$pythonExe""
+          if ""%~1""==""--version"" (
+            shift
+            ""%PYTHON_EXE%"" -m esptool version %*
+            exit /b %ERRORLEVEL%
+          )
+          set ""REAL_ESPTOOL=$realEsptool""
+          if not exist ""%REAL_ESPTOOL%"" (
+            echo esptool shim: %REAL_ESPTOOL% not found>&2
+            exit /b 1
+          )
+          for %%I in (""%REAL_ESPTOOL%"") do set ""EXT=%%~xI""
+          if /I ""%EXT%""=="".PY"" (
+            ""%PYTHON_EXE%"" ""%REAL_ESPTOOL%"" %*
+          ) else (
+            ""%REAL_ESPTOOL%"" %*
+          )
+          exit /b %ERRORLEVEL%
+          "@
+
+          $shimPath = Join-Path $shimDir "esptool.cmd"
+          Set-Content -Path $shimPath -Value $shimContent -Encoding Ascii
+          Add-Content -Path $env:GITHUB_PATH -Value $shimDir
+          Write-Host "Added esptool shim at $shimPath and exported $shimDir to GITHUB_PATH."
+
       - name: Initialize PlatformIO core.
         run: platformio system info
 
