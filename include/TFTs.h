@@ -5,6 +5,8 @@
 #include <FS.h>
 #include <SPIFFS.h>
 #include <TFT_eSPI.h>
+#include <memory>
+#include <new>
 #include "GLOBAL_DEFINES.h"
 #include "ChipSelect.h"
 
@@ -76,7 +78,8 @@ private:
   uint16_t read16(fs::File &f);
   uint32_t read32(fs::File &f);
 
-  static uint16_t UnpackedImageBuffer[TFT_HEIGHT][TFT_WIDTH];
+  std::unique_ptr<uint16_t[]> unpackedImageBuffer;
+  size_t unpackedImageBufferSize = 0;
   uint8_t FileInBuffer = 255; // invalid, always load first image
   uint8_t NextFileRequired = 0;
 

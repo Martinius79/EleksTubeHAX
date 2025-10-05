@@ -1,6 +1,60 @@
+#include <Arduino.h>
 #include "MQTT_client_ips.h"
 #include "TFTs.h"
 #include "WiFi_WPS.h"
+#include <cstring>
+#if defined(DIM_WITH_ENABLE_PIN_PWM) && defined(ARDUINO_ARCH_ESP32)
+#include <driver/ledc.h>
+#include <esp_idf_version.h>
+
+namespace
+{
+  constexpr ledc_mode_t kTftPwmMode = LEDC_LOW_SPEED_MODE;
+  constexpr ledc_timer_t kTftPwmTimer = LEDC_TIMER_0;
+
+  void configureTftPwmIfNeeded()
+  {
+    static bool configured = false;
+    if (configured)
+    {
+      return;
+    }
+
+    ledc_timer_config_t timerConfig;
+    memset(&timerConfig, 0, sizeof(timerConfig));
+    timerConfig.speed_mode = kTftPwmMode;
+    timerConfig.timer_num = kTftPwmTimer;
+    timerConfig.duty_resolution = static_cast<ledc_timer_bit_t>(TFT_PWM_RESOLUTION);
+    timerConfig.freq_hz = TFT_PWM_FREQ;
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 0, 0)
+    timerConfig.clk_cfg = LEDC_AUTO_CLK;
+#endif
+    ledc_timer_config(&timerConfig);
+
+    ledc_channel_config_t channelConfig;
+    memset(&channelConfig, 0, sizeof(channelConfig));
+    channelConfig.gpio_num = TFT_ENABLE_PIN;
+    channelConfig.speed_mode = kTftPwmMode;
+    channelConfig.channel = static_cast<ledc_channel_t>(TFT_PWM_CHANNEL);
+    channelConfig.intr_type = LEDC_INTR_DISABLE;
+    channelConfig.timer_sel = kTftPwmTimer;
+    channelConfig.duty = 0;
+    channelConfig.hpoint = 0;
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    channelConfig.flags.output_invert = 0;
+#endif
+    ledc_channel_config(&channelConfig);
+
+    configured = true;
+  }
+
+  void updateTftPwmDuty(uint32_t duty)
+  {
+    ledc_set_duty(kTftPwmMode, static_cast<ledc_channel_t>(TFT_PWM_CHANNEL), duty);
+    ledc_update_duty(kTftPwmMode, static_cast<ledc_channel_t>(TFT_PWM_CHANNEL));
+  }
+}
+#endif
 
 void TFTs::begin()
 {
@@ -8,10 +62,12 @@ void TFTs::begin()
   chip_select.setAll(); // Start with all displays selected
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
-  // If hardware dimming is used, init ledc, set the pin and channel for PWM and set frequency and resolution
-  ledcSetup(TFT_ENABLE_PIN, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);            // PWM, globally defined
-  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);                         // Attach the pin to the PWM channel
-  ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION); // need to set the frequency and resolution again to have the hardware dimming working properly
+  // If hardware dimming is used, configure the PWM channel once.
+#if defined(ARDUINO_ARCH_ESP32)
+  configureTftPwmIfNeeded();
+#else
+  pinMode(TFT_ENABLE_PIN, OUTPUT);
+#endif
 #else
   pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
@@ -41,8 +97,11 @@ void TFTs::reinit()
     chip_select.setAll(); // Start again with all displays selected.
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
-    ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
-    ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);
+#ifdef ARDUINO_ARCH_ESP32
+  configureTftPwmIfNeeded();
+#else
+  pinMode(TFT_ENABLE_PIN, OUTPUT);
+#endif
 #else
     pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
@@ -210,23 +269,22 @@ void TFTs::LoadNextImage()
 
 void TFTs::InvalidateImageInBuffer()
 {                     // force reload from Flash with new dimming settings
+  unpackedImageBuffer.reset();
+  unpackedImageBufferSize = 0;
   FileInBuffer = 255; // invalid, always load first image
 }
-
 void TFTs::ProcessUpdatedDimming()
 {
 #ifdef DIM_WITH_ENABLE_PIN_PWM
   // hardware dimming is done via PWM on the pin defined by TFT_ENABLE_PIN
   // ONLY for IPSTUBE clocks in the moment! Other clocks may be damaged!
-  if (TFTsEnabled)
-  {
-    ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(dimming));
-  }
-  else
-  {
-    // no dimming means 255 (full brightness)
-    ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(0));
-  }
+#if defined(ARDUINO_ARCH_ESP32)
+  configureTftPwmIfNeeded();
+  const uint32_t duty = TFTsEnabled ? CALCDIMVALUE(dimming) : CALCDIMVALUE(0);
+  updateTftPwmDuty(duty);
+#else
+  digitalWrite(TFT_ENABLE_PIN, TFTsEnabled ? ACTIVATEDISPLAYS : DEACTIVATEDISPLAYS);
+#endif
 #else
   // "software" dimming is done via alpha blending in the image drawing function
   // signal that the image in the buffer is invalid and needs to be reloaded and refilled
@@ -245,9 +303,6 @@ bool TFTs::FileExists(const char *path)
 // These BMP functions are stolen directly from the TFT_SPIFFS_BMP example in the TFT_eSPI library.
 // Unfortunately, they aren't part of the library itself, so I had to copy them.
 // I've modified DrawImage to buffer the whole image at once instead of doing it line-by-line.
-
-// Too big to fit on the stack.
-uint16_t TFTs::UnpackedImageBuffer[TFT_HEIGHT][TFT_WIDTH];
 
 #ifndef USE_CLK_FILES
 
@@ -299,8 +354,24 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t w, h, row, col;
   uint16_t r, g, b, bitDepth;
 
+  // Ensure we have a buffer allocated for the entire image
+  const size_t requiredElements = static_cast<size_t>(TFT_WIDTH) * static_cast<size_t>(TFT_HEIGHT);
+  if (!unpackedImageBuffer || unpackedImageBufferSize < requiredElements)
+  {
+    unpackedImageBuffer.reset();
+    auto buffer = std::unique_ptr<uint16_t[]>(new (std::nothrow) uint16_t[requiredElements]);
+    if (!buffer)
+    {
+      Serial.println("ERROR: Failed to allocate memory for image buffer!");
+      bmpFS.close();
+      return (false);
+    }
+    unpackedImageBufferSize = requiredElements;
+    unpackedImageBuffer = std::move(buffer);
+  }
+
   // black background - clear whole buffer
-  memset(UnpackedImageBuffer, '\0', sizeof(UnpackedImageBuffer));
+  memset(unpackedImageBuffer.get(), 0, unpackedImageBufferSize * sizeof(uint16_t));
 
   uint16_t magic = read16(bmpFS);
   if (magic == 0xFFFF)
@@ -421,7 +492,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
       } // dimming
 #endif
 
-      UnpackedImageBuffer[row + y][col + x] = color;
+      unpackedImageBuffer[(row + y) * TFT_WIDTH + (col + x)] = color;
     } // col
   } // row
   FileInBuffer = file_index;
@@ -484,8 +555,24 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t w, h, row, col;
   uint16_t r, g, b;
 
+  // Ensure buffer is allocated for CLK files as well
+  const size_t requiredElements = static_cast<size_t>(TFT_WIDTH) * static_cast<size_t>(TFT_HEIGHT);
+  if (!unpackedImageBuffer || unpackedImageBufferSize < requiredElements)
+  {
+    unpackedImageBuffer.reset();
+    auto buffer = std::unique_ptr<uint16_t[]>(new (std::nothrow) uint16_t[requiredElements]);
+    if (!buffer)
+    {
+      Serial.println("ERROR: Failed to allocate memory for image buffer!");
+      bmpFS.close();
+      return (false);
+    }
+    unpackedImageBufferSize = requiredElements;
+    unpackedImageBuffer = std::move(buffer);
+  }
+
   // black background - clear whole buffer
-  memset(UnpackedImageBuffer, '\0', sizeof(UnpackedImageBuffer));
+  memset(unpackedImageBuffer.get(), 0, unpackedImageBufferSize * sizeof(uint16_t));
 
   uint16_t magic = read16(bmpFS);
   if (magic == 0xFFFF)
@@ -537,11 +624,11 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
     {
 #ifdef DIM_WITH_ENABLE_PIN_PWM
       // skip alpha blending for dimming if hardware dimming is used
-      UnpackedImageBuffer[row + y][col + x] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
+      unpackedImageBuffer[(row + y) * TFT_WIDTH + (col + x)] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
 #else
       if (dimming == 255)
       { // not needed, copy directly
-        UnpackedImageBuffer[row + y][col + x] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
+        unpackedImageBuffer[(row + y) * TFT_WIDTH + (col + x)] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
       }
       else
       {
@@ -558,7 +645,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
         r = r >> 8;
         g = g >> 8;
         b = b >> 8;
-        UnpackedImageBuffer[row + y][col + x] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+        unpackedImageBuffer[(row + y) * TFT_WIDTH + (col + x)] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
       } // dimming
 #endif
     } // col
@@ -592,15 +679,25 @@ void TFTs::DrawImage(uint8_t file_index)
     LoadImageIntoBuffer(file_index);
   }
 
+  if (!unpackedImageBuffer)
+  {
+#ifdef DEBUG_OUTPUT_IMAGES
+    Serial.println("ERROR: Image buffer unavailable, skipping draw.");
+#endif
+    return;
+  }
+
   bool oldSwapBytes = getSwapBytes();
   setSwapBytes(true);
-  pushImage(0, 0, TFT_WIDTH, TFT_HEIGHT, reinterpret_cast<uint16_t *>(UnpackedImageBuffer));
+  pushImage(0, 0, TFT_WIDTH, TFT_HEIGHT, unpackedImageBuffer.get());
   setSwapBytes(oldSwapBytes);
 
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img transfer time: ");
   Serial.println(millis() - StartTime);
 #endif
+
+  InvalidateImageInBuffer();
 }
 
 // These read 16- and 32-bit types from the SD card file.
