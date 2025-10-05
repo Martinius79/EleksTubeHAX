@@ -88,6 +88,36 @@ jobs:
           python -m pip install --upgrade "pip<24"
           pip install --upgrade platformio intelhex esptool
 
+      - name: Initialize PlatformIO core.
+        run: platformio system info
+
+      - name: Ensure pip<24 inside PlatformIO virtualenv.
+        run: |
+          python - <<'PY'
+          import os
+          import pathlib
+          import subprocess
+          from textwrap import dedent
+
+          exec(dedent("""
+          import os
+          import pathlib
+          import subprocess
+
+          home = pathlib.Path.home()
+          penv = home / ".platformio" / "penv"
+          if os.name == "nt":
+              python_path = penv / "Scripts" / "python.exe"
+          else:
+              python_path = penv / "bin" / "python"
+
+          if python_path.exists():
+              subprocess.check_call([str(python_path), "-m", "pip", "install", "--upgrade", "pip<24"])
+          else:
+              print(f"No PlatformIO virtualenv python found at {python_path}, skipping pip downgrade.")
+          """))
+          PY
+
       - name: Ensure default _USER_DEFINES.h file exists.
         shell: bash
         run: |
