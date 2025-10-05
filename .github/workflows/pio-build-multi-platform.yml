@@ -92,7 +92,6 @@ jobs:
         run: platformio system info
 
       - name: Ensure pip<24 inside PlatformIO virtualenv.
-        shell: bash
         run: |
           set -euo pipefail
           if [[ "${RUNNER_OS}" == "Windows" ]]; then
@@ -105,6 +104,23 @@ jobs:
             "$PENV_PY" -m pip install --upgrade "pip<24"
           else
             echo "No PlatformIO virtualenv python found at $PENV_PY (RUNNER_OS=$RUNNER_OS), skipping pip downgrade."
+          fi
+
+      - name: Show pip versions
+        run: |
+          set -euo pipefail
+          echo "System python pip:" 
+          python -m pip --version
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then
+            PENV_PY="$USERPROFILE\\.platformio\\penv\\Scripts\\python.exe"
+          else
+            PENV_PY="$HOME/.platformio/penv/bin/python"
+          fi
+          if [[ -f "$PENV_PY" ]]; then
+            echo "PlatformIO penv pip:" 
+            "$PENV_PY" -m pip --version
+          else
+            echo "PlatformIO penv python not found (RUNNER_OS=$RUNNER_OS)."
           fi
 
       - name: Ensure default _USER_DEFINES.h file exists.
