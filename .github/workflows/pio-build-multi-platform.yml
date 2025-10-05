@@ -19,7 +19,7 @@ env:
   GH_PAGER: cat
   GH_NO_UPDATE_NOTIFIER: "1"
   PLATFORMIO_USE_SYSTEM_PYTHON: "1"
-  ESPTOOL_VERSION: "5.0.1"
+  ESPTOOL_VERSION: "5.1.0"
 
 jobs:
   discover-envs:
@@ -117,6 +117,66 @@ jobs:
             "$PENV_PY" -m pip install --upgrade pip
             "$PENV_PY" -m pip install --upgrade "esptool==${ESPTOOL_VERSION}"
           fi
+
+      - name: Preinstall PlatformIO esptool tool package.
+        run: |
+          platformio pkg install --tool tool-esptoolpy
+
+      - name: Hydrate tool-esptoolpy with pip distribution.
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          import shutil
+          from pathlib import Path
+          import esptool
+
+          pkg_dir = Path.home() / ".platformio" / "packages" / "tool-esptoolpy"
+          pkg_dir.mkdir(parents=True, exist_ok=True)
+
+          src_dir = Path(esptool.__file__).resolve().parent
+          dst_dir = pkg_dir / "esptool"
+          if dst_dir.exists():
+            shutil.rmtree(dst_dir)
+          shutil.copytree(src_dir, dst_dir)
+
+          (pkg_dir / "pyproject.toml").write_text("""
+          [build-system]
+          requires = ["setuptools>=61"]
+          build-backend = "setuptools.build_meta"
+          """.strip() + "\n", encoding="utf-8")
+
+          version = os.environ.get("ESPTOOL_VERSION", getattr(esptool, "__version__", "0.0.0"))
+
+          setup_cfg_lines = [
+              "[metadata]",
+              "name = esptool",
+              f"version = {version}",
+              "description = PlatformIO hydrated esptool package",
+              "license = GPL-2.0-or-later",
+              "",
+              "[options]",
+              "packages = find:",
+              "include_package_data = True",
+              "install_requires =",
+              "    bitstring!=4.2.0,>=3.1.6",
+              "    cryptography>=43.0.0",
+              "    pyserial>=3.3",
+              "    reedsolo<1.8,>=1.5.3",
+              "    PyYAML>=5.1",
+              "    intelhex",
+              "    rich_click",
+              "    click<9",
+              "python_requires = >=3.8",
+              "",
+              "[options.entry_points]",
+              "console_scripts =",
+              "    esptool = esptool.__main__:main",
+              "    esptool.py = esptool.__main__:main",
+              "",
+          ]
+          (pkg_dir / "setup.cfg").write_text("\n".join(setup_cfg_lines), encoding="utf-8")
+          PY
 
       - name: Export esptool path for PlatformIO.
         run: |
