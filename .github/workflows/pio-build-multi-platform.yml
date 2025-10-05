@@ -107,6 +107,7 @@ jobs:
         run: |
           python -m pip install --upgrade "pip<24"
           pip install --upgrade platformio intelhex esptool
+          pip install --upgrade uv
 
       - name: Initialize PlatformIO core.
         run: platformio system info
