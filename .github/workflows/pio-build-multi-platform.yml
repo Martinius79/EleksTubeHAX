@@ -106,8 +106,21 @@ jobs:
       - name: Install PlatformIO + IntelHex and esptool libraries.
         run: |
           python -m pip install --upgrade "pip<24"
-          pip install --upgrade platformio intelhex esptool
-          pip install --upgrade uv
+          pip install --upgrade platformio intelhex esptool uv
+
+      - name: Export esptool path for PlatformIO.
+        run: |
+          set -euo pipefail
+          ESPTOOL_PATH=$(python - <<'PY'
+          import shutil
+          path = shutil.which("esptool.py") or shutil.which("esptool")
+          if not path:
+              raise SystemExit("esptool executable not found in PATH")
+          print(path, end="")
+          PY
+          )
+          echo "Using esptool at $ESPTOOL_PATH"
+          echo "PLATFORMIO_ESPTOOLPY_PATH=$ESPTOOL_PATH" >> "$GITHUB_ENV"
 
       - name: Initialize PlatformIO core.
         run: platformio system info
