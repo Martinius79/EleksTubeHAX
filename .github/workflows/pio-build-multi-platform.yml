@@ -18,6 +18,7 @@ env:
   GH_PROMPT_DISABLED: "1"
   GH_PAGER: cat
   GH_NO_UPDATE_NOTIFIER: "1"
+  PLATFORMIO_USE_SYSTEM_PYTHON: "1"
 
 jobs:
   discover-envs:
@@ -84,7 +85,7 @@ jobs:
 
       - name: Install PlatformIO + IntelHex and esptool libraries.
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade "pip<24"
           pip install --upgrade platformio intelhex esptool
 
       - name: Ensure default _USER_DEFINES.h file exists.
