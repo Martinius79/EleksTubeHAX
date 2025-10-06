@@ -83,61 +83,59 @@ jobs:
           python-version: '3.x'
 
 
-
-      - name: Create PlatformIO venv and esptool.exe stub.
-        run: |
-          python -m venv "$HOME/.platformio/penv"
-          PENV_SCRIPTS="$HOME/.platformio/penv/Scripts"
-          PYTHON_EXE="$PENV_SCRIPTS/python.exe"
-          # Install esptool in venv
-          "$PYTHON_EXE" -m pip install --upgrade pip
-          "$PYTHON_EXE" -m pip install "esptool==5.1.0"
-          # Create esptool.exe stub (Windows only)
-          if [ -d "$PENV_SCRIPTS" ]; then
-            echo "@echo off\n$PYTHON_EXE -m esptool %*" > "$PENV_SCRIPTS/esptool.cmd"
-          fi
-
       - name: Install PlatformIO + IntelHex and esptool libraries.
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade platformio intelhex esptool
 
-      - name: Hydrate tool-esptoolpy with pip distribution.
+
+      - name: Hydrate tool-esptoolpy with pip distribution
         run: |
-          python - <<'PY'
-          import os
-          import shutil
-          from pathlib import Path
-          import textwrap
-          import esptool
+            python - <<'PY'
+            import os
+            import shutil
+            from pathlib import Path
+            import textwrap
+            import esptool
 
-          pkg_dir = Path.home() / ".platformio" / "packages" / "tool-esptoolpy"
-          pkg_dir.mkdir(parents=True, exist_ok=True)
+            print("[HYDRATE] Starting hydration of tool-esptoolpy...")
+            pkg_dir = Path.home() / ".platformio" / "packages" / "tool-esptoolpy"
+            print(f"[HYDRATE] Target package dir: {pkg_dir}")
+            pkg_dir.mkdir(parents=True, exist_ok=True)
 
-          src_dir = Path(esptool.__file__).resolve().parent
-          dst_dir = pkg_dir / "esptool"
-          if dst_dir.exists():
-            shutil.rmtree(dst_dir)
-          shutil.copytree(src_dir, dst_dir)
+            src_dir = Path(esptool.__file__).resolve().parent
+            print(f"[HYDRATE] Source esptool module dir: {src_dir}")
+            print(f"[HYDRATE] Files in source dir:")
+            for f in src_dir.iterdir():
+              print(f"  - {f}")
 
-          (pkg_dir / "pyproject.toml").write_text("""
-          [build-system]
-          requires = ["setuptools>=61"]
-          build-backend = "setuptools.build_meta"
-          """.strip() + "\n", encoding="utf-8")
+            dst_dir = pkg_dir / "esptool"
+            if dst_dir.exists():
+              print(f"[HYDRATE] Removing existing destination dir: {dst_dir}")
+              shutil.rmtree(dst_dir)
+            print(f"[HYDRATE] Copying esptool module to: {dst_dir}")
+            shutil.copytree(src_dir, dst_dir)
 
-          version = os.environ.get("ESPTOOL_VERSION", getattr(esptool, "__version__", "0.0.0"))
-          setup_cfg = textwrap.dedent(f"""
-          [metadata]
-          name = esptool
-          version = {version}
-          description = PlatformIO hydrated esptool package
-          license = GPL-2.0-or-later
+            print(f"[HYDRATE] Writing pyproject.toml to: {pkg_dir / 'pyproject.toml'}")
+            (pkg_dir / "pyproject.toml").write_text("""
+            [build-system]
+            requires = ["setuptools>=61"]
+            build-backend = "setuptools.build_meta"
+            """.strip() + "\n", encoding="utf-8")
 
-          [options]
-          packages = find:
-          include_package_data = True
-          install_requires =
+            version = os.environ.get("ESPTOOL_VERSION", getattr(esptool, "__version__", "0.0.0"))
+            print(f"[HYDRATE] Detected esptool version: {version}")
+            setup_cfg = textwrap.dedent(f"""
+            [metadata]
+            name = esptool
+            version = {version}
+            description = PlatformIO hydrated esptool package
+            license = GPL-2.0-or-later
+
+            [options]
+            packages = find:
+            include_package_data = True
+            install_requires =
               bitstring!=4.2.0,>=3.1.6
               cryptography>=43.0.0
               pyserial>=3.3
@@ -146,15 +144,17 @@ jobs:
               intelhex
               rich_click
               click<9
-          python_requires = >=3.8
+            python_requires = >=3.8
 
-          [options.entry_points]
-          console_scripts =
+            [options.entry_points]
+            console_scripts =
               esptool = esptool.__main__:main
               esptool.py = esptool.__main__:main
-          """).strip() + "\n"
-          (pkg_dir / "setup.cfg").write_text(setup_cfg, encoding="utf-8")
-          PY
+            """).strip() + "\n"
+            print(f"[HYDRATE] Writing setup.cfg to: {pkg_dir / 'setup.cfg'}")
+            (pkg_dir / "setup.cfg").write_text(setup_cfg, encoding="utf-8")
+            print("[HYDRATE] Hydration complete.")
+            PY
 
       - name: Ensure default _USER_DEFINES.h file exists.
         shell: bash
@@ -176,3 +176,17 @@ jobs:
 
       - name: Build ${{ matrix.env }} environment.
         run: pio run --environment "${{ matrix.env }}" --verbose
+
+      - name: List esptool files in package and Python env (always)
+        if: always()
+        shell: bash
+        run: |
+          echo "\n[DEBUG] Listing files in PlatformIO tool-esptoolpy package:"
+          ls -lR "$HOME/.platformio/packages/tool-esptoolpy" || echo "(ls failed)"
+          echo "\n[DEBUG] Listing files in Python esptool module directory:"
+          python -c "import esptool, os; print(os.path.dirname(esptool.__file__))" | xargs ls -lR || echo "(ls failed)"
+          echo "\n[DEBUG] Listing files in Windows (if applicable):"
+          if command -v dir &> /dev/null; then
+            dir /s "%USERPROFILE%\.platformio\packages\tool-esptoolpy"
+            python -c "import esptool, os; print(os.path.dirname(esptool.__file__))" | xargs -I{} dir /s "{}"
+          fi
