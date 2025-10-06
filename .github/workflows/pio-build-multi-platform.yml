@@ -106,4 +106,4 @@ jobs:
           fi
 
       - name: Build ${{ matrix.env }} environment.
-        run: pio run --environment "${{ matrix.env }}"
+        run: pio run --environment "${{ matrix.env }}" --verbose
