@@ -177,16 +177,39 @@ jobs:
       - name: Build ${{ matrix.env }} environment.
         run: pio run --environment "${{ matrix.env }}" --verbose
 
-      - name: List esptool files in package and Python env (always)
-        if: always()
+      - name: List esptool files on Linux/macOS runners
+        if: always() && runner.os != 'Windows'
         shell: bash
         run: |
-          echo "\n[DEBUG] Listing files in PlatformIO tool-esptoolpy package:"
-          ls -lR "$HOME/.platformio/packages/tool-esptoolpy" || echo "(ls failed)"
-          echo "\n[DEBUG] Listing files in Python esptool module directory:"
-          python -c "import esptool, os; print(os.path.dirname(esptool.__file__))" | xargs ls -lR || echo "(ls failed)"
-          echo "\n[DEBUG] Listing files in Windows (if applicable):"
-          if command -v dir &> /dev/null; then
-            dir /s "%USERPROFILE%\.platformio\packages\tool-esptoolpy"
-            python -c "import esptool, os; print(os.path.dirname(esptool.__file__))" | xargs -I{} dir /s "{}"
-          fi
+          set -euo pipefail
+          echo "\n[DEBUG][Linux] Listing files in PlatformIO tool-esptoolpy package:"
+          ls -lR "$HOME/.platformio/packages/tool-esptoolpy" || echo "(PlatformIO package listing failed)"
+          echo "\n[DEBUG][Linux] Listing files in Python esptool module directory:"
+          module_dir="$(python -c 'import esptool, os; print(os.path.dirname(esptool.__file__))')"
+          echo "Module dir: ${module_dir}"
+          ls -lR "${module_dir}" || echo "(Python module listing failed)"
+
+      - name: List esptool files on Windows runners
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "`n[DEBUG][Windows] Listing files in PlatformIO tool-esptoolpy package:" -ForegroundColor Cyan
+          $pkgPath = Join-Path $env:USERPROFILE '.platformio\packages\tool-esptoolpy'
+          if (Test-Path $pkgPath) {
+            Get-ChildItem $pkgPath -Recurse -Force | Select-Object FullName, Length, LastWriteTime
+          } else {
+            Write-Host "(path missing: $pkgPath)" -ForegroundColor Yellow
+          }
+          Write-Host "`n[DEBUG][Windows] Listing files in Python esptool module directory:" -ForegroundColor Cyan
+          try {
+            $moduleDir = python -c "import esptool, os; print(os.path.dirname(esptool.__file__))"
+            $moduleDir = $moduleDir.Trim()
+            Write-Host "Module dir: $moduleDir"
+            if (Test-Path $moduleDir) {
+              Get-ChildItem $moduleDir -Recurse -Force | Select-Object FullName, Length, LastWriteTime
+            } else {
+              Write-Host "(module dir missing: $moduleDir)" -ForegroundColor Yellow
+            }
+          } catch {
+            Write-Host "(python lookup failed: $_)" -ForegroundColor Red
+          }
