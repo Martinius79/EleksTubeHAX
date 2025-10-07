@@ -110,9 +110,37 @@ jobs:
           }
           Write-Host "Installing/refreshing esptool via $pythonExe" -ForegroundColor Cyan
           & $pythonExe -m pip install --upgrade esptool
-          Write-Host "Adding $scriptsDir to PATH" -ForegroundColor Cyan
+          $shimDir = Join-Path $scriptsDir 'esptool-shim'
+          New-Item -ItemType Directory -Force -Path $shimDir | Out-Null
+          $shimPath = Join-Path $shimDir 'esptool.cmd'
+          $shimLines = @(
+            '@echo off',
+            'set "_PYTHON_EXE=' + $pythonExe + '"',
+            'set "HAS_ESPT_VERSION="',
+            'for %%A in (%*) do (',
+            '  if /I "%%~A"=="--version" (',
+            '    set HAS_ESPT_VERSION=1',
+            '  )',
+            ')',
+            'if defined HAS_ESPT_VERSION goto handleVersion',
+            'goto execNormal',
+            '',
+            ':handleVersion',
+            '"%_PYTHON_EXE%" -m esptool version',
+            'set "_EXITCODE=%ERRORLEVEL%"',
+            'exit /b %_EXITCODE%',
+            '',
+            ':execNormal',
+            '"%_PYTHON_EXE%" -m esptool %*',
+            'set "_EXITCODE=%ERRORLEVEL%"',
+            'exit /b %_EXITCODE%'
+          )
+          Set-Content -Path $shimPath -Value $shimLines -Encoding ASCII
+          Write-Host "Created esptool shim at $shimPath" -ForegroundColor Cyan
+          $env:PATH = "$shimDir;$scriptsDir;$env:PATH"
+          $shimDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "$scriptsDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          Write-Host "Verifying esptool binary (should match PlatformIO environment):" -ForegroundColor Cyan
+          Write-Host "Verifying esptool binary via --version (shimmed):" -ForegroundColor Cyan
           esptool --version
 
       - name: Ensure default _USER_DEFINES.h file exists.
