@@ -113,14 +113,18 @@ jobs:
           $shimDir = Join-Path $scriptsDir 'esptool-shim'
           New-Item -ItemType Directory -Force -Path $shimDir | Out-Null
           $shimPath = Join-Path $shimDir 'esptool.cmd'
-          $pyQuoted = $pythonExe.Replace('"', '""')
           $shimLines = @(
             '@echo off',
             'setlocal enableextensions',
-            'set "_PYTHON_EXE=' + $pyQuoted + '"',
-            'set "_HANDLED=0"',
-            'for %%A in (%*) do (' ,
-            '  if /I "%%~A"=="--version" (' ,
+            'set "_SCRIPT_DIR=%~dp0"',
+            'set "_PYTHON_EXE=%~dp0..\python.exe"',
+            'if not exist "%_PYTHON_EXE%" set "_PYTHON_EXE=%~dp0..\..\python.exe"',
+            'if not exist "%_PYTHON_EXE%" (',
+            '  echo Failed to locate python.exe for esptool shim>&2',
+            '  exit /b 1',
+            ')',
+            'for %%A in (%*) do (',
+            '  if /I "%%~A"=="--version" (',
             '    "%_PYTHON_EXE%" -m esptool version',
             '    exit /b %ERRORLEVEL%',
             '  )',
