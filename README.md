@@ -824,6 +824,61 @@ You need to connect to the same MQTT broker like the clock and then will be able
 
 All MQTT messages from and to the clock are also traced out via the serial interface. So using a serial monitor while using the clock, gives also debug information. Make sure you enable the `DEBUG_OUTPUT_MQTT` before compilation and upload.
 
+## Logging Serial output to InfluxDB
+
+If you want to keep the existing `Serial.print*` calls unchanged but still persist every line in a time-series database, you can forward the USB serial stream on your computer into InfluxDB. The repository ships with a helper script in `scripts/serial_to_influx.py` that reads from any serial port, batches the lines, and writes them to an InfluxDB 1.x or 2.x instance via the HTTP API.
+
+### Prerequisites
+
+* Python 3.9 or newer on the machine connected to the clock
+* The packages `pyserial` and `requests`
+
+Install the dependencies once:
+
+```powershell
+python -m pip install --upgrade pyserial requests
+```
+
+### Configuration
+
+The script supports both InfluxDB 2.x (token-based) and InfluxDB 1.x (database + username/password). Pick the matching set of arguments:
+
+* **InfluxDB 2.x** – supply `--influx-url`, `--bucket`, `--org`, and an API `--token`
+* **InfluxDB 1.x/1.8** – supply `--influx-url`, `--database`, and optionally `--username`/`--password`
+
+For convenience you can store secrets in environment variables and reference them via PowerShell variable expansion.
+
+### Usage example
+
+```powershell
+cd scripts
+python serial_to_influx.py \ 
+  --port COM7 \ 
+  --baud 115200 \ 
+  --influx-url http://homeassistant.local:8086 \ 
+  --influx-version 2 \ 
+  --bucket elekstube \ 
+  --org home-assistant \ 
+  --token $env:INFLUX_TOKEN \ 
+  --device-tag elekstube-clock \ 
+  --source-tag firmware \ 
+  --include-level
+```
+
+Replace `COM7` with the serial port that Windows assigned to the clock. On Linux/macOS use `/dev/ttyUSB0` or similar. The script sends each line as measurement `serial_log` (configurable via `--measurement`) with the raw text stored in the `message` field. The optional `--include-level` flag tries to categorise log levels (`INFO`, `WARN`, `ERROR`, …) and stores the result as an Influx tag.
+
+Additional flags:
+
+* `--batch-size` and `--flush-interval` control how many lines are buffered before writing to InfluxDB
+* `--dry-run` lets you verify the parsed output without touching the database
+* `--no-ssl-verify` is available when you are using self-signed certificates on Home Assistant OS
+
+Stop the logger with `Ctrl+C`. Any buffered lines are flushed before the script exits. Because the firmware stays untouched, you can continue to build and flash as usual—just keep the logger running in a separate terminal.
+
+### Alternative: ESP32-native Serial forwarding *(optional)*
+
+For completely standalone deployments you can enable the built-in Serial proxy that mirrors every `Serial.print*` call directly to InfluxDB from the ESP32 itself. Set the desired connection parameters in `_USER_DEFINES.h` and define `ENABLE_INFLUX_SERIAL_LOGGER` before compiling. The firmware will keep all existing UART output while additionally batching each newline-terminated message into the configured InfluxDB bucket (supporting both v1 and v2 APIs). Disable the define to return to the default behaviour without touching any source files.
+
 ## 6\. Known problems/limitations, Notes
 
 ##### 6.1 No RTC backup battery for SI HAI IPS Clock

@@ -332,6 +332,13 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t x = (TFT_WIDTH - w) / 2;
   int16_t y = (TFT_HEIGHT - h) / 2;
 
+  if (w > TFT_WIDTH || h > TFT_HEIGHT)
+  {
+    Serial.printf("ERROR: BMP %s too large: %dx%d (max %dx%d)\n", filename, w, h, TFT_WIDTH, TFT_HEIGHT);
+    bmpFS.close();
+    return false;
+  }
+
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print(" image W, H, BPP: ");
   Serial.print(w);
@@ -374,6 +381,10 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   uint32_t lineSize = ((bitDepth * w + 31) >> 5) * 4;
   uint8_t lineBuffer[lineSize];
 
+  uint32_t pixelsWritten = 0;
+  uint32_t pixelsSkipped = 0;
+  bool boundsWarningIssued = false;
+
   // row is decremented as the BMP image is drawn bottom up
   for (row = h - 1; row >= 0; row--)
   {
@@ -383,6 +394,39 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
     // Convert 24 to 16 bit colours while copying to output buffer.
     for (col = 0; col < w; col++)
     {
+      int16_t dstY = row + y;
+      int16_t dstX = col + x;
+
+      if (dstY < 0 || dstY >= TFT_HEIGHT || dstX < 0 || dstX >= TFT_WIDTH)
+      {
+        pixelsSkipped++;
+        if (!boundsWarningIssued)
+        {
+          Serial.printf("WARN: BMP pixel out of bounds for %s (dst %d,%d)\n", filename, dstX, dstY);
+          boundsWarningIssued = true;
+        }
+        // advance source pointer but do not write to buffer
+        if (bitDepth == 24)
+        {
+          bptr += 3;
+        }
+        else if (bitDepth == 8)
+        {
+          bptr += 1;
+        }
+        else if (bitDepth == 4)
+        {
+          if (col & 0x01)
+            bptr++;
+        }
+        else
+        {
+          if ((col & 0x07) == 0x07)
+            bptr++;
+        }
+        continue;
+      }
+
       if (bitDepth == 24)
       {
         b = *bptr++;
@@ -421,7 +465,8 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
       } // dimming
 #endif
 
-      UnpackedImageBuffer[row + y][col + x] = color;
+      UnpackedImageBuffer[dstY][dstX] = color;
+      pixelsWritten++;
     } // col
   } // row
   FileInBuffer = file_index;
@@ -430,6 +475,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img load time: ");
   Serial.println(millis() - StartTime);
+  Serial.printf("img stats: written=%lu skipped=%lu offset=(%d,%d)\n", pixelsWritten, pixelsSkipped, x, y);
 #endif
   return (true);
 }
@@ -511,6 +557,13 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t x = (TFT_WIDTH - w) / 2;
   int16_t y = (TFT_HEIGHT - h) / 2;
 
+  if (w > TFT_WIDTH || h > TFT_HEIGHT)
+  {
+    Serial.printf("ERROR: CLK %s too large: %dx%d (max %dx%d)\n", filename, w, h, TFT_WIDTH, TFT_HEIGHT);
+    bmpFS.close();
+    return false;
+  }
+
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print(" image W, H: ");
   Serial.print(w);
@@ -526,6 +579,10 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
   uint8_t lineBuffer[w * 2];
 
+  uint32_t pixelsWritten = 0;
+  uint32_t pixelsSkipped = 0;
+  bool boundsWarningIssued = false;
+
   // 0,0 coordinates are top left
   for (row = 0; row < h; row++)
   {
@@ -535,13 +592,26 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
     // Colors are already in 16-bit R5, G6, B5 format
     for (col = 0; col < w; col++)
     {
+      int16_t dstY = row + y;
+      int16_t dstX = col + x;
+
+      if (dstY < 0 || dstY >= TFT_HEIGHT || dstX < 0 || dstX >= TFT_WIDTH)
+      {
+        pixelsSkipped++;
+        if (!boundsWarningIssued)
+        {
+          Serial.printf("WARN: CLK pixel out of bounds for %s (dst %d,%d)\n", filename, dstX, dstY);
+          boundsWarningIssued = true;
+        }
+        continue;
+      }
 #ifdef DIM_WITH_ENABLE_PIN_PWM
       // skip alpha blending for dimming if hardware dimming is used
-      UnpackedImageBuffer[row + y][col + x] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
+      UnpackedImageBuffer[dstY][dstX] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
 #else
       if (dimming == 255)
       { // not needed, copy directly
-        UnpackedImageBuffer[row + y][col + x] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
+        UnpackedImageBuffer[dstY][dstX] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
       }
       else
       {
@@ -558,9 +628,10 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
         r = r >> 8;
         g = g >> 8;
         b = b >> 8;
-        UnpackedImageBuffer[row + y][col + x] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+        UnpackedImageBuffer[dstY][dstX] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
       } // dimming
 #endif
+      pixelsWritten++;
     } // col
   } // row
   FileInBuffer = file_index;
@@ -569,6 +640,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img load time: ");
   Serial.println(millis() - StartTime);
+  Serial.printf("img stats: written=%lu skipped=%lu offset=(%d,%d)\n", pixelsWritten, pixelsSkipped, x, y);
 #endif
   return (true);
 }

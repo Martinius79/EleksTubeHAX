@@ -16,6 +16,10 @@
 #include <stdint.h>
 #include "_USER_DEFINES.h"
 
+#ifdef ENABLE_INFLUX_SERIAL_LOGGER
+#include <SerialInfluxLogger.h>
+#endif
+
 #define VALUE(string) #string
 #define TO_LITERAL(string) VALUE(string)
 
@@ -302,7 +306,7 @@
 
 // Comment the next line out, to DISABLE hardware dimming with TFT_ENABLE_PIN. 
 // For older IPStube devices (<06/2024) only
-#define DIM_WITH_ENABLE_PIN_PWM
+// #define DIM_WITH_ENABLE_PIN_PWM
 
 // NOTE: If NIGTHTIME_DIMMING is enabled:
 //  For the main LCDs: The dimming will be set to the hard coded value TFT_DIMMED_INTENSITY in the given time period EVERY HOUR beginning at NIGHT_TIME

@@ -865,7 +865,7 @@ void loop()
     }
   }
 #ifdef DEBUG_OUTPUT
-  if (time_in_loop <= 2) // if the loop time is less than 2ms, we don't need to print it in detail
+  if (time_in_loop <= 10) // if the loop time is less than 2ms, we don't need to print it in detail
     Serial.print(".");
   else
   {

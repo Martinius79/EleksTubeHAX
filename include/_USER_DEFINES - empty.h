@@ -93,4 +93,31 @@
 // Don't forget to copy the correct certificate file into the 'data' folder and rename it to mqtt-ca-root.pem!
 // Example CA cert (Let's Encrypt CA cert) can be found in the 'data - other graphics' subfolder in the root of this repo
 
+// ************* Optional: Mirror Serial output to InfluxDB *************
+// Uncomment to enable the Serial logger proxy that forwards each Serial.println to InfluxDB as well.
+// #define ENABLE_INFLUX_SERIAL_LOGGER
+
+#ifdef ENABLE_INFLUX_SERIAL_LOGGER
+// #define SERIAL_INFLUX_URL "http://homeassistant.local:8086"
+// #define SERIAL_INFLUX_VERSION 2                // Set to 1 for InfluxDB 1.x compatibility
+// #define SERIAL_INFLUX_BUCKET "my_bucket"       // Required for InfluxDB 2.x
+// #define SERIAL_INFLUX_ORG "my_org"             // Required for InfluxDB 2.x
+// #define SERIAL_INFLUX_TOKEN "secret_token"     // Required for InfluxDB 2.x
+// #define SERIAL_INFLUX_DATABASE "my_database"   // Required for InfluxDB 1.x
+// #define SERIAL_INFLUX_USERNAME ""              // Optional for InfluxDB 1.x
+// #define SERIAL_INFLUX_PASSWORD ""              // Optional for InfluxDB 1.x
+// #define SERIAL_INFLUX_MEASUREMENT "serial_log"
+// #define SERIAL_INFLUX_DEVICE_TAG "elekstube"      // Defaults to UniqueDeviceName when omitted
+// #define SERIAL_INFLUX_SOURCE_TAG "serial"
+// #define SERIAL_INFLUX_INCLUDE_LEVEL 1           // Set to 0 to disable automatic level tag detection
+// #define SERIAL_INFLUX_DEFAULT_LEVEL "info"
+// #define SERIAL_INFLUX_HTTP_TIMEOUT_MS 5000
+// #define SERIAL_INFLUX_VERIFY_TLS 0              // Set to 1 to enforce TLS verification
+// #define SERIAL_INFLUX_TLS_FINGERPRINT ""       // Optional SHA1 fingerprint for TLS
+// #define SERIAL_INFLUX_MAX_LINE 384              // Adjust max buffered characters per line
+// #define SERIAL_INFLUX_TRACE 0                   // Set to 1 for verbose diagnostics on the hardware UART
+// #define SERIAL_INFLUX_MAX_FAILURES 3            // Disable forwarding after N consecutive failures
+// #define SERIAL_INFLUX_REENABLE_AFTER_MS 60000   // Re-enable forwarding after this cooldown (ms)
+#endif
+
 #endif // USER_DEFINES_H_
