@@ -23,7 +23,7 @@
 
 #ifdef DEBUG_FORCE_REDRAW
 #ifndef DEBUG_FORCE_REDRAW_INTERVAL_MS
-#define DEBUG_FORCE_REDRAW_INTERVAL_MS 5000
+#define DEBUG_FORCE_REDRAW_INTERVAL_MS 10000
 #endif
 #endif
 
@@ -610,12 +610,14 @@ void loop()
 #ifdef DEBUG_FORCE_REDRAW
   static uint32_t lastForcedRedraw = 0;
   static bool debugSkipClockUpdate = false;
+  static bool debugRestorePending = false;
   uint32_t now = millis();
   if ((now - lastForcedRedraw) >= DEBUG_FORCE_REDRAW_INTERVAL_MS)
   {
     lastForcedRedraw = now;
     Serial.println("[DEBUG] Forcing full clock redraw for stress testing.");
     debugSkipClockUpdate = true;
+    debugRestorePending = true;
 
     static const uint8_t debugDigitOrder[NUM_DIGITS] = {
         SECONDS_ONES,
@@ -638,18 +640,25 @@ void loop()
     }
 
     tfts.LoadNextImage();
+#ifdef DEBUG_TFT_TIMING
+    tfts.PrintTimingStats();
+#endif
   }
 #endif
 
 #ifdef DEBUG_FORCE_REDRAW
-  if (!debugSkipClockUpdate)
+  if (debugSkipClockUpdate)
   {
-    updateClockDisplay(); // Draw only the changed clock digits!
+    debugSkipClockUpdate = false;
+  }
+  else if (debugRestorePending)
+  {
+    updateClockDisplay(TFTs::force);
+    debugRestorePending = false;
   }
   else
   {
-    updateClockDisplay(TFTs::force);
-    debugSkipClockUpdate = false;
+    updateClockDisplay(); // Draw only the changed clock digits!
   }
 #else
   updateClockDisplay(); // Draw only the changed clock digits!

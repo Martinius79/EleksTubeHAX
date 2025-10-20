@@ -276,6 +276,13 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 {
   uint32_t StartTime = millis();
 
+  if (!AcquireBufferLock("LoadImageIntoBuffer", BufferLockTimeoutMs))
+  {
+    Serial.println("[TFT GUARD] Failed to acquire buffer lock in LoadImageIntoBuffer (BMP).");
+    return false;
+  }
+
+  bool success = false;
   fs::File bmpFS;
   // Filenames are no bigger than "255.bmp\0"
   char filename[10];
@@ -286,65 +293,74 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   Serial.println(filename);
 #endif
 
-  // Open requested file on SD card
-  bmpFS = SPIFFS.open(filename, "r");
-  if (!bmpFS)
+  uint32_t seekOffset = 0;
+  uint32_t headerSize = 0;
+  uint32_t paletteSize = 0;
+  int16_t w = 0;
+  int16_t h = 0;
+  int16_t row = 0;
+  int16_t col = 0;
+  uint16_t r = 0;
+  uint16_t g = 0;
+  uint16_t b = 0;
+  uint16_t bitDepth = 0;
+  int16_t x = 0;
+  int16_t y = 0;
+  uint32_t pixelsWritten = 0;
+
+  do
   {
-    Serial.print("File not found: ");
-    Serial.println(filename);
-    return (false);
-  }
+    // Open requested file on SD card
+    bmpFS = SPIFFS.open(filename, "r");
+    if (!bmpFS)
+    {
+      Serial.print("File not found: ");
+      Serial.println(filename);
+      break;
+    }
 
-  uint32_t seekOffset, headerSize, paletteSize = 0;
-  int16_t w, h, row, col;
-  uint16_t r, g, b, bitDepth;
+    // black background - clear whole buffer
+    memset(UnpackedImageBuffer, '\0', sizeof(UnpackedImageBuffer));
 
-  // black background - clear whole buffer
-  memset(UnpackedImageBuffer, '\0', sizeof(UnpackedImageBuffer));
+    uint16_t magic = read16(bmpFS);
+    if (magic == 0xFFFF)
+    {
+      Serial.print("Can't openfile. Make sure you upload the SPIFFs image with BMPs. : ");
+      Serial.println(filename);
+      break;
+    }
 
-  uint16_t magic = read16(bmpFS);
-  if (magic == 0xFFFF)
-  {
-    Serial.print("Can't openfile. Make sure you upload the SPIFFs image with BMPs. : ");
-    Serial.println(filename);
-    bmpFS.close();
-    return (false);
-  }
+    if (magic != 0x4D42)
+    {
+      Serial.print("File not a BMP. Magic: ");
+      Serial.println(magic);
+      break;
+    }
 
-  if (magic != 0x4D42)
-  {
-    Serial.print("File not a BMP. Magic: ");
-    Serial.println(magic);
-    bmpFS.close();
-    return (false);
-  }
+    read32(bmpFS);              // filesize in bytes
+    read32(bmpFS);              // reserved
+    seekOffset = read32(bmpFS); // start of bitmap
+    headerSize = read32(bmpFS); // header size
+    w = read32(bmpFS);          // width
+    h = read32(bmpFS);          // height
+    read16(bmpFS);              // color planes (must be 1)
+    bitDepth = read16(bmpFS);
 
-  read32(bmpFS);              // filesize in bytes
-  read32(bmpFS);              // reserved
-  seekOffset = read32(bmpFS); // start of bitmap
-  headerSize = read32(bmpFS); // header size
-  w = read32(bmpFS);          // width
-  h = read32(bmpFS);          // height
-  read16(bmpFS);              // color planes (must be 1)
-  bitDepth = read16(bmpFS);
+    // center image on the display
+    x = (TFT_WIDTH - w) / 2;
+    y = (TFT_HEIGHT - h) / 2;
 
-  // center image on the display
-  int16_t x = (TFT_WIDTH - w) / 2;
-  int16_t y = (TFT_HEIGHT - h) / 2;
+    if (w <= 0 || h <= 0)
+    {
+      Serial.printf("ERROR: BMP %s has invalid geometry: %dx%d\n", filename, w, h);
+      break;
+    }
 
-  if (w <= 0 || h <= 0)
-  {
-    Serial.printf("ERROR: BMP %s has invalid geometry: %dx%d\n", filename, w, h);
-    bmpFS.close();
-    return false;
-  }
-
-  if (w > TFT_WIDTH || h > TFT_HEIGHT)
-  {
-    Serial.printf("ERROR: BMP %s too large: %dx%d (max %dx%d)\n", filename, w, h, TFT_WIDTH, TFT_HEIGHT);
-    bmpFS.close();
-    return false;
-  }
+    if (w > TFT_WIDTH || h > TFT_HEIGHT)
+    {
+      Serial.printf("ERROR: BMP %s too large: %dx%d (max %dx%d)\n", filename, w, h, TFT_WIDTH, TFT_HEIGHT);
+      break;
+    }
 
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print(" image W, H, BPP: ");
@@ -360,106 +376,133 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   Serial.print(", ");
   Serial.println(y);
 #endif
-  if (read32(bmpFS) != 0 || (bitDepth != 24 && bitDepth != 1 && bitDepth != 4 && bitDepth != 8))
-  {
-    Serial.println("BMP format not recognized.");
-    bmpFS.close();
-    return (false);
-  }
-
-  uint32_t palette[256];
-  if (bitDepth <= 8) // 1,4,8 bit bitmap: read color palette
-  {
-    read32(bmpFS);
-    read32(bmpFS);
-    read32(bmpFS); // size, w resolution, h resolution
-    paletteSize = read32(bmpFS);
-    if (paletteSize == 0)
-      paletteSize = pow(2, bitDepth); // if 0, size is 2^bitDepth
-    bmpFS.seek(14 + headerSize);      // start of color palette
-    for (uint16_t i = 0; i < paletteSize; i++)
+    if (read32(bmpFS) != 0 || (bitDepth != 24 && bitDepth != 1 && bitDepth != 4 && bitDepth != 8))
     {
-      palette[i] = read32(bmpFS);
+      Serial.println("BMP format not recognized.");
+      break;
     }
-  }
 
-  bmpFS.seek(seekOffset);
-
-  uint32_t lineSize = ((bitDepth * w + 31) >> 5) * 4;
-  uint8_t lineBuffer[lineSize];
-
-  uint32_t pixelsWritten = 0;
-
-  // row is decremented as the BMP image is drawn bottom up
-  for (row = h - 1; row >= 0; row--)
-  {
-    bmpFS.read(lineBuffer, sizeof(lineBuffer));
-    uint8_t *bptr = lineBuffer;
-
-    // Convert 24 to 16 bit colours while copying to output buffer.
-    for (col = 0; col < w; col++)
+    uint32_t palette[256];
+    if (bitDepth <= 8) // 1,4,8 bit bitmap: read color palette
     {
-      int16_t dstY = row + y;
-      int16_t dstX = col + x;
-
-      if (dstY < 0 || dstY >= TFT_HEIGHT || dstX < 0 || dstX >= TFT_WIDTH)
+      read32(bmpFS);
+      read32(bmpFS);
+      read32(bmpFS); // size, w resolution, h resolution
+      paletteSize = read32(bmpFS);
+      if (paletteSize == 0)
+        paletteSize = pow(2, bitDepth); // if 0, size is 2^bitDepth
+      bmpFS.seek(14 + headerSize);      // start of color palette
+      for (uint16_t i = 0; i < paletteSize; i++)
       {
-        Serial.printf("ERROR: BMP %s pixel out of bounds (dst %d,%d) - aborting draw to protect buffer\n", filename, dstX, dstY);
-        bmpFS.close();
-        return false;
+        palette[i] = read32(bmpFS);
       }
+    }
 
-      if (bitDepth == 24)
+    bmpFS.seek(seekOffset);
+
+    uint32_t lineSize = ((bitDepth * w + 31) >> 5) * 4;
+    uint8_t lineBuffer[lineSize];
+
+    // row is decremented as the BMP image is drawn bottom up
+    for (row = h - 1; row >= 0; row--)
+    {
+      bmpFS.read(lineBuffer, sizeof(lineBuffer));
+      uint8_t *bptr = lineBuffer;
+
+      // Convert 24 to 16 bit colours while copying to output buffer.
+      for (col = 0; col < w; col++)
       {
-        b = *bptr++;
-        g = *bptr++;
-        r = *bptr++;
-      }
-      else
-      {
-        uint32_t c = 0;
-        if (bitDepth == 8)
+        int16_t dstY = row + y;
+        int16_t dstX = col + x;
+
+        if (dstY < 0 || dstY >= TFT_HEIGHT || dstX < 0 || dstX >= TFT_WIDTH)
         {
-          c = palette[*bptr++];
+          Serial.printf("ERROR: BMP %s pixel out of bounds (dst %d,%d) - aborting draw to protect buffer\n", filename, dstX, dstY);
+          goto cleanup;
         }
-        else if (bitDepth == 4)
+
+        if (bitDepth == 24)
         {
-          c = palette[(*bptr >> ((col & 0x01) ? 0 : 4)) & 0x0F];
-          if (col & 0x01)
-            bptr++;
+          b = *bptr++;
+          g = *bptr++;
+          r = *bptr++;
         }
         else
-        { // bitDepth == 1
-          c = palette[(*bptr >> (7 - (col & 0x07))) & 0x01];
-          if ((col & 0x07) == 0x07)
-            bptr++;
+        {
+          uint32_t c = 0;
+          if (bitDepth == 8)
+          {
+            c = palette[*bptr++];
+          }
+          else if (bitDepth == 4)
+          {
+            c = palette[(*bptr >> ((col & 0x01) ? 0 : 4)) & 0x0F];
+            if (col & 0x01)
+              bptr++;
+          }
+          else
+          { // bitDepth == 1
+            c = palette[(*bptr >> (7 - (col & 0x07))) & 0x01];
+            if ((col & 0x07) == 0x07)
+              bptr++;
+          }
+          b = c;
+          g = c >> 8;
+          r = c >> 16;
         }
-        b = c;
-        g = c >> 8;
-        r = c >> 16;
-      }
 
-      uint16_t color = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xFF) >> 3);
+        uint16_t color = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xFF) >> 3);
 #ifndef DIM_WITH_ENABLE_PIN_PWM // skip alpha blending for dimming if hardware dimming is used
-      if (dimming < 255)
-      { // only dim when needed
-        color = alphaBlend(dimming, color, TFT_BLACK);
-      } // dimming
+        if (dimming < 255)
+        { // only dim when needed
+          color = alphaBlend(dimming, color, TFT_BLACK);
+        } // dimming
 #endif
 
-      UnpackedImageBuffer[dstY][dstX] = color;
-      pixelsWritten++;
-    } // col
-  } // row
-  FileInBuffer = file_index;
+        UnpackedImageBuffer[dstY][dstX] = color;
+        pixelsWritten++;
+      } // col
+    }   // row
+    FileInBuffer = file_index;
+    success = true;
+  } while (false);
 
-  bmpFS.close();
+cleanup:
+  if (bmpFS)
+  {
+    bmpFS.close();
+  }
+
+  uint32_t loadElapsed = millis() - StartTime;
+
 #ifdef DEBUG_OUTPUT_IMAGES
-  Serial.print("img load time: ");
-  Serial.println(millis() - StartTime);
-  Serial.printf("img stats: written=%lu offset=(%d,%d)\n", pixelsWritten, x, y);
+  if (success)
+  {
+    Serial.print("img load time: ");
+    Serial.println(loadElapsed);
+    Serial.printf("img stats: written=%lu offset=(%d,%d)\n", pixelsWritten, x, y);
+  }
 #endif
-  return (true);
+#ifdef DEBUG_TFT_TIMING
+  if (success)
+  {
+    timing.lastLoadMs = loadElapsed;
+    if (loadElapsed > timing.maxLoadMs)
+    {
+      timing.maxLoadMs = loadElapsed;
+    }
+    timing.totalLoadMs += loadElapsed;
+    timing.loadCount++;
+    Serial.printf("[TFT TIMING] load %s -> %lu ms (max %lu ms, n=%lu)\n",
+                  filename,
+                  static_cast<unsigned long>(loadElapsed),
+                  static_cast<unsigned long>(timing.maxLoadMs),
+                  static_cast<unsigned long>(timing.loadCount));
+  }
+#endif
+
+  ReleaseBufferLock("LoadImageIntoBuffer");
+  return success;
 }
 #endif
 
@@ -490,6 +533,13 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 {
   uint32_t StartTime = millis();
 
+  if (!AcquireBufferLock("LoadImageIntoBuffer", BufferLockTimeoutMs))
+  {
+    Serial.println("[TFT GUARD] Failed to acquire buffer lock in LoadImageIntoBuffer (CLK).");
+    return false;
+  }
+
+  bool success = false;
   fs::File bmpFS;
   // Filenames are no bigger than "255.clk\0"
   char filename[10];
@@ -500,58 +550,64 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   Serial.println(filename);
 #endif
 
-  // Open requested file on SD card
-  bmpFS = SPIFFS.open(filename, "r");
-  if (!bmpFS)
+  int16_t w = 0;
+  int16_t h = 0;
+  int16_t row = 0;
+  int16_t col = 0;
+  uint16_t r = 0;
+  uint16_t g = 0;
+  uint16_t b = 0;
+  int16_t x = 0;
+  int16_t y = 0;
+  uint32_t pixelsWritten = 0;
+
+  do
   {
-    Serial.print("File not found: ");
-    Serial.println(filename);
-    return (false);
-  }
+    // Open requested file on SD card
+    bmpFS = SPIFFS.open(filename, "r");
+    if (!bmpFS)
+    {
+      Serial.print("File not found: ");
+      Serial.println(filename);
+      break;
+    }
 
-  int16_t w, h, row, col;
-  uint16_t r, g, b;
+    // black background - clear whole buffer
+    memset(UnpackedImageBuffer, '\0', sizeof(UnpackedImageBuffer));
 
-  // black background - clear whole buffer
-  memset(UnpackedImageBuffer, '\0', sizeof(UnpackedImageBuffer));
+    uint16_t magic = read16(bmpFS);
+    if (magic == 0xFFFF)
+    {
+      Serial.print("Can't openfile. Make sure you upload the SPIFFs image with images. : ");
+      Serial.println(filename);
+      break;
+    }
 
-  uint16_t magic = read16(bmpFS);
-  if (magic == 0xFFFF)
-  {
-    Serial.print("Can't openfile. Make sure you upload the SPIFFs image with images. : ");
-    Serial.println(filename);
-    bmpFS.close();
-    return (false);
-  }
+    if (magic != 0x4B43)
+    { // look for "CK" header
+      Serial.print("File not a CLK. Magic: ");
+      Serial.println(magic);
+      break;
+    }
 
-  if (magic != 0x4B43)
-  { // look for "CK" header
-    Serial.print("File not a CLK. Magic: ");
-    Serial.println(magic);
-    bmpFS.close();
-    return (false);
-  }
+    w = read16(bmpFS);
+    h = read16(bmpFS);
 
-  w = read16(bmpFS);
-  h = read16(bmpFS);
+    // center image on the display
+    x = (TFT_WIDTH - w) / 2;
+    y = (TFT_HEIGHT - h) / 2;
 
-  // center image on the display
-  int16_t x = (TFT_WIDTH - w) / 2;
-  int16_t y = (TFT_HEIGHT - h) / 2;
+    if (w <= 0 || h <= 0)
+    {
+      Serial.printf("ERROR: CLK %s has invalid geometry: %dx%d\n", filename, w, h);
+      break;
+    }
 
-  if (w <= 0 || h <= 0)
-  {
-    Serial.printf("ERROR: CLK %s has invalid geometry: %dx%d\n", filename, w, h);
-    bmpFS.close();
-    return false;
-  }
-
-  if (w > TFT_WIDTH || h > TFT_HEIGHT)
-  {
-    Serial.printf("ERROR: CLK %s too large: %dx%d (max %dx%d)\n", filename, w, h, TFT_WIDTH, TFT_HEIGHT);
-    bmpFS.close();
-    return false;
-  }
+    if (w > TFT_WIDTH || h > TFT_HEIGHT)
+    {
+      Serial.printf("ERROR: CLK %s too large: %dx%d (max %dx%d)\n", filename, w, h, TFT_WIDTH, TFT_HEIGHT);
+      break;
+    }
 
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print(" image W, H: ");
@@ -566,66 +622,94 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   Serial.println(y);
 #endif
 
-  uint8_t lineBuffer[w * 2];
+    uint8_t lineBuffer[w * 2];
 
-  uint32_t pixelsWritten = 0;
-
-  // 0,0 coordinates are top left
-  for (row = 0; row < h; row++)
-  {
-    bmpFS.read(lineBuffer, sizeof(lineBuffer));
-    uint8_t PixM, PixL;
-
-    // Colors are already in 16-bit R5, G6, B5 format
-    for (col = 0; col < w; col++)
+    // 0,0 coordinates are top left
+    for (row = 0; row < h; row++)
     {
-      int16_t dstY = row + y;
-      int16_t dstX = col + x;
+      bmpFS.read(lineBuffer, sizeof(lineBuffer));
+      uint8_t PixM, PixL;
 
-      if (dstY < 0 || dstY >= TFT_HEIGHT || dstX < 0 || dstX >= TFT_WIDTH)
+      // Colors are already in 16-bit R5, G6, B5 format
+      for (col = 0; col < w; col++)
       {
-        Serial.printf("ERROR: CLK %s pixel out of bounds (dst %d,%d) - aborting draw to protect buffer\n", filename, dstX, dstY);
-        bmpFS.close();
-        return false;
-      }
+        int16_t dstY = row + y;
+        int16_t dstX = col + x;
+
+        if (dstY < 0 || dstY >= TFT_HEIGHT || dstX < 0 || dstX >= TFT_WIDTH)
+        {
+          Serial.printf("ERROR: CLK %s pixel out of bounds (dst %d,%d) - aborting draw to protect buffer\n", filename, dstX, dstY);
+          goto clk_cleanup;
+        }
 #ifdef DIM_WITH_ENABLE_PIN_PWM
-      // skip alpha blending for dimming if hardware dimming is used
-      UnpackedImageBuffer[dstY][dstX] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
-#else
-      if (dimming == 255)
-      { // not needed, copy directly
+        // skip alpha blending for dimming if hardware dimming is used
         UnpackedImageBuffer[dstY][dstX] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
-      }
-      else
-      {
-        // 16 BPP pixel format: R5, G6, B5 ; bin: RRRR RGGG GGGB BBBB
-        PixM = lineBuffer[col * 2 + 1];
-        PixL = lineBuffer[col * 2];
-        // align to 8-bit value (MSB left aligned)
-        r = (PixM) & 0xF8;
-        g = ((PixM << 5) | (PixL >> 3)) & 0xFC;
-        b = (PixL << 3) & 0xF8;
-        r *= dimming;
-        g *= dimming;
-        b *= dimming;
-        r = r >> 8;
-        g = g >> 8;
-        b = b >> 8;
-        UnpackedImageBuffer[dstY][dstX] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
-      } // dimming
+#else
+        if (dimming == 255)
+        { // not needed, copy directly
+          UnpackedImageBuffer[dstY][dstX] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
+        }
+        else
+        {
+          // 16 BPP pixel format: R5, G6, B5 ; bin: RRRR RGGG GGGB BBBB
+          PixM = lineBuffer[col * 2 + 1];
+          PixL = lineBuffer[col * 2];
+          // align to 8-bit value (MSB left aligned)
+          r = (PixM) & 0xF8;
+          g = ((PixM << 5) | (PixL >> 3)) & 0xFC;
+          b = (PixL << 3) & 0xF8;
+          r *= dimming;
+          g *= dimming;
+          b *= dimming;
+          r = r >> 8;
+          g = g >> 8;
+          b = b >> 8;
+          UnpackedImageBuffer[dstY][dstX] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+        } // dimming
 #endif
-      pixelsWritten++;
-    } // col
-  } // row
-  FileInBuffer = file_index;
+        pixelsWritten++;
+      } // col
+    }   // row
+    FileInBuffer = file_index;
+    success = true;
+  } while (false);
 
-  bmpFS.close();
+clk_cleanup:
+  if (bmpFS)
+  {
+    bmpFS.close();
+  }
+
+  uint32_t loadElapsed = millis() - StartTime;
+
 #ifdef DEBUG_OUTPUT_IMAGES
-  Serial.print("img load time: ");
-  Serial.println(millis() - StartTime);
-  Serial.printf("img stats: written=%lu offset=(%d,%d)\n", pixelsWritten, x, y);
+  if (success)
+  {
+    Serial.print("img load time: ");
+    Serial.println(loadElapsed);
+    Serial.printf("img stats: written=%lu offset=(%d,%d)\n", pixelsWritten, x, y);
+  }
 #endif
-  return (true);
+#ifdef DEBUG_TFT_TIMING
+  if (success)
+  {
+    timing.lastLoadMs = loadElapsed;
+    if (loadElapsed > timing.maxLoadMs)
+    {
+      timing.maxLoadMs = loadElapsed;
+    }
+    timing.totalLoadMs += loadElapsed;
+    timing.loadCount++;
+    Serial.printf("[TFT TIMING] load %s -> %lu ms (max %lu ms, n=%lu)\n",
+                  filename,
+                  static_cast<unsigned long>(loadElapsed),
+                  static_cast<unsigned long>(timing.maxLoadMs),
+                  static_cast<unsigned long>(timing.loadCount));
+  }
+#endif
+
+  ReleaseBufferLock("LoadImageIntoBuffer");
+  return success;
 }
 #endif
 
@@ -644,7 +728,17 @@ void TFTs::DrawImage(uint8_t file_index)
 #ifdef DEBUG_OUTPUT_IMAGES
     Serial.println("Not preloaded; loading now...");
 #endif
-    LoadImageIntoBuffer(file_index);
+    if (!LoadImageIntoBuffer(file_index))
+    {
+      Serial.printf("[TFT GUARD] DrawImage abort: failed to load file %u.\n", static_cast<unsigned int>(file_index));
+      return;
+    }
+  }
+
+  if (!AcquireBufferLock("DrawImage", BufferLockTimeoutMs))
+  {
+    Serial.println("[TFT GUARD] Failed to acquire buffer lock in DrawImage.");
+    return;
   }
 
   bool oldSwapBytes = getSwapBytes();
@@ -656,6 +750,22 @@ void TFTs::DrawImage(uint8_t file_index)
   Serial.print("img transfer time: ");
   Serial.println(millis() - StartTime);
 #endif
+#ifdef DEBUG_TFT_TIMING
+  uint32_t drawElapsed = millis() - StartTime;
+  timing.lastDrawMs = drawElapsed;
+  if (drawElapsed > timing.maxDrawMs)
+  {
+    timing.maxDrawMs = drawElapsed;
+  }
+  timing.totalDrawMs += drawElapsed;
+  timing.drawCount++;
+  Serial.printf("[TFT TIMING] draw %u -> %lu ms (max %lu ms, n=%lu)\n",
+                static_cast<unsigned int>(file_index),
+                static_cast<unsigned long>(drawElapsed),
+                static_cast<unsigned long>(timing.maxDrawMs),
+                static_cast<unsigned long>(timing.drawCount));
+#endif
+  ReleaseBufferLock("DrawImage");
 }
 
 // These read 16- and 32-bit types from the SD card file.
@@ -696,4 +806,87 @@ uint8_t TFTs::nameToClockFace(String name)
   }
   return 1;
 }
+
+bool TFTs::AcquireBufferLock(const char *owner, uint32_t timeoutMs)
+{
+  uint32_t start = millis();
+  bool contentionLogged = false;
+
+  while (bufferLockActive)
+  {
+    if (!contentionLogged)
+    {
+      const char *currentOwner = bufferLockOwner ? bufferLockOwner : "unknown";
+      uint32_t heldMs = bufferLockSince ? (millis() - bufferLockSince) : 0;
+      Serial.printf("[TFT GUARD] contention: %s waiting for %s (held %lu ms so far).\n",
+                    owner ? owner : "unknown",
+                    currentOwner,
+                    static_cast<unsigned long>(heldMs));
+      contentionLogged = true;
+    }
+
+    if ((millis() - start) >= timeoutMs)
+    {
+      const char *currentOwner = bufferLockOwner ? bufferLockOwner : "unknown";
+      uint32_t heldMs = bufferLockSince ? (millis() - bufferLockSince) : 0;
+      Serial.printf("[TFT GUARD] timeout: %s gave up waiting for %s (held %lu ms).\n",
+                    owner ? owner : "unknown",
+                    currentOwner,
+                    static_cast<unsigned long>(heldMs));
+      return false;
+    }
+
+    delay(1);
+  }
+
+  bufferLockActive = true;
+  bufferLockOwner = owner;
+  bufferLockSince = millis();
+  return true;
+}
+
+void TFTs::ReleaseBufferLock(const char *owner)
+{
+  if (!bufferLockActive)
+  {
+    Serial.printf("[TFT GUARD] release without lock by %s.\n", owner ? owner : "unknown");
+    return;
+  }
+
+  if (bufferLockOwner && bufferLockOwner != owner)
+  {
+    uint32_t heldMs = bufferLockSince ? (millis() - bufferLockSince) : 0;
+    Serial.printf("[TFT GUARD] release mismatch: lock held by %s for %lu ms, release requested by %s.\n",
+                  bufferLockOwner,
+                  static_cast<unsigned long>(heldMs),
+                  owner ? owner : "unknown");
+  }
+
+  bufferLockActive = false;
+  bufferLockOwner = nullptr;
+  bufferLockSince = 0;
+}
+#ifdef DEBUG_TFT_TIMING
+void TFTs::ResetTimingStats()
+{
+  timing = TimingStats{};
+}
+
+void TFTs::PrintTimingStats() const
+{
+  uint32_t avgLoad = timing.loadCount ? static_cast<uint32_t>(timing.totalLoadMs / timing.loadCount) : 0;
+  uint32_t avgDraw = timing.drawCount ? static_cast<uint32_t>(timing.totalDrawMs / timing.drawCount) : 0;
+
+  Serial.printf("[TFT TIMING] loads: last=%lu ms, avg=%lu ms, max=%lu ms, n=%lu\n",
+                static_cast<unsigned long>(timing.lastLoadMs),
+                static_cast<unsigned long>(avgLoad),
+                static_cast<unsigned long>(timing.maxLoadMs),
+                static_cast<unsigned long>(timing.loadCount));
+  Serial.printf("[TFT TIMING] draws: last=%lu ms, avg=%lu ms, max=%lu ms, n=%lu\n",
+                static_cast<unsigned long>(timing.lastDrawMs),
+                static_cast<unsigned long>(avgDraw),
+                static_cast<unsigned long>(timing.maxDrawMs),
+                static_cast<unsigned long>(timing.drawCount));
+}
+#endif
 //// END STOLEN CODE

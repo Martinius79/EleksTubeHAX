@@ -65,6 +65,23 @@ public:
   String clockFaceToName(uint8_t clockFace);
   uint8_t nameToClockFace(String name);
 
+#ifdef DEBUG_TFT_TIMING
+  struct TimingStats
+  {
+    uint32_t lastLoadMs = 0;
+    uint32_t lastDrawMs = 0;
+    uint32_t maxLoadMs = 0;
+    uint32_t maxDrawMs = 0;
+    uint64_t totalLoadMs = 0;
+    uint64_t totalDrawMs = 0;
+    uint32_t loadCount = 0;
+    uint32_t drawCount = 0;
+  } timing;
+
+  void ResetTimingStats();
+  void PrintTimingStats() const;
+#endif
+
 private:
   uint8_t digits[NUM_DIGITS];
   bool TFTsEnabled = false;
@@ -79,6 +96,13 @@ private:
   static uint16_t UnpackedImageBuffer[TFT_HEIGHT][TFT_WIDTH];
   uint8_t FileInBuffer = 255; // invalid, always load first image
   uint8_t NextFileRequired = 0;
+
+  bool AcquireBufferLock(const char *owner, uint32_t timeoutMs = BufferLockTimeoutMs);
+  void ReleaseBufferLock(const char *owner);
+  volatile bool bufferLockActive = false;
+  const char *bufferLockOwner = nullptr;
+  uint32_t bufferLockSince = 0;
+  static constexpr uint32_t BufferLockTimeoutMs = 250;
 
   String patterns_str[9] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
   void loadClockFacesNames();
