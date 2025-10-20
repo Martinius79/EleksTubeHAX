@@ -21,6 +21,12 @@
 #include "MQTT_client_ips.h"
 #endif
 
+#ifdef DEBUG_FORCE_REDRAW
+#ifndef DEBUG_FORCE_REDRAW_INTERVAL_MS
+#define DEBUG_FORCE_REDRAW_INTERVAL_MS 5000
+#endif
+#endif
+
 /************************
  *   NovelLife Clone    *
  ************************/
@@ -601,7 +607,60 @@ void loop()
   checkDimmingNeeded(); // Night or day time brightness change
 #endif
 
+#ifdef DEBUG_FORCE_REDRAW
+  static uint32_t lastForcedRedraw = 0;
+  static bool debugSkipClockUpdate = false;
+  uint32_t now = millis();
+  if ((now - lastForcedRedraw) >= DEBUG_FORCE_REDRAW_INTERVAL_MS)
+  {
+    lastForcedRedraw = now;
+    Serial.println("[DEBUG] Forcing full clock redraw for stress testing.");
+    debugSkipClockUpdate = true;
+
+    static const uint8_t debugDigitOrder[NUM_DIGITS] = {
+        SECONDS_ONES,
+        SECONDS_TENS,
+        MINUTES_ONES,
+        MINUTES_TENS,
+        HOURS_ONES,
+        HOURS_TENS};
+
+    for (uint8_t idx = 0; idx < NUM_DIGITS; ++idx)
+    {
+      uint8_t digitId = debugDigitOrder[idx];
+      uint8_t currentValue = tfts.getDigit(digitId);
+      if (currentValue == TFTs::blanked)
+      {
+        currentValue = 0; // Force non-blank digits during stress test.
+      }
+      uint8_t nextValue = (currentValue + 1) % 10;
+      tfts.setDigit(digitId, nextValue, TFTs::force);
+    }
+
+    tfts.LoadNextImage();
+  }
+#endif
+
+#ifdef DEBUG_FORCE_REDRAW
+  if (!debugSkipClockUpdate)
+  {
+    updateClockDisplay(); // Draw only the changed clock digits!
+  }
+  else
+  {
+    updateClockDisplay(TFTs::force);
+    debugSkipClockUpdate = false;
+  }
+#else
   updateClockDisplay(); // Draw only the changed clock digits!
+#endif
+
+  // // Force a deterministic crash when the clock shows xx:xx:30 to validate coredump capture.
+  // if (uclock.getSecond() == 30)
+  // {
+  //   volatile uint32_t *panicPtr = reinterpret_cast<volatile uint32_t *>(0x00000000);
+  //   *panicPtr = 0xDEADBEEF; // Intentional invalid write triggers StoreProhibited panic.
+  // }
 
   UpdateDstEveryNight();
 

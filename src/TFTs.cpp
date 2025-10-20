@@ -332,6 +332,13 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t x = (TFT_WIDTH - w) / 2;
   int16_t y = (TFT_HEIGHT - h) / 2;
 
+  if (w <= 0 || h <= 0)
+  {
+    Serial.printf("ERROR: BMP %s has invalid geometry: %dx%d\n", filename, w, h);
+    bmpFS.close();
+    return false;
+  }
+
   if (w > TFT_WIDTH || h > TFT_HEIGHT)
   {
     Serial.printf("ERROR: BMP %s too large: %dx%d (max %dx%d)\n", filename, w, h, TFT_WIDTH, TFT_HEIGHT);
@@ -382,8 +389,6 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   uint8_t lineBuffer[lineSize];
 
   uint32_t pixelsWritten = 0;
-  uint32_t pixelsSkipped = 0;
-  bool boundsWarningIssued = false;
 
   // row is decremented as the BMP image is drawn bottom up
   for (row = h - 1; row >= 0; row--)
@@ -399,32 +404,9 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
       if (dstY < 0 || dstY >= TFT_HEIGHT || dstX < 0 || dstX >= TFT_WIDTH)
       {
-        pixelsSkipped++;
-        if (!boundsWarningIssued)
-        {
-          Serial.printf("WARN: BMP pixel out of bounds for %s (dst %d,%d)\n", filename, dstX, dstY);
-          boundsWarningIssued = true;
-        }
-        // advance source pointer but do not write to buffer
-        if (bitDepth == 24)
-        {
-          bptr += 3;
-        }
-        else if (bitDepth == 8)
-        {
-          bptr += 1;
-        }
-        else if (bitDepth == 4)
-        {
-          if (col & 0x01)
-            bptr++;
-        }
-        else
-        {
-          if ((col & 0x07) == 0x07)
-            bptr++;
-        }
-        continue;
+        Serial.printf("ERROR: BMP %s pixel out of bounds (dst %d,%d) - aborting draw to protect buffer\n", filename, dstX, dstY);
+        bmpFS.close();
+        return false;
       }
 
       if (bitDepth == 24)
@@ -475,7 +457,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img load time: ");
   Serial.println(millis() - StartTime);
-  Serial.printf("img stats: written=%lu skipped=%lu offset=(%d,%d)\n", pixelsWritten, pixelsSkipped, x, y);
+  Serial.printf("img stats: written=%lu offset=(%d,%d)\n", pixelsWritten, x, y);
 #endif
   return (true);
 }
@@ -557,6 +539,13 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   int16_t x = (TFT_WIDTH - w) / 2;
   int16_t y = (TFT_HEIGHT - h) / 2;
 
+  if (w <= 0 || h <= 0)
+  {
+    Serial.printf("ERROR: CLK %s has invalid geometry: %dx%d\n", filename, w, h);
+    bmpFS.close();
+    return false;
+  }
+
   if (w > TFT_WIDTH || h > TFT_HEIGHT)
   {
     Serial.printf("ERROR: CLK %s too large: %dx%d (max %dx%d)\n", filename, w, h, TFT_WIDTH, TFT_HEIGHT);
@@ -580,8 +569,6 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   uint8_t lineBuffer[w * 2];
 
   uint32_t pixelsWritten = 0;
-  uint32_t pixelsSkipped = 0;
-  bool boundsWarningIssued = false;
 
   // 0,0 coordinates are top left
   for (row = 0; row < h; row++)
@@ -597,13 +584,9 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
       if (dstY < 0 || dstY >= TFT_HEIGHT || dstX < 0 || dstX >= TFT_WIDTH)
       {
-        pixelsSkipped++;
-        if (!boundsWarningIssued)
-        {
-          Serial.printf("WARN: CLK pixel out of bounds for %s (dst %d,%d)\n", filename, dstX, dstY);
-          boundsWarningIssued = true;
-        }
-        continue;
+        Serial.printf("ERROR: CLK %s pixel out of bounds (dst %d,%d) - aborting draw to protect buffer\n", filename, dstX, dstY);
+        bmpFS.close();
+        return false;
       }
 #ifdef DIM_WITH_ENABLE_PIN_PWM
       // skip alpha blending for dimming if hardware dimming is used
@@ -640,7 +623,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img load time: ");
   Serial.println(millis() - StartTime);
-  Serial.printf("img stats: written=%lu skipped=%lu offset=(%d,%d)\n", pixelsWritten, pixelsSkipped, x, y);
+  Serial.printf("img stats: written=%lu offset=(%d,%d)\n", pixelsWritten, x, y);
 #endif
   return (true);
 }
