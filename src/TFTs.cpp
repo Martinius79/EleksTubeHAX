@@ -401,12 +401,41 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
     bmpFS.seek(seekOffset);
 
     uint32_t lineSize = ((bitDepth * w + 31) >> 5) * 4;
-    uint8_t lineBuffer[lineSize];
+    const uint32_t maxLineSize = ((bitDepth * TFT_WIDTH + 31) >> 5) * 4;
+    if (lineSize == 0 || lineSize > maxLineSize)
+    {
+      Serial.printf("[TFT GUARD] Invalid BMP lineSize %lu (max %lu) in %s\n",
+                    static_cast<unsigned long>(lineSize),
+                    static_cast<unsigned long>(maxLineSize),
+                    filename);
+      goto cleanup;
+    }
+
+  uint8_t lineBuffer[lineSize];
+
+#ifdef DEBUG_TFT_GUARD
+  Serial.printf("[TFT DEBUG] %s: w=%d h=%d bpp=%u lineSize=%lu maxLineSize=%lu\n",
+          filename,
+          static_cast<int>(w),
+          static_cast<int>(h),
+          static_cast<unsigned int>(bitDepth),
+          static_cast<unsigned long>(lineSize),
+          static_cast<unsigned long>(maxLineSize));
+#endif
 
     // row is decremented as the BMP image is drawn bottom up
     for (row = h - 1; row >= 0; row--)
     {
-      bmpFS.read(lineBuffer, sizeof(lineBuffer));
+      size_t bytesRead = bmpFS.read(lineBuffer, sizeof(lineBuffer));
+      if (bytesRead != lineSize)
+      {
+        Serial.printf("[TFT GUARD] Short BMP read (%u/%lu) in %s row %d\n",
+                      static_cast<unsigned int>(bytesRead),
+                      static_cast<unsigned long>(lineSize),
+                      filename,
+                      static_cast<int>(row));
+        goto cleanup;
+      }
       uint8_t *bptr = lineBuffer;
 
       // Convert 24 to 16 bit colours while copying to output buffer.
@@ -622,12 +651,29 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   Serial.println(y);
 #endif
 
-    uint8_t lineBuffer[w * 2];
+  uint8_t lineBuffer[w * 2];
+
+#ifdef DEBUG_TFT_GUARD
+  Serial.printf("[TFT DEBUG] %s: w=%d h=%d lineBytes=%u\n",
+          filename,
+          static_cast<int>(w),
+          static_cast<int>(h),
+          static_cast<unsigned int>(sizeof(lineBuffer)));
+#endif
 
     // 0,0 coordinates are top left
     for (row = 0; row < h; row++)
     {
-      bmpFS.read(lineBuffer, sizeof(lineBuffer));
+      size_t bytesRead = bmpFS.read(lineBuffer, sizeof(lineBuffer));
+      if (bytesRead != sizeof(lineBuffer))
+      {
+        Serial.printf("[TFT GUARD] Short CLK read (%u/%u) in %s row %d\n",
+                      static_cast<unsigned int>(bytesRead),
+                      static_cast<unsigned int>(sizeof(lineBuffer)),
+                      filename,
+                      static_cast<int>(row));
+        goto clk_cleanup;
+      }
       uint8_t PixM, PixL;
 
       // Colors are already in 16-bit R5, G6, B5 format
