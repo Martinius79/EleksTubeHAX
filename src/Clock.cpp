@@ -248,6 +248,11 @@ NTPClient Clock::ntpTimeClient(ntpUDP, NTP_SERVER, 0, NTP_UPDATE_INTERVAL);
 uint32_t Clock::current_ntp_interval_ms = Clock::ntp_interval_initial_ms;
 uint8_t Clock::consecutive_failures = 0;
 uint8_t Clock::consecutive_successes = 0;
+const uint32_t Clock::ntp_interval_initial_ms;
+const uint32_t Clock::ntp_interval_normal_ms;
+const uint32_t Clock::ntp_interval_stable_ms;
+const uint32_t Clock::ntp_interval_error_ms;
+const uint32_t Clock::ntp_interval_max_ms;
 
 void Clock::begin(StoredConfig::Config::Clock *config_)
 {
