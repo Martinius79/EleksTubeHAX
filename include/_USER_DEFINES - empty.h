@@ -12,6 +12,7 @@
 // #define DEBUG_OUTPUT_IMAGES // Uncomment for Debug printing of image loading and drawing
 // #define DEBUG_OUTPUT_MQTT   // Uncomment for Debug printing of MQTT messages
 // #define DEBUG_OUTPUT_RTC    // Uncomment for Debug printing of RTC chip initialization and time setting
+// #define DEBUG_TFT_GUARD     // Uncomment for TFT guard debug logging
 
 // ************* Clock font file type selection (.clk or .bmp)  *************
 // #define USE_CLK_FILES   // Select between .CLK and .BMP images
