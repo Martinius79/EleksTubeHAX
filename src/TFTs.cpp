@@ -2,6 +2,8 @@
 #include "MQTT_client_ips.h"
 #include "TFTs.h"
 #include "WiFi_WPS.h"
+#include "esp_err.h"
+#include "esp_spiffs.h"
 
 #ifdef DEBUG_TFT_GUARD
 #define TFT_GUARD_LOG(fmt, ...) Serial.printf("[TFT GUARD] " fmt, ##__VA_ARGS__)
@@ -42,6 +44,61 @@ void TFTs::begin()
     Serial.println("SPIFFS initialization failed!");
     NumberOfClockFaces = 0;
     return;
+  }
+
+  // Log some useful information about flash and SPIFFS status
+  const FlashMode_t flashMode = ESP.getFlashChipMode();
+  const uint32_t flashSpeedHz = ESP.getFlashChipSpeed();
+
+  const char *modeString = "UNKNOWN";
+  switch (flashMode)
+  {
+  case FM_QIO:
+    modeString = "QIO";
+    break;
+  case FM_QOUT:
+    modeString = "QOUT";
+    break;
+  case FM_DIO:
+    modeString = "DIO";
+    break;
+  case FM_DOUT:
+    modeString = "DOUT";
+    break;
+  case FM_FAST_READ:
+    modeString = "FAST_READ";
+    break;
+  case FM_SLOW_READ:
+    modeString = "SLOW_READ";
+    break;
+  default:
+    break;
+  }
+
+  Serial.printf("[FLASH] mode=%s (%d), speed=%lu Hz\n",
+                modeString,
+                static_cast<int>(flashMode),
+                static_cast<unsigned long>(flashSpeedHz));
+
+  // Log SPIFFS usage information
+  size_t spiffsTotal = 0;
+  size_t spiffsUsed = 0;
+  esp_err_t spiffsStatus = esp_spiffs_info(nullptr, &spiffsTotal, &spiffsUsed);
+  if (spiffsStatus == ESP_OK)
+  {
+    size_t spiffsFree = (spiffsTotal >= spiffsUsed) ? (spiffsTotal - spiffsUsed) : 0;
+    const double usedPercent = (spiffsTotal > 0) ? (static_cast<double>(spiffsUsed) * 100.0 / static_cast<double>(spiffsTotal)) : 0.0;
+    Serial.printf("[SPIFFS] total=%u bytes, used=%u bytes, free=%u bytes (%.2f%% used)\n",
+                  static_cast<unsigned int>(spiffsTotal),
+                  static_cast<unsigned int>(spiffsUsed),
+                  static_cast<unsigned int>(spiffsFree),
+                  usedPercent);
+  }
+  else
+  {
+    Serial.printf("[SPIFFS] esp_spiffs_info failed: %s (%d)\n",
+                  esp_err_to_name(spiffsStatus),
+                  static_cast<int>(spiffsStatus));
   }
 
   NumberOfClockFaces = CountNumberOfClockFaces();
@@ -536,11 +593,33 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
   bmpFS.close();
 
+#if defined(DEBUG_OUTPUT_IMAGES) || defined(DEBUG_TFT_TIMING)
+  const uint32_t loadElapsed = millis() - StartTime;
+#endif
+
 #ifdef DEBUG_OUTPUT_IMAGES
   if (loadOk)
   {
     Serial.print("img load time: ");
-    Serial.println(millis() - StartTime);
+    Serial.println(loadElapsed);
+  }
+#endif
+
+#ifdef DEBUG_TFT_TIMING
+  if (loadOk)
+  {
+    timing.lastLoadMs = loadElapsed;
+    if (loadElapsed > timing.maxLoadMs)
+    {
+      timing.maxLoadMs = loadElapsed;
+    }
+    timing.totalLoadMs += loadElapsed;
+    ++timing.loadCount;
+    Serial.printf("[TFT TIMING] load %s -> %lu ms (max %lu ms, n=%lu)\n",
+                  filename,
+                  static_cast<unsigned long>(loadElapsed),
+                  static_cast<unsigned long>(timing.maxLoadMs),
+                  static_cast<unsigned long>(timing.loadCount));
   }
 #endif
 
@@ -732,11 +811,31 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   }
 
   bmpFS.close();
+#if defined(DEBUG_OUTPUT_IMAGES) || defined(DEBUG_TFT_TIMING)
+  const uint32_t loadElapsed = millis() - StartTime;
+#endif
 #ifdef DEBUG_OUTPUT_IMAGES
   if (loadOk)
   {
     Serial.print("img load time: ");
-    Serial.println(millis() - StartTime);
+    Serial.println(loadElapsed);
+  }
+#endif
+#ifdef DEBUG_TFT_TIMING
+  if (loadOk)
+  {
+    timing.lastLoadMs = loadElapsed;
+    if (loadElapsed > timing.maxLoadMs)
+    {
+      timing.maxLoadMs = loadElapsed;
+    }
+    timing.totalLoadMs += loadElapsed;
+    ++timing.loadCount;
+    Serial.printf("[TFT TIMING] load %s -> %lu ms (max %lu ms, n=%lu)\n",
+                  filename,
+                  static_cast<unsigned long>(loadElapsed),
+                  static_cast<unsigned long>(timing.maxLoadMs),
+                  static_cast<unsigned long>(timing.loadCount));
   }
 #endif
   return loadOk;
@@ -773,6 +872,21 @@ void TFTs::DrawImage(uint8_t file_index)
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img transfer time: ");
   Serial.println(millis() - StartTime);
+#endif
+#ifdef DEBUG_TFT_TIMING
+  uint32_t drawElapsed = millis() - StartTime;
+  timing.lastDrawMs = drawElapsed;
+  if (drawElapsed > timing.maxDrawMs)
+  {
+    timing.maxDrawMs = drawElapsed;
+  }
+  timing.totalDrawMs += drawElapsed;
+  ++timing.drawCount;
+  Serial.printf("[TFT TIMING] draw %u -> %lu ms (max %lu ms, n=%lu)\n",
+                static_cast<unsigned int>(file_index),
+                static_cast<unsigned long>(drawElapsed),
+                static_cast<unsigned long>(timing.maxDrawMs),
+                static_cast<unsigned long>(timing.drawCount));
 #endif
 }
 
@@ -814,4 +928,27 @@ uint8_t TFTs::nameToClockFace(String name)
   }
   return 1;
 }
+#ifdef DEBUG_TFT_TIMING
+void TFTs::ResetTimingStats()
+{
+  timing = TimingStats{};
+}
+
+void TFTs::PrintTimingStats() const
+{
+  uint32_t avgLoad = timing.loadCount ? static_cast<uint32_t>(timing.totalLoadMs / timing.loadCount) : 0;
+  uint32_t avgDraw = timing.drawCount ? static_cast<uint32_t>(timing.totalDrawMs / timing.drawCount) : 0;
+
+  Serial.printf("[TFT TIMING] loads: last=%lu ms, avg=%lu ms, max=%lu ms, n=%lu\n",
+                static_cast<unsigned long>(timing.lastLoadMs),
+                static_cast<unsigned long>(avgLoad),
+                static_cast<unsigned long>(timing.maxLoadMs),
+                static_cast<unsigned long>(timing.loadCount));
+  Serial.printf("[TFT TIMING] draws: last=%lu ms, avg=%lu ms, max=%lu ms, n=%lu\n",
+                static_cast<unsigned long>(timing.lastDrawMs),
+                static_cast<unsigned long>(avgDraw),
+                static_cast<unsigned long>(timing.maxDrawMs),
+                static_cast<unsigned long>(timing.drawCount));
+}
+#endif
 //// END STOLEN CODE

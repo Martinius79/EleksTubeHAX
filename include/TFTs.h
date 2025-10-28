@@ -65,6 +65,11 @@ public:
   String clockFaceToName(uint8_t clockFace);
   uint8_t nameToClockFace(String name);
 
+#ifdef DEBUG_TFT_TIMING
+  void ResetTimingStats();
+  void PrintTimingStats() const;
+#endif
+
 private:
   uint8_t digits[NUM_DIGITS];
   bool TFTsEnabled = false;
@@ -82,6 +87,22 @@ private:
 
   String patterns_str[9] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
   void loadClockFacesNames();
+
+#ifdef DEBUG_TFT_TIMING
+  struct TimingStats
+  {
+    uint32_t lastLoadMs = 0;
+    uint32_t maxLoadMs = 0;
+    uint64_t totalLoadMs = 0;
+    uint32_t loadCount = 0;
+    uint32_t lastDrawMs = 0;
+    uint32_t maxDrawMs = 0;
+    uint64_t totalDrawMs = 0;
+    uint32_t drawCount = 0;
+  };
+
+  mutable TimingStats timing{};
+#endif
 };
 
 extern TFTs tfts;

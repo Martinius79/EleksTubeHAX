@@ -338,6 +338,10 @@ void loop()
 {
   uint32_t millis_at_top = millis();
 
+#ifdef DEBUG_TFT_GUARD
+  heap_caps_check_integrity_all(true);
+#endif
+
   // Do all the maintenance work.
   WifiReconnect(); // If not connected to WiFi, attempt to reconnect
 
