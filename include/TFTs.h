@@ -78,8 +78,8 @@ private:
   int8_t CountNumberOfClockFaces();
   bool LoadImageIntoBuffer(uint8_t file_index);
   void DrawImage(uint8_t file_index);
-  uint16_t read16(fs::File &f);
-  uint32_t read32(fs::File &f);
+  bool read16(fs::File &f, uint16_t &value);
+  bool read32(fs::File &f, uint32_t &value);
 
   static uint16_t UnpackedImageBuffer[TFT_HEIGHT][TFT_WIDTH];
   uint8_t FileInBuffer = 255; // invalid, always load first image

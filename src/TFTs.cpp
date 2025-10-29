@@ -19,6 +19,25 @@ inline bool ensureRange(int32_t value, int32_t minValue, int32_t maxValue)
 {
   return (value >= minValue) && (value <= maxValue);
 }
+
+inline bool readExact(fs::File &file, uint8_t *buffer, size_t length)
+{
+  size_t totalRead = 0;
+  while (totalRead < length)
+  {
+    size_t chunk = file.read(buffer + totalRead, length - totalRead);
+    if (chunk == 0)
+    {
+      return false;
+    }
+    totalRead += chunk;
+    if (totalRead < length)
+    {
+      yield();
+    }
+  }
+  return true;
+}
 } // namespace
 
 void TFTs::begin()
@@ -375,6 +394,36 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
   bool loadOk = true;
 
+  auto read16OrFail = [&](uint16_t &dest, const char *what) -> bool
+  {
+    if (!loadOk)
+    {
+      return false;
+    }
+    if (!read16(bmpFS, dest))
+    {
+      TFT_GUARD_LOG("Failed to read %s for %s\n", what, filename);
+      loadOk = false;
+      return false;
+    }
+    return true;
+  };
+
+  auto read32OrFail = [&](uint32_t &dest, const char *what) -> bool
+  {
+    if (!loadOk)
+    {
+      return false;
+    }
+    if (!read32(bmpFS, dest))
+    {
+      TFT_GUARD_LOG("Failed to read %s for %s\n", what, filename);
+      loadOk = false;
+      return false;
+    }
+    return true;
+  };
+
   uint32_t seekOffset = 0;
   uint32_t headerSize = 0;
   uint32_t paletteSize = 0;
@@ -387,8 +436,8 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   // black background - clear whole buffer
   memset(UnpackedImageBuffer, '\0', sizeof(UnpackedImageBuffer));
 
-  uint16_t magic = read16(bmpFS);
-  if (magic == 0xFFFF)
+  uint16_t magic = 0;
+  if (!read16(bmpFS, magic))
   {
     Serial.print("Can't openfile. Make sure you upload the SPIFFs image with BMPs. : ");
     Serial.println(filename);
@@ -405,16 +454,29 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
   if (loadOk)
   {
-    read32(bmpFS);              // filesize in bytes (unused)
-    read32(bmpFS);              // reserved (unused)
-    seekOffset = read32(bmpFS); // start of bitmap
-    headerSize = read32(bmpFS); // header size
-    w = static_cast<int32_t>(read32(bmpFS));
-    h = static_cast<int32_t>(read32(bmpFS));
-    read16(bmpFS); // color planes (must be 1)
-    bitDepth = read16(bmpFS);
+    uint32_t ignored32 = 0;
+    read32OrFail(ignored32, "BMP file size");
+    read32OrFail(ignored32, "BMP reserved field");
+    read32OrFail(seekOffset, "BMP pixel offset");
+    read32OrFail(headerSize, "BMP header size");
 
-    if (!ensureRange(w, 1, TFT_WIDTH) || !ensureRange(h, 1, TFT_HEIGHT))
+    uint32_t widthRaw = 0;
+    if (read32OrFail(widthRaw, "BMP width"))
+    {
+      w = static_cast<int32_t>(widthRaw);
+    }
+
+    uint32_t heightRaw = 0;
+    if (read32OrFail(heightRaw, "BMP height"))
+    {
+      h = static_cast<int32_t>(heightRaw);
+    }
+
+    uint16_t colorPlanes = 0;
+    read16OrFail(colorPlanes, "BMP color planes");
+    read16OrFail(bitDepth, "BMP bit depth");
+
+    if (loadOk && (!ensureRange(w, 1, TFT_WIDTH) || !ensureRange(h, 1, TFT_HEIGHT)))
     {
       TFT_GUARD_LOG("BMP size %ldx%ld exceeds TFT bounds %ux%u\n", static_cast<long>(w), static_cast<long>(h), TFT_WIDTH, TFT_HEIGHT);
       loadOk = false;
@@ -455,22 +517,26 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
   if (loadOk)
   {
-    uint32_t compression = read32(bmpFS);
-    if (compression != 0 || (bitDepth != 24 && bitDepth != 1 && bitDepth != 4 && bitDepth != 8))
+    uint32_t compression = 0;
+    if (read32OrFail(compression, "BMP compression"))
     {
-      Serial.println("BMP format not recognized.");
-      TFT_GUARD_LOG("Unsupported BMP compression %lu or bit depth %u in %s\n", static_cast<unsigned long>(compression), bitDepth, filename);
-      loadOk = false;
+      if (compression != 0 || (bitDepth != 24 && bitDepth != 1 && bitDepth != 4 && bitDepth != 8))
+      {
+        Serial.println("BMP format not recognized.");
+        TFT_GUARD_LOG("Unsupported BMP compression %lu or bit depth %u in %s\n", static_cast<unsigned long>(compression), bitDepth, filename);
+        loadOk = false;
+      }
     }
   }
 
   uint32_t palette[kMaxBmpPaletteEntries];
   if (loadOk && bitDepth <= 8)
   {
-    read32(bmpFS);
-    read32(bmpFS);
-    read32(bmpFS); // size, w resolution, h resolution
-    paletteSize = read32(bmpFS);
+    uint32_t ignored32 = 0;
+    read32OrFail(ignored32, "BMP image size field");
+    read32OrFail(ignored32, "BMP X resolution");
+    read32OrFail(ignored32, "BMP Y resolution");
+    read32OrFail(paletteSize, "BMP palette size");
     if (paletteSize == 0)
     {
       paletteSize = 1u << bitDepth;
@@ -489,7 +555,14 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
     {
       for (uint32_t i = 0; i < paletteSize; i++)
       {
-        palette[i] = read32(bmpFS);
+        uint32_t entry = 0;
+        if (!read32(bmpFS, entry))
+        {
+          TFT_GUARD_LOG("Failed to read palette entry %lu for %s\n", static_cast<unsigned long>(i), filename);
+          loadOk = false;
+          break;
+        }
+        palette[i] = entry;
       }
     }
   }
@@ -517,11 +590,29 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
     for (row = h - 1; row >= 0; row--)
     {
-      int bytesRead = bmpFS.read(lineBuffer, lineSize);
-      if (bytesRead != static_cast<int>(lineSize))
+      size_t totalRead = 0;
+      while (totalRead < lineSize)
       {
-        TFT_GUARD_LOG("Short read (%d/%lu) in row %ld for %s\n", bytesRead, static_cast<unsigned long>(lineSize), static_cast<long>(row), filename);
-        loadOk = false;
+        size_t chunk = bmpFS.read(lineBuffer + totalRead, lineSize - totalRead);
+        if (chunk == 0)
+        {
+          TFT_GUARD_LOG("Short read (%lu/%lu) in row %ld for %s\n",
+                        static_cast<unsigned long>(totalRead),
+                        static_cast<unsigned long>(lineSize),
+                        static_cast<long>(row),
+                        filename);
+          loadOk = false;
+          break;
+        }
+        totalRead += chunk;
+        if (totalRead < lineSize)
+        {
+          yield();
+        }
+      }
+
+      if (!loadOk)
+      {
         break;
       }
 
@@ -683,8 +774,8 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   // black background - clear whole buffer
   memset(UnpackedImageBuffer, '\0', sizeof(UnpackedImageBuffer));
 
-  uint16_t magic = read16(bmpFS);
-  if (magic == 0xFFFF)
+  uint16_t magic = 0;
+  if (!read16(bmpFS, magic))
   {
     Serial.print("Can't openfile. Make sure you upload the SPIFFs image with images. : ");
     Serial.println(filename);
@@ -702,8 +793,17 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
     return false;
   }
 
-  w = read16(bmpFS);
-  h = read16(bmpFS);
+  uint16_t widthRaw = 0;
+  uint16_t heightRaw = 0;
+  if (!read16(bmpFS, widthRaw) || !read16(bmpFS, heightRaw))
+  {
+    bmpFS.close();
+    TFT_GUARD_LOG("CLK dimension read failed for %s\n", filename);
+    FileInBuffer = 255;
+    return false;
+  }
+  w = static_cast<int32_t>(widthRaw);
+  h = static_cast<int32_t>(heightRaw);
   if (!ensureRange(w, 1, TFT_WIDTH) || !ensureRange(h, 1, TFT_HEIGHT))
   {
     TFT_GUARD_LOG("CLK size %ldx%ld exceeds TFT bounds %ux%u\n", static_cast<long>(w), static_cast<long>(h), TFT_WIDTH, TFT_HEIGHT);
@@ -758,11 +858,28 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   // 0,0 coordinates are top left
   for (row = 0; row < h; row++)
   {
-    int bytesRead = bmpFS.read(lineBuffer, lineSize);
-    if (bytesRead != static_cast<int>(lineSize))
+    size_t totalRead = 0;
+    while (totalRead < lineSize)
     {
-      TFT_GUARD_LOG("CLK short read (%d/%lu) in row %ld for %s\n", bytesRead, static_cast<unsigned long>(lineSize), static_cast<long>(row), filename);
-      loadOk = false;
+      size_t chunk = bmpFS.read(lineBuffer + totalRead, lineSize - totalRead);
+      if (chunk == 0)
+      {
+        TFT_GUARD_LOG("CLK short read (%lu/%lu) in row %ld for %s\n",
+                      static_cast<unsigned long>(totalRead),
+                      static_cast<unsigned long>(lineSize),
+                      static_cast<long>(row),
+                      filename);
+        loadOk = false;
+        break;
+      }
+      totalRead += chunk;
+      if (totalRead < lineSize)
+      {
+        yield();
+      }
+    }
+    if (!loadOk)
+    {
       break;
     }
     uint8_t PixM, PixL;
@@ -784,8 +901,8 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
         uint16_t g = 0;
         uint16_t b = 0;
         // 16 BPP pixel format: R5, G6, B5 ; bin: RRRR RGGG GGGB BBBB
-  PixM = lineBuffer[col * 2 + 1];
-  PixL = lineBuffer[col * 2];
+    PixM = lineBuffer[col * 2 + 1];
+    PixL = lineBuffer[col * 2];
         // align to 8-bit value (MSB left aligned)
         r = (PixM) & 0xF8;
         g = ((PixM << 5) | (PixL >> 3)) & 0xFC;
@@ -894,22 +1011,29 @@ void TFTs::DrawImage(uint8_t file_index)
 // BMP data is stored little-endian, Arduino is little-endian too.
 // May need to reverse subscript order if porting elsewhere.
 
-uint16_t TFTs::read16(fs::File &f)
+bool TFTs::read16(fs::File &f, uint16_t &value)
 {
-  uint16_t result;
-  reinterpret_cast<uint8_t *>(&result)[0] = f.read(); // LSB
-  reinterpret_cast<uint8_t *>(&result)[1] = f.read(); // MSB
-  return result;
+  uint8_t buffer[2];
+  if (!readExact(f, buffer, sizeof(buffer)))
+  {
+    return false;
+  }
+  value = static_cast<uint16_t>(buffer[0]) | (static_cast<uint16_t>(buffer[1]) << 8);
+  return true;
 }
 
-uint32_t TFTs::read32(fs::File &f)
+bool TFTs::read32(fs::File &f, uint32_t &value)
 {
-  uint32_t result;
-  reinterpret_cast<uint8_t *>(&result)[0] = f.read(); // LSB
-  reinterpret_cast<uint8_t *>(&result)[1] = f.read();
-  reinterpret_cast<uint8_t *>(&result)[2] = f.read();
-  reinterpret_cast<uint8_t *>(&result)[3] = f.read(); // MSB
-  return result;
+  uint8_t buffer[4];
+  if (!readExact(f, buffer, sizeof(buffer)))
+  {
+    return false;
+  }
+  value = static_cast<uint32_t>(buffer[0]) |
+          (static_cast<uint32_t>(buffer[1]) << 8) |
+          (static_cast<uint32_t>(buffer[2]) << 16) |
+          (static_cast<uint32_t>(buffer[3]) << 24);
+  return true;
 }
 
 String TFTs::clockFaceToName(uint8_t clockFace)

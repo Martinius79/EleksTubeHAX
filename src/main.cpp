@@ -149,6 +149,8 @@ uint8_t hour_old = 255;
 #endif
 bool DstNeedsUpdate = false;
 uint8_t yesterday = 0;
+uint32_t lastDstAttemptMs = 0;
+uint8_t lastDstAttemptDay = 0;
 
 uint32_t lastMQTTCommandExecuted = (uint32_t)-1;
 
@@ -609,6 +611,40 @@ void loop()
 
   UpdateDstEveryNight();
 
+#ifdef GEOLOCATION_ENABLED
+  if (DstNeedsUpdate)
+  {
+    const uint32_t now = millis();
+    const uint8_t currentDay = uclock.getDay();
+    if (lastDstAttemptDay != currentDay)
+    {
+      lastDstAttemptMs = 0;
+      lastDstAttemptDay = currentDay;
+    }
+
+    constexpr uint32_t kDstRetryIntervalMs = 60000; // retry at most once per minute
+    if ((lastDstAttemptMs == 0) || (now - lastDstAttemptMs >= kDstRetryIntervalMs))
+    {
+      lastDstAttemptMs = now;
+      Serial.println("Attempting DST geolocation update...");
+
+      if (GetGeoLocationTimeZoneOffset())
+      {
+        const double offsetHours = GeoLocTZoffset;
+        const time_t offsetSeconds = static_cast<time_t>(offsetHours * 3600.0);
+        uclock.setTimeZoneOffset(offsetSeconds);
+        yesterday = currentDay;
+        DstNeedsUpdate = false;
+        Serial.printf("DST update successful. TZ offset set to %.2f hours\n", offsetHours);
+      }
+      else
+      {
+        Serial.println("DST update failed; will retry.");
+      }
+    }
+  }
+#endif
+
   // Menu
   if (menu.stateChanged() && tfts.isEnabled())
   {
@@ -934,15 +970,14 @@ void checkDimmingNeeded()
 
 void UpdateDstEveryNight()
 {
-  uint8_t currentDay = uclock.getDay();
-  // This `DstNeedsUpdate` is True between 3:00:05 and 3:00:59. Has almost one minute of time slot to fetch updates, incl. eventual retries.
-  DstNeedsUpdate = (currentDay != yesterday) && (uclock.getHour24() == 3) && (uclock.getMinute() == 0) && (uclock.getSecond() > 5);
-  if (DstNeedsUpdate)
+  const uint8_t currentDay = uclock.getDay();
+  const bool windowOpened = (currentDay != yesterday) && (uclock.getHour24() == 3) && (uclock.getMinute() == 0) && (uclock.getSecond() > 5);
+  if (windowOpened && !DstNeedsUpdate)
   {
-    Serial.print("DST needs update...");
-
-    // Update day after geoloc was successfully updated. Otherwise this will immediately disable the failed update retry.
-    yesterday = currentDay;
+    DstNeedsUpdate = true;
+    lastDstAttemptMs = 0;   // force an immediate attempt
+    lastDstAttemptDay = currentDay;
+    Serial.printf("DST update window opened for day %u\n", static_cast<unsigned int>(currentDay));
   }
 }
 
