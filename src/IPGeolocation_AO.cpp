@@ -455,41 +455,12 @@ bool IPGeolocation::updateStatus(IPGeo *I)
         return false;
       }
       
-      // Find JSON part (after double newline separating headers from body)
-      int jsonStart = -1;
-      
-      // Try different line ending combinations
-      if ((jsonStart = fullResponse.indexOf("\r\n\r\n")) != -1)
+      // Find JSON part (after HTTP headers separated by \r\n\r\n)
+      int jsonStart = fullResponse.indexOf("\r\n\r\n");
+      if (jsonStart != -1)
       {
         jsonStart += 4;
         DEBUGPRINT("Found JSON start after \\r\\n\\r\\n at position: " + String(jsonStart));
-      }
-      else if ((jsonStart = fullResponse.indexOf("\n\n")) != -1)
-      {
-        jsonStart += 2;
-        DEBUGPRINT("Found JSON start after \\n\\n at position: " + String(jsonStart));
-      }
-      else
-      {
-        // Fallback: look for the last header line and find content after it
-        int lastHeaderEnd = fullResponse.lastIndexOf('\n');
-        if (lastHeaderEnd != -1 && lastHeaderEnd < fullResponse.length() - 1)
-        {
-          // Look for JSON starting with '{'
-          for (int i = lastHeaderEnd + 1; i < fullResponse.length(); i++)
-          {
-            if (fullResponse.charAt(i) == '{')
-            {
-              jsonStart = i;
-              DEBUGPRINT("Found JSON start by searching for '{' at position: " + String(jsonStart));
-              break;
-            }
-          }
-        }
-      }
-      
-      if (jsonStart != -1 && jsonStart < fullResponse.length())
-      {
         _Response = fullResponse.substring(jsonStart);
         _Response.trim();
         DEBUGPRINT("Extracted JSON: " + _Response);
