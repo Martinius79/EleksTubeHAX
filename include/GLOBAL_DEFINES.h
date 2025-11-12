@@ -89,13 +89,13 @@
 
 // Define the activate and deactivate state for the display power transistor and how the dimming value is calculated.
 #if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)) // for all clocks, except IPSTube and MarvelTubes
-#define ACTIVATEDISPLAYS HIGH                                                // Activate is HIGH
-#define DEACTIVATEDISPLAYS LOW                                               // Deactivate is LOW
-#define CALCDIMVALUE(x) (x)                                                  // Dimming value is directly used for software dimming
-#else                                                                        // IPSTube keeps LOW active for display power
-#define ACTIVATEDISPLAYS LOW                                                 // Activate is LOW for the IPSTube
-#define DEACTIVATEDISPLAYS HIGH                                              // Deactivate is HIGH for the IPSTube
-#define CALCDIMVALUE(x) (255 - x)                                            // Dimming value is "inverted" for hardware dimming for IPSTube
+#define ACTIVATEDISPLAYS HIGH                                                  // Activate is HIGH
+#define DEACTIVATEDISPLAYS LOW                                                 // Deactivate is LOW
+#define CALCDIMVALUE(x) (x)                                                    // Dimming value is directly used for software dimming
+#else                                                                          // IPSTube keeps LOW active for display power
+#define ACTIVATEDISPLAYS LOW                                                   // Activate is LOW for the IPSTube
+#define DEACTIVATEDISPLAYS HIGH                                                // Deactivate is HIGH for the IPSTube
+#define CALCDIMVALUE(x) (255 - x)                                              // Dimming value is "inverted" for hardware dimming for IPSTube
 #endif
 
 #if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
@@ -604,7 +604,7 @@
 #define DEVICE_HW_VERSION "1.0"
 
 // WS2812 (or compatible) LEDs on the back of the display modules.
-#define BACKLIGHTS_PIN (38) // controls the WS2812B LEDs
+#define BACKLIGHTS_PIN (38)    // controls the WS2812B LEDs
 #define NUM_BACKLIGHT_LEDS (6) // 6 LEDs on the back of every LCD
 
 // Buttons, active low, externally pulled up (with actual resistors!).
@@ -613,9 +613,9 @@
 #define BUTTON_RIGHT_PIN (11) // Time/Right button
 #define BUTTON_POWER_PIN (10) // Alarm/Power button
 
-// I2C! RTC UNKWONN TYPE! 5609 HDN2mY - ECS‑RTC‑3225‑5609 clone?
-#define RTC_SCL_PIN (20) // or vice versa???
-#define RTC_SDA_PIN (21) // or vice versa???
+// I2C! RTC UNKWONN TYPE! 5609 HDN2mY - ECS‑RTC‑3225‑5609 clone -> I2C ID 0x32 -> RX8025T compatible -> modified driver is working
+#define RTC_SCL_PIN (20)
+#define RTC_SDA_PIN (21)
 
 // No chip select shift register! Directly connected to ESP32 GPIOs
 // #define CSSR_DATA_PIN (-1)
@@ -626,9 +626,9 @@
 // Active is LOW for this clock.
 #define TFT_ENABLE_PIN (19)
 
-// #define TFT_PWM_CHANNEL 0 // Use PWM channel 0 for TFT dimming
+#define TFT_PWM_CHANNEL 0 // Use PWM channel 0 for TFT dimming
 
-// #define DIM_WITH_ENABLE_PIN_PWM // Enable hardware dimming with TFT_ENABLE_PIN
+#define DIM_WITH_ENABLE_PIN_PWM // Enable hardware dimming with TFT_ENABLE_PIN
 
 // Configure library \TFT_eSPI\User_Setup.h: ST7789 135 x 240 display with no chip select line.
 #define ST7789_DRIVER // Configure all registers
@@ -660,8 +660,8 @@
 #define SPI_FREQUENCY 40000000
 
 // Definitions for PWM frequency and resolution for TFT dimming.
-// #define TFT_PWM_FREQ 20000   // PWM frequency for TFT dimming (Hz)
-// #define TFT_PWM_RESOLUTION 8 // PWM resolution for TFT dimming (bits)
+#define TFT_PWM_FREQ 20000   // PWM frequency for TFT dimming (Hz)
+#define TFT_PWM_RESOLUTION 8 // PWM resolution for TFT dimming (bits)
 
 // Force the TFT_eSPI library to not over-write all this
 #define USER_SETUP_LOADED
