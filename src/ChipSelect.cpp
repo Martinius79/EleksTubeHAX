@@ -13,9 +13,15 @@ const int lcdEnablePins[NUM_DIGITS] = {GPIO_NUM_15, GPIO_NUM_2, GPIO_NUM_27, GPI
 const int numLCDs = NUM_DIGITS;
 #endif
 
+#ifdef HARDWARE_MARVELTUBES_CLOCK
+// Define the pins for each LCD's enable wire
+const int lcdEnablePins[NUM_DIGITS] = {37, 36, 35, 34, 33, 15}; // GPIO pins for each LCD CS
+const int numLCDs = NUM_DIGITS;
+#endif
+
 void ChipSelect::begin()
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   pinMode(CSSR_LATCH_PIN, OUTPUT);
   pinMode(CSSR_DATA_PIN, OUTPUT);
   pinMode(CSSR_CLOCK_PIN, OUTPUT);
@@ -35,18 +41,18 @@ void ChipSelect::begin()
   digitalWrite(CSSR_LATCH_PIN, LOW);
   update();
 #else
-  // Initialize all six different pins for the CS of each LCD as OUTPUT and set it to HIGH (disabled)
+  // Initialize all six different pins for the CS of each LCD as OUTPUT and set it to DEACTIVATEDISPLAYS (disabled)
   for (int i = 0; i < numLCDs; ++i)
   {
     pinMode(lcdEnablePins[i], OUTPUT);
-    digitalWrite(lcdEnablePins[i], HIGH);
+    digitalWrite(lcdEnablePins[i], DEACTIVATEDISPLAYS);
   }
 #endif
 }
 
 void ChipSelect::clear(bool update_)
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   setDigitMap(all_off, update_);
 #else
   disableAllCSPins();
@@ -55,7 +61,7 @@ void ChipSelect::clear(bool update_)
 
 void ChipSelect::setAll(bool update_)
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   setDigitMap(all_on, update_);
 #else
   enableAllCSPins();
@@ -64,7 +70,7 @@ void ChipSelect::setAll(bool update_)
 
 void ChipSelect::setDigit(uint8_t digit, bool update_)
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   // Set the bit for the given digit in the digits_map
   setDigitMap(1 << digit, update_);
   if (update_)
@@ -84,7 +90,7 @@ void ChipSelect::setDigit(uint8_t digit, bool update_)
 
 void ChipSelect::update()
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   // Documented in README.md.  Q7 and Q6 are unused. Q5 is Seconds Ones, Q0 is Hours Tens.
   // Q7 is the first bit written, Q0 is the last.  So we push two dummy bits, then start with
   // Seconds Ones and end with Hours Tens.
@@ -100,13 +106,13 @@ void ChipSelect::update()
   // for IPSTUBE clocks, the CS pin is already pulled to LOW by the "setDigit" function and stays there, till another "setDigit" is called.
   // so all writing done by the eTFT_SPI lib functions in the time, the pin is low, will write out directly to the LCD.
   //"Update" never will work, because, if pin was HIGH, no writing was done.
-  digitalWrite(lcdEnablePins[currentLCD], LOW);
+  digitalWrite(lcdEnablePins[currentLCD], ACTIVATEDISPLAYS);
 #endif
 }
 
 bool ChipSelect::isSecondsOnes()
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   return ((digits_map & SECONDS_ONES_MAP) > 0);
 #else
   return true;
@@ -115,7 +121,7 @@ bool ChipSelect::isSecondsOnes()
 
 bool ChipSelect::isSecondsTens()
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   return ((digits_map & SECONDS_TENS_MAP) > 0);
 #else
   return true;
@@ -124,7 +130,7 @@ bool ChipSelect::isSecondsTens()
 
 bool ChipSelect::isMinutesOnes()
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   return ((digits_map & MINUTES_ONES_MAP) > 0);
 #else
   return true;
@@ -133,7 +139,7 @@ bool ChipSelect::isMinutesOnes()
 
 bool ChipSelect::isMinutesTens()
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   return ((digits_map & MINUTES_TENS_MAP) > 0);
 #else
   return true;
@@ -142,7 +148,7 @@ bool ChipSelect::isMinutesTens()
 
 bool ChipSelect::isHoursOnes()
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   return ((digits_map & HOURS_ONES_MAP) > 0);
 #else
   return true;
@@ -151,7 +157,7 @@ bool ChipSelect::isHoursOnes()
 
 bool ChipSelect::isHoursTens()
 {
-#ifndef HARDWARE_IPSTUBE_CLOCK
+#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
   return ((digits_map & HOURS_TENS_MAP) > 0);
 #else
   return true;
@@ -160,38 +166,38 @@ bool ChipSelect::isHoursTens()
 
 void ChipSelect::enableAllCSPins()
 {
-#ifdef HARDWARE_IPSTUBE_CLOCK
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
   // enable each LCD
   for (int i = 0; i < numLCDs; ++i)
   {
-    digitalWrite(lcdEnablePins[i], LOW);
+    digitalWrite(lcdEnablePins[i], ACTIVATEDISPLAYS);
   }
 #endif
 }
 
 void ChipSelect::disableAllCSPins()
 {
-#ifdef HARDWARE_IPSTUBE_CLOCK
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
   // disable each LCD
   for (int i = 0; i < numLCDs; ++i)
   {
-    digitalWrite(lcdEnablePins[i], HIGH);
+    digitalWrite(lcdEnablePins[i], DEACTIVATEDISPLAYS);
   }
 #endif
 }
 
 void ChipSelect::enableDigitCSPins(uint8_t digit)
 {
-#ifdef HARDWARE_IPSTUBE_CLOCK
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
   // enable the LCD for the given digit
-  digitalWrite(lcdEnablePins[digit], LOW);
+  digitalWrite(lcdEnablePins[digit], ACTIVATEDISPLAYS);
 #endif
 }
 
 void ChipSelect::disableDigitCSPins(uint8_t digit)
 {
-#ifdef HARDWARE_IPSTUBE_CLOCK
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
   // disable the LCD for the given digit
-  digitalWrite(lcdEnablePins[digit], HIGH);
+  digitalWrite(lcdEnablePins[digit], DEACTIVATEDISPLAYS);
 #endif
 }

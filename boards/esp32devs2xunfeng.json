@@ -20,7 +20,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "Espressif ESP32-S2 Wroom Module",
+  "name": "Espressif ESP32-S2 Wroom Module - Xunfeng",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,

@@ -190,7 +190,7 @@ void TFTs::showDigit(uint8_t digit)
         NextNumber = 0; // pre-load only seconds, because they are drawn first
       NextFileRequired = current_graphic * 10 + NextNumber;
     }
-#ifdef HARDWARE_IPSTUBE_CLOCK
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
     chip_select.update();
 #endif
   }
