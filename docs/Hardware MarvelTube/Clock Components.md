@@ -5,8 +5,8 @@
 - MCU **ESP32** as ESP32-S2-WROVER module, see [datasheet](https://documentation.espressif.com/esp32-s2-wroom_esp32-s2-wroom-i_datasheet_en.pdf)
 - Flash 16MB in the module
 - PSRAM 2MB in the module
-- RTC **ECS-RTC-3225-5609 Clone** in SMD3225 package, see [datasheet](https://ecsxtal.com/store/pdf/ECS-RTC-3225-5609-Full-Spec.pdf)
-- UART Chip **CH340** as CH340C with Package: SOP-8 3.9mm 150mil, see [datasheet](https://web.archive.org/web/20230328023924/http://wch-ic.com/downloads/file/79.html?time=2023-01-31%2005:37:01&code=byrlQteadwoMguMjmbWlPKyCiEACwGGapSxnN8I1)
+- RTC **ECS-RTC-3225-5609 Clone** in SMD3225 package, see [datasheet](https://ecsxtal.com/store/pdf/ECS-RTC-3225-5609-Full-Spec.pdf) -> I2C ID 0x32 -> Seems to be an RX8025T clone
+- UART Chip **CH340** as CH340C, see [datasheet](https://web.archive.org/web/20230328023924/http://wch-ic.com/downloads/file/79.html?time=2023-01-31%2005:37:01&code=byrlQteadwoMguMjmbWlPKyCiEACwGGapSxnN8I1)
 - Audio **NAU88C22** 24-bit Stereo Audio Codec with Speaker Driver [datasheet](https://www.nuvoton.com/resource-files/NAU88C22DataSheet0.6.pdf)
 - Generic active buzzer
 - **LCD panel**

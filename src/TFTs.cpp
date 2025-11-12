@@ -4,38 +4,95 @@
 
 void TFTs::begin()
 {
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin()");
+#endif
   chip_select.begin();
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - chip_select.begin() finished.");
+  Serial.println("TFTs::begin() - Calling chip_select.setAll()");
+#endif
   chip_select.setAll(); // Start with all displays selected
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - chip_select.setAll() finished.");
+#endif
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
   // If hardware dimming is used, init ledc, set the pin and channel for PWM and set frequency and resolution
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - Using hardware dimming with PWM.");
+  Serial.print("TFTs::begin() - TFT_ENABLE_PIN: ");
+  Serial.println(TFT_ENABLE_PIN);
+  Serial.print("TFTs::begin() - TFT_PWM_CHANNEL: ");
+  Serial.println(TFT_PWM_CHANNEL);
+#endif
   ledcSetup(TFT_ENABLE_PIN, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);            // PWM, globally defined
   ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);                         // Attach the pin to the PWM channel
   ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION); // need to set the frequency and resolution again to have the hardware dimming working properly
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - PWM setup finished.");
+#endif
 #else
   pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
   InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - InvalidateImageInBuffer() finished.");
+  Serial.println("TFTs::begin() - Calling init()");
+#endif
   init();                    // Initialize the super class.
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - init() finished.");
+  Serial.println("TFTs::begin() - Calling fillScreen(TFT_BLACK)");
+#endif
   fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - fillScreen(TFT_BLACK) finished.");
+  Serial.println("TFTs::begin() - Calling enableAllDisplays()");
+#endif
   enableAllDisplays();       // Signal, that the displays are enabled now and do the hardware dimming, if available and enabled
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - enableAllDisplays() finished.");
+#endif
 
   if (!SPIFFS.begin()) // Initialize SPIFFS
   {
     Serial.println("SPIFFS initialization failed!");
+#ifdef DEBUG_OUTPUT_TFT
+    Serial.println("TFTs::begin() - Finished with SPIFFS initialization failed!");
+#endif
     NumberOfClockFaces = 0;
     return;
   }
 
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("SPIFFS initialized successfully.");
+  Serial.println("TFTs::begin() - Calling CountNumberOfClockFaces()");
+#endif
   NumberOfClockFaces = CountNumberOfClockFaces();
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.print("TFTs::begin() - NumberOfClockFaces: ");
+  Serial.println(NumberOfClockFaces);
+  Serial.println("TFTs::begin() - Calling loadClockFacesNames()");
+#endif
   loadClockFacesNames();
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - loadClockFacesNames() finished.");
+  Serial.println("TFTs::begin() - Finished!");
+#endif
 }
 
 void TFTs::reinit()
 {
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::reinit()");
+#endif
   if (!TFTsEnabled) // perform re-init only if displays are actually off. HA sends ON command together with clock face change which causes flickering.
   {
 #ifndef TFT_SKIP_REINIT
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::reinit() - Reinitializing displays.");
+#endif
     // Start with all displays selected.
     chip_select.begin();
     chip_select.setAll(); // Start again with all displays selected.
@@ -43,6 +100,9 @@ void TFTs::reinit()
 #ifdef DIM_WITH_ENABLE_PIN_PWM
     ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
     ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::reinit() - PWM reconfiguration finished.");
+#endif
 #else
     pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
@@ -50,21 +110,45 @@ void TFTs::reinit()
     init();                    // Initialize the super class (again).
     fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
     enableAllDisplays();       // Signal, that the displays are enabled now
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::reinit() - Full reinitialization finished.");
+#endif
 #else                          // TFT_SKIP_REINIT
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::reinit() - Skipping full initialization, just re-enabling displays.");
+#endif
     enableAllDisplays(); // skip full inintialization, just reenable displays by signaling to enable them
 #endif                         // TFT_SKIP_REINIT
   }
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::reinit() - Finished!");
+#endif
 }
 
 void TFTs::clear()
 {
   // Start with all displays selected.
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::clear()");
+  Serial.println("TFTs::clear() - Calling chip_select.setAll()");
+#endif
   chip_select.setAll();
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::clear() - chip_select.setAll() finished.");
+  Serial.println("TFTs::clear() - Calling enableAllDisplays()");
+#endif
   enableAllDisplays();
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::clear() - enableAllDisplays() finished.");
+  Serial.println("TFTs::clear() - Finished!");
+#endif
 }
 
 void TFTs::loadClockFacesNames()
 {
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::loadClockFacesNames()");
+#endif
   int8_t i = 0;
   const char *filename = "/clockfaces.txt";
   Serial.println("Loading clock face names...");
@@ -72,6 +156,9 @@ void TFTs::loadClockFacesNames()
   if (!f)
   {
     Serial.println("ERROR: SPIFFS clockfaces.txt not found.");
+#ifdef DEBUG_OUTPUT_TFT
+    Serial.println("TFTs::loadClockFacesNames() - Failed to open file.");
+#endif
     return;
   }
   while (f.available() && i < 9)
@@ -82,6 +169,9 @@ void TFTs::loadClockFacesNames()
     i++;
   }
   f.close();
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::loadClockFacesNames() - Finished!");
+#endif
 }
 
 void TFTs::showNoWifiStatus()
@@ -172,18 +262,46 @@ void TFTs::setDigit(uint8_t digit, uint8_t value, show_t show)
 
 void TFTs::showDigit(uint8_t digit)
 {
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.print("TFTs::showDigit(");
+  Serial.print(digit);
+  Serial.println(")");
+#endif
   if (TFTsEnabled)
   { // only do this, if the displays are enabled
+#ifdef DEBUG_OUTPUT_TFT
+    Serial.print("TFTs::showDigit() - Displays enabled, showing digit: ");
+    Serial.println(digit);
+    Serial.println("TFTs::showDigit() - Calling chip_select.setDigit()");
+#endif
     chip_select.setDigit(digit);
+#ifdef DEBUG_OUTPUT_TFT
+    Serial.println("TFTs::showDigit() - chip_select.setDigit() finished.");
+#endif
 
     if (digits[digit] == blanked)
     { // Blank Zero
+#ifdef DEBUG_OUTPUT_TFT
+      Serial.println("TFTs::showDigit() - Digit blanked, clearing screen.");
+#endif
       fillScreen(TFT_BLACK);
     }
     else
     {
+#ifdef DEBUG_OUTPUT_TFT
+      Serial.print("TFTs::showDigit() - Digit value: ");
+      Serial.println(digits[digit]);
+#endif
       uint8_t file_index = current_graphic * 10 + digits[digit];
+#ifdef DEBUG_OUTPUT_IMAGES
+      Serial.print("TFTs::showDigit() - file_index: ");
+      Serial.println(file_index);
+      Serial.println("TFTs::showDigit() - Calling DrawImage()");
+#endif
       DrawImage(file_index);
+#ifdef DEBUG_OUTPUT_IMAGES
+      Serial.println("TFTs::showDigit() - DrawImage() finished.");
+#endif
 
       uint8_t NextNumber = digits[SECONDS_ONES] + 1;
       if (NextNumber > 9)
@@ -191,9 +309,19 @@ void TFTs::showDigit(uint8_t digit)
       NextFileRequired = current_graphic * 10 + NextNumber;
     }
 #if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+#ifdef DEBUG_OUTPUT_TFT
+    Serial.println("TFTs::showDigit() - Calling chip_select.update()");
+#endif
     chip_select.update();
 #endif
   }
+#ifdef DEBUG_OUTPUT_TFT
+  else
+  {
+    Serial.println("TFTs::showDigit() - Displays disabled, skipping update.");
+  }
+  Serial.println("TFTs::showDigit() - Finished!");
+#endif
   // else { } //display is disabled, do nothing
 }
 
@@ -239,6 +367,12 @@ bool TFTs::FileExists(const char *path)
   fs::File f = SPIFFS.open(path, "r");
   bool Exists = ((f == true) && !f.isDirectory());
   f.close();
+#ifdef DEBUG_OUTPUT_IMAGES
+  Serial.print("FileExists check for ");
+  Serial.print(path);
+  Serial.print(": ");
+  Serial.println(Exists ? "true" : "false");
+#endif
   return Exists;
 }
 
@@ -579,15 +713,15 @@ void TFTs::DrawImage(uint8_t file_index)
 
   uint32_t StartTime = millis();
 #ifdef DEBUG_OUTPUT_IMAGES
-  Serial.println("");
-  Serial.print("Drawing image: ");
-  Serial.println(file_index);
+  Serial.print("TFTs::DrawImage(");
+  Serial.print(file_index);
+  Serial.println(")");
 #endif
   // check if file is already loaded into buffer; skip loading if it is. Saves 50 to 150 msec of time.
   if (file_index != FileInBuffer)
   {
 #ifdef DEBUG_OUTPUT_IMAGES
-    Serial.println("Not preloaded; loading now...");
+  Serial.println("TFTs::DrawImage() - Not preloaded, loading now...");
 #endif
     LoadImageIntoBuffer(file_index);
   }
@@ -600,6 +734,7 @@ void TFTs::DrawImage(uint8_t file_index)
 #ifdef DEBUG_OUTPUT_IMAGES
   Serial.print("img transfer time: ");
   Serial.println(millis() - StartTime);
+  Serial.println("TFTs::DrawImage() - Finished!");
 #endif
 }
 

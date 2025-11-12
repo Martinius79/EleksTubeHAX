@@ -64,7 +64,7 @@
 
 // Common indexing scheme, used to identify the digit
 #define NUM_DIGITS (6)
-#if defined(HARDWARE_PUNKCYBER_CLOCK) || defined(HARDWARE_XUNFENG_CLOCK)
+#if defined(HARDWARE_PUNKCYBER_CLOCK) || defined(HARDWARE_XUNFENG_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
 #define SECONDS_ONES (5)
 #define SECONDS_TENS (4)
 #define MINUTES_ONES (3)
@@ -88,14 +88,22 @@
 #define HOURS_TENS_MAP (0x01 << HOURS_TENS)
 
 // Define the activate and deactivate state for the display power transistor and how the dimming value is calculated.
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) // for all clocks, except IPSTube and MarvelTubes
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)) // for all clocks, except IPSTube and MarvelTubes
 #define ACTIVATEDISPLAYS HIGH                                                // Activate is HIGH
 #define DEACTIVATEDISPLAYS LOW                                               // Deactivate is LOW
 #define CALCDIMVALUE(x) (x)                                                  // Dimming value is directly used for software dimming
-#else                                                                        // Only for HARDWARE_IPSTUBE_CLOCK currently
+#else                                                                        // IPSTube keeps LOW active for display power
 #define ACTIVATEDISPLAYS LOW                                                 // Activate is LOW for the IPSTube
 #define DEACTIVATEDISPLAYS HIGH                                              // Deactivate is HIGH for the IPSTube
 #define CALCDIMVALUE(x) (255 - x)                                            // Dimming value is "inverted" for hardware dimming for IPSTube
+#endif
+
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+#define DIGIT_CS_ACTIVE_LEVEL LOW
+#define DIGIT_CS_INACTIVE_LEVEL HIGH
+#else
+#define DIGIT_CS_ACTIVE_LEVEL HIGH
+#define DIGIT_CS_INACTIVE_LEVEL LOW
 #endif
 
 /************************

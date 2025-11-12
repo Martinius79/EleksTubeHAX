@@ -9,6 +9,7 @@
 #include <nvs_flash.h>
 #include <stdint.h>
 #include <math.h>
+#include <Wire.h>
 #include "GLOBAL_DEFINES.h"
 #include "Backlights.h"
 #include "Buttons.h"
@@ -176,6 +177,9 @@ void setupMenu(void);
 bool isNightTime(uint8_t current_hour);
 void checkDimmingNeeded(void);
 #endif
+#if defined(RTC_SCL_PIN) && defined(RTC_SDA_PIN)
+void scanRtcI2CBus(void);
+#endif
 
 //-----------------------------------------------------------------------
 // Setup
@@ -188,6 +192,23 @@ void setup()
   Serial.println("\nSystem starting...\n");
   Serial.println("EleksTubeHAX https://github.com/aly-fly/EleksTubeHAX");
   Serial.printf("Firmware version: v%s.\n", FIRMWARE_VERSION);
+
+  // Report memory configuration (heap + PSRAM if available).
+  Serial.printf("Flash chip size: %u bytes (%.2f MB)\n", ESP.getFlashChipSize(), ESP.getFlashChipSize() / (1024.0 * 1024.0));
+  Serial.printf("Total heap: %u bytes, free heap: %u bytes\n", ESP.getHeapSize(), ESP.getFreeHeap());
+  if (ESP.getPsramSize() > 0)
+  {
+    Serial.printf("Total PSRAM: %u bytes, free PSRAM: %u bytes\n", ESP.getPsramSize(), ESP.getFreePsram());
+  }
+  else
+  {
+    Serial.println("PSRAM not present or disabled");
+  }
+
+// #if defined(RTC_SCL_PIN) && defined(RTC_SDA_PIN)
+//   scanRtcI2CBus();
+// #endif
+
 
   // Prepare unique device name
 #ifdef MQTT_CLIENT_ID_FOR_SMARTNEST
@@ -239,7 +260,7 @@ void setup()
 
   // Setup the displays (TFTs) initaly and show bootup message(s).
   tfts.begin(); // ...and count number of clock faces available...
-  tfts.fillScreen(TFT_BLACK);
+  tfts.fillScreen(TFT_RED);
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
   tfts.setCursor(0, 0, 2); // Font 2. 16 pixel high
   tfts.println("Starting Setup...");
@@ -887,6 +908,35 @@ void loop()
   }
 #endif // DEBUG_OUTPUT
 }
+
+#if defined(RTC_SCL_PIN) && defined(RTC_SDA_PIN)
+void scanRtcI2CBus(void)
+{
+  Serial.printf("Scanning I2C bus (SDA=%d, SCL=%d)...\n", RTC_SDA_PIN, RTC_SCL_PIN);
+  Wire.begin(RTC_SDA_PIN, RTC_SCL_PIN);
+  uint8_t devicesFound = 0;
+  for (uint8_t address = 1; address < 0x78; ++address)
+  {
+    Wire.beginTransmission(address);
+    uint8_t error = Wire.endTransmission();
+    if (error == 0)
+    {
+      Serial.printf("I2C device found at 0x%02X\n", address);
+      devicesFound++;
+    }
+    else if (error == 4)
+    {
+      Serial.printf("Unknown error at 0x%02X\n", address);
+    }
+    delay(2);
+  }
+  if (devicesFound == 0)
+  {
+    Serial.println("No I2C devices found");
+  }
+  Serial.println("I2C scan done");
+}
+#endif
 
 void setupMenu()
 {                                  // Prepare drawing of the menu texts

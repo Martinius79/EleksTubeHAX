@@ -21,7 +21,10 @@ const int numLCDs = NUM_DIGITS;
 
 void ChipSelect::begin()
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::begin - Initializing shift-register based chip select");
+#endif
   pinMode(CSSR_LATCH_PIN, OUTPUT);
   pinMode(CSSR_DATA_PIN, OUTPUT);
   pinMode(CSSR_CLOCK_PIN, OUTPUT);
@@ -39,46 +42,92 @@ void ChipSelect::begin()
   digitalWrite(CSSR_DATA_PIN, LOW);
   digitalWrite(CSSR_CLOCK_PIN, LOW);
   digitalWrite(CSSR_LATCH_PIN, LOW);
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::begin - Shift register pins prepared, issuing initial update()");
+#endif
   update();
 #else
-  // Initialize all six different pins for the CS of each LCD as OUTPUT and set it to DEACTIVATEDISPLAYS (disabled)
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::begin - Initializing per-digit CS pins");
+#endif
+  // Initialize all six different pins for the CS of each LCD as OUTPUT and set it to DIGIT_CS_INACTIVE_LEVEL (disabled)
   for (int i = 0; i < numLCDs; ++i)
   {
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::begin - Config pin ");
+    Serial.print(lcdEnablePins[i]);
+    Serial.println(" as OUTPUT, default disabled");
+#endif
     pinMode(lcdEnablePins[i], OUTPUT);
-    digitalWrite(lcdEnablePins[i], DEACTIVATEDISPLAYS);
+    digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL);
   }
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::begin - All CS pins set to DIGIT_CS_INACTIVE_LEVEL (disabled)");
+  Serial.println("ChipSelect::begin - DIGIT_CS_INACTIVE_LEVEL is: ");
+  Serial.println(DIGIT_CS_INACTIVE_LEVEL);
+  Serial.println("ChipSelect::begin - DIGIT_CS_ACTIVE_LEVEL is: ");
+  Serial.println(DIGIT_CS_ACTIVE_LEVEL);
+  Serial.println("ChipSelect::begin - Finished!");
+#endif
 #endif
 }
 
 void ChipSelect::clear(bool update_)
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::clear - Clearing shift register state");
+#endif
   setDigitMap(all_off, update_);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::clear - Disabling all per-digit CS pins");
+#endif
   disableAllCSPins();
 #endif
 }
 
 void ChipSelect::setAll(bool update_)
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::setAll - Enabling all digits via shift register");
+#endif
   setDigitMap(all_on, update_);
 #else
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::setAll - Enabling all per-digit CS pins");
+#endif
   enableAllCSPins();
 #endif
 }
 
 void ChipSelect::setDigit(uint8_t digit, bool update_)
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
   // Set the bit for the given digit in the digits_map
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::setDigit - Selecting digit ");
+  Serial.println(digit);
+#endif
   setDigitMap(1 << digit, update_);
   if (update_)
+  {
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.println("ChipSelect::setDigit - update_ requested, calling update()");
+#endif
     update();
+  }
 #else
   // Set the actual currentLCD value for the given digit and activate the corresponding LCD
 
   // first deactivate the current LCD
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::setDigit - Switching from digit ");
+  Serial.print(currentLCD);
+  Serial.print(" to digit ");
+  Serial.println(digit);
+#endif
   disableDigitCSPins(currentLCD);
   // store the current
   currentLCD = digit;
@@ -90,7 +139,7 @@ void ChipSelect::setDigit(uint8_t digit, bool update_)
 
 void ChipSelect::update()
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
   // Documented in README.md.  Q7 and Q6 are unused. Q5 is Seconds Ones, Q0 is Hours Tens.
   // Q7 is the first bit written, Q0 is the last.  So we push two dummy bits, then start with
   // Seconds Ones and end with Hours Tens.
@@ -98,6 +147,10 @@ void ChipSelect::update()
 
   uint8_t to_shift = (~digits_map) << 2;
 
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::update - Shifting map 0b");
+  Serial.println(to_shift, BIN);
+#endif
   digitalWrite(CSSR_LATCH_PIN, LOW);
   shiftOut(CSSR_DATA_PIN, CSSR_CLOCK_PIN, LSBFIRST, to_shift);
   digitalWrite(CSSR_LATCH_PIN, HIGH);
@@ -106,13 +159,19 @@ void ChipSelect::update()
   // for IPSTUBE clocks, the CS pin is already pulled to LOW by the "setDigit" function and stays there, till another "setDigit" is called.
   // so all writing done by the eTFT_SPI lib functions in the time, the pin is low, will write out directly to the LCD.
   //"Update" never will work, because, if pin was HIGH, no writing was done.
-  digitalWrite(lcdEnablePins[currentLCD], ACTIVATEDISPLAYS);
+  digitalWrite(lcdEnablePins[currentLCD], DIGIT_CS_ACTIVE_LEVEL);
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::update - Maintaining digit ");
+  Serial.print(currentLCD);
+  Serial.print(" active on pin ");
+  Serial.println(lcdEnablePins[currentLCD]);
+#endif
 #endif
 }
 
 bool ChipSelect::isSecondsOnes()
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
   return ((digits_map & SECONDS_ONES_MAP) > 0);
 #else
   return true;
@@ -121,8 +180,8 @@ bool ChipSelect::isSecondsOnes()
 
 bool ChipSelect::isSecondsTens()
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
-  return ((digits_map & SECONDS_TENS_MAP) > 0);
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
+  return ((digits_map & SECONDS_TENS_MAP) > 0); 
 #else
   return true;
 #endif
@@ -130,7 +189,7 @@ bool ChipSelect::isSecondsTens()
 
 bool ChipSelect::isMinutesOnes()
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
   return ((digits_map & MINUTES_ONES_MAP) > 0);
 #else
   return true;
@@ -139,7 +198,7 @@ bool ChipSelect::isMinutesOnes()
 
 bool ChipSelect::isMinutesTens()
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
   return ((digits_map & MINUTES_TENS_MAP) > 0);
 #else
   return true;
@@ -148,7 +207,7 @@ bool ChipSelect::isMinutesTens()
 
 bool ChipSelect::isHoursOnes()
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
   return ((digits_map & HOURS_ONES_MAP) > 0);
 #else
   return true;
@@ -157,7 +216,7 @@ bool ChipSelect::isHoursOnes()
 
 bool ChipSelect::isHoursTens()
 {
-#if !defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK))
   return ((digits_map & HOURS_TENS_MAP) > 0);
 #else
   return true;
@@ -166,38 +225,68 @@ bool ChipSelect::isHoursTens()
 
 void ChipSelect::enableAllCSPins()
 {
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK))
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::enableAllCSPins - Enabling every digit");
+#endif
   // enable each LCD
   for (int i = 0; i < numLCDs; ++i)
   {
-    digitalWrite(lcdEnablePins[i], ACTIVATEDISPLAYS);
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::enableAllCSPins - Pin ");
+    Serial.print(lcdEnablePins[i]);
+    Serial.println(" -> ACTIVATEDISPLAYS");
+#endif
+    digitalWrite(lcdEnablePins[i], DIGIT_CS_ACTIVE_LEVEL);
   }
 #endif
 }
 
 void ChipSelect::disableAllCSPins()
 {
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK))
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::disableAllCSPins - Disabling every digit");
+#endif
   // disable each LCD
   for (int i = 0; i < numLCDs; ++i)
   {
-    digitalWrite(lcdEnablePins[i], DEACTIVATEDISPLAYS);
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::disableAllCSPins - Pin ");
+    Serial.print(lcdEnablePins[i]);
+    Serial.println(" -> DEACTIVATEDISPLAYS");
+#endif
+    digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL);
   }
 #endif
 }
 
 void ChipSelect::enableDigitCSPins(uint8_t digit)
 {
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK))
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::enableDigitCSPins - Digit ");
+  Serial.print(digit);
+  Serial.print(" pin ");
+  Serial.print(lcdEnablePins[digit]);
+  Serial.println(" -> ACTIVATEDISPLAYS");
+#endif
   // enable the LCD for the given digit
-  digitalWrite(lcdEnablePins[digit], ACTIVATEDISPLAYS);
+  digitalWrite(lcdEnablePins[digit], DIGIT_CS_ACTIVE_LEVEL);
 #endif
 }
 
 void ChipSelect::disableDigitCSPins(uint8_t digit)
 {
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK))
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::disableDigitCSPins - Digit ");
+  Serial.print(digit);
+  Serial.print(" pin ");
+  Serial.print(lcdEnablePins[digit]);
+  Serial.println(" -> DEACTIVATEDISPLAYS");
+#endif
   // disable the LCD for the given digit
-  digitalWrite(lcdEnablePins[digit], DEACTIVATEDISPLAYS);
+  digitalWrite(lcdEnablePins[digit], DIGIT_CS_INACTIVE_LEVEL);
 #endif
 }
