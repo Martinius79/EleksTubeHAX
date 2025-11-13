@@ -64,7 +64,7 @@
 
 // Common indexing scheme, used to identify the digit
 #define NUM_DIGITS (6)
-#if defined(HARDWARE_PUNKCYBER_CLOCK) || defined(HARDWARE_XUNFENG_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+#if defined(HARDWARE_PUNKCYBER_CLOCK) || defined(HARDWARE_XUNFENG_CLOCK)
 #define SECONDS_ONES (5)
 #define SECONDS_TENS (4)
 #define MINUTES_ONES (3)
@@ -78,7 +78,7 @@
 #define MINUTES_TENS (3)
 #define HOURS_ONES (4)
 #define HOURS_TENS (5)
-#endif // #ifdef HARDWARE_PUNKCYBER_CLOCK
+#endif // if defined(HARDWARE_PUNKCYBER_CLOCK) || defined(HARDWARE_XUNFENG_CLOCK)
 
 #define SECONDS_ONES_MAP (0x01 << SECONDS_ONES)
 #define SECONDS_TENS_MAP (0x01 << SECONDS_TENS)
@@ -638,7 +638,7 @@
 
 #define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
 
-#define TFT_MISO (-1) // No MISO
+// #define TFT_MISO (-1) // No MISO
 #define TFT_MOSI (40)
 #define TFT_SCLK (39)
 #define TFT_CS (-1)  // MUST be -1 for this clock -> chipselect class does the magic also without a shift register

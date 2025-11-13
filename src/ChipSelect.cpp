@@ -14,8 +14,8 @@ const int numLCDs = NUM_DIGITS;
 #endif
 
 #ifdef HARDWARE_MARVELTUBES_CLOCK
-// Define the pins for each LCD's enable wire
-const int lcdEnablePins[NUM_DIGITS] = {37, 36, 35, 34, 33, 15}; // GPIO pins for each LCD CS
+// Define the pins for each LCD's enable wire (left to right: hours tens .. seconds ones)
+const int lcdEnablePins[NUM_DIGITS] = {15, 33, 34, 35, 36, 37};
 const int numLCDs = NUM_DIGITS;
 #endif
 
