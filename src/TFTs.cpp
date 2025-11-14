@@ -26,7 +26,7 @@ void TFTs::begin()
   Serial.print("TFTs::begin() - TFT_PWM_CHANNEL: ");
   Serial.println(TFT_PWM_CHANNEL);
 #endif
-  ledcSetup(TFT_ENABLE_PIN, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);            // PWM, globally defined
+  ledcSetup(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);           // PWM, globally defined
   ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);                         // Attach the pin to the PWM channel
   ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION); // need to set the frequency and resolution again to have the hardware dimming working properly
 #ifdef DEBUG_OUTPUT_TFT

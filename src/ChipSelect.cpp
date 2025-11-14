@@ -63,9 +63,9 @@ void ChipSelect::begin()
   }
 #ifdef DEBUG_OUTPUT_CHIPSELECT
   Serial.println("ChipSelect::begin - All CS pins set to DIGIT_CS_INACTIVE_LEVEL (disabled)");
-  Serial.println("ChipSelect::begin - DIGIT_CS_INACTIVE_LEVEL is: ");
+  Serial.print("ChipSelect::begin - DIGIT_CS_INACTIVE_LEVEL is: ");
   Serial.println(DIGIT_CS_INACTIVE_LEVEL);
-  Serial.println("ChipSelect::begin - DIGIT_CS_ACTIVE_LEVEL is: ");
+  Serial.print("ChipSelect::begin - DIGIT_CS_ACTIVE_LEVEL is: ");
   Serial.println(DIGIT_CS_ACTIVE_LEVEL);
   Serial.println("ChipSelect::begin - Finished!");
 #endif
