@@ -8,6 +8,7 @@
 
 #include <nvs_flash.h>
 #include <stdint.h>
+#include <math.h>
 #include "GLOBAL_DEFINES.h"
 #include "Backlights.h"
 #include "Buttons.h"
@@ -16,6 +17,10 @@
 #include "StoredConfig.h"
 #include "TFTs.h"
 #include "WiFi_WPS.h"
+
+#ifdef GEOLOCATION_ENABLED
+#include "IPGeolocation_AO.h"
+#endif
 
 #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
 #include "MQTT_client_ips.h"
@@ -133,7 +138,7 @@ void HandleGesture()
 }
 #endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
 
-char UniqueDeviceName[32]; // Enough space for <DeviceName> + 6 hex chars + null
+char UniqueDeviceName[32];      // Enough space for <DeviceName> + 6 hex chars + null
 char UniqueDeviceNameLower[32]; // Lowercase variant used for MQTT topics
 
 Backlights backlights;
@@ -143,12 +148,24 @@ Clock uclock;
 Menu menu;
 StoredConfig stored_config;
 
+#ifdef GEOLOCATION_ENABLED
+double GeoLocTZoffset = 0;
+bool GetGeoLocationTimeZoneOffset();
+constexpr uint8_t GEOLOC_MAX_FAILURES_PER_DAY = 4;
+constexpr uint32_t GEOLOC_RETRY_BACKOFF_MS = 5UL * 60UL * 1000UL;
+uint8_t GeoLocFailedAttempts = 0;
+uint32_t GeoLocNextRetryMillis = 0;
+uint8_t GeoLocAttemptDay = 0;
+bool GeoLocNeedsUpdate = false;
+void processGeoLocUpdate(void);
+void checkUpdateGeoLocNeeded(void);
+uint8_t yesterday = 0;
+#endif
+
 #ifdef DIMMING
 bool isDimmingNeeded = false;
 uint8_t hour_old = 255;
 #endif
-bool DstNeedsUpdate = false;
-uint8_t yesterday = 0;
 
 uint32_t lastMQTTCommandExecuted = (uint32_t)-1;
 
@@ -159,7 +176,6 @@ void setupMenu(void);
 bool isNightTime(uint8_t current_hour);
 void checkDimmingNeeded(void);
 #endif
-void UpdateDstEveryNight(void);
 
 //-----------------------------------------------------------------------
 // Setup
@@ -177,7 +193,7 @@ void setup()
 #ifdef MQTT_CLIENT_ID_FOR_SMARTNEST
   snprintf(UniqueDeviceName, sizeof(UniqueDeviceName), "%s", MQTT_CLIENT_ID_FOR_SMARTNEST); // Use fixed ID for smartnest.cz
 #else
-{
+  {
     // Generate unique ID for other cases
     // ESP.getEfuseMac() returns the 48-bit MAC address in the lower bits of the value (little-endian byte order when viewed as an integer).
     // We extract all 6 bytes and store them in the canonical MAC order (MSB first).
@@ -185,12 +201,12 @@ void setup()
     uint8_t mac_bytes[6];
     for (int i = 0; i < 6; i++)
     {
-        mac_bytes[i] = (rawmac >> (8 * i)) & 0xFF; // LSB first
+      mac_bytes[i] = (rawmac >> (8 * i)) & 0xFF; // LSB first
     }
     // Generate a unique device name using the last 3 bytes of the MAC address to make the name shorter but still unique enough to avoid collisions
     snprintf(UniqueDeviceName, sizeof(UniqueDeviceName), "%s-%02X%02X%02X", DEVICE_NAME,
              mac_bytes[3], mac_bytes[4], mac_bytes[5]);
-}
+  }
 #endif // #ifdef MQTT_CLIENT_ID_FOR_SMARTNEST
   // Prepare lowercase variant for MQTT topic usage
   for (size_t i = 0; i < sizeof(UniqueDeviceName); ++i)
@@ -603,7 +619,9 @@ void loop()
 
   updateClockDisplay(); // Draw only the changed clock digits!
 
-  UpdateDstEveryNight();
+#ifdef GEOLOCATION_ENABLED
+  checkUpdateGeoLocNeeded(); // Check if it is time to update geolocation based timezone offset (just once per day)
+#endif
 
   // Menu
   if (menu.stateChanged() && tfts.isEnabled())
@@ -837,28 +855,23 @@ void loop()
   uint32_t time_in_loop = millis() - millis_at_top;
   if (time_in_loop < 20)
   {
-    // we have free time, spend it for loading next image into buffer
+    // we have free time (loop run took under 20 ms), spend it for loading next image into buffer
     tfts.LoadNextImage();
 
-    // we still have extra time
+    // Do we still have extra time? -> normally not in the same loop where image loading was done, but in the next loops
     time_in_loop = millis() - millis_at_top;
     if (time_in_loop < 20)
     {
 #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
-      MQTTLoopInFreeTime();
+      MQTTLoopInFreeTime(); // do less time critical MQTT tasks
 #endif
-      // run once a day (= 744 times per month which is below the limit of 5k for free account)
-      if (DstNeedsUpdate)
-      { // Daylight savings time changes at 3 in the morning
-        if (GetGeoLocationTimeZoneOffset())
-        {
-          uclock.setTimeZoneOffset(GeoLocTZoffset * 3600);
-          DstNeedsUpdate = false; // done for this night; retry if not sucessfull
-        }
-      }
+
+#ifdef GEOLOCATION_ENABLED
+      processGeoLocUpdate();
+#endif // GEOLOCATION_ENABLED
       // Sleep for up to 20ms, less if we've spent time doing stuff above.
       time_in_loop = millis() - millis_at_top;
-      if (time_in_loop < 20)
+      if (time_in_loop < 20) // loop was faster than 20ms -> unusually fast, yield some time to other tasks
       {
         delay(20 - time_in_loop);
       }
@@ -928,19 +941,167 @@ void checkDimmingNeeded()
 }
 #endif // DIMMING
 
-void UpdateDstEveryNight()
+#ifdef GEOLOCATION_ENABLED
+bool GetGeoLocationTimeZoneOffset()
 {
-  uint8_t currentDay = uclock.getDay();
-  // This `DstNeedsUpdate` is True between 3:00:05 and 3:00:59. Has almost one minute of time slot to fetch updates, incl. eventual retries.
-  DstNeedsUpdate = (currentDay != yesterday) && (uclock.getHour24() == 3) && (uclock.getMinute() == 0) && (uclock.getSecond() > 5);
-  if (DstNeedsUpdate)
-  {
-    Serial.print("DST needs update...");
+  Serial.println("\nStarting Geolocation API query...");
 
-    // Update day after geoloc was successfully updated. Otherwise this will immediately disable the failed update retry.
-    yesterday = currentDay;
+#ifdef GEOLOCATION_PROVIDER_IPAPI
+  // Use IP-API.com -> Free tier has a 45 requests per minute limit!
+  IPGeolocation location(GEOLOCATION_API_KEY, "IPAPI");
+#elif defined(GEOLOCATION_PROVIDER_IPGEOLOCATION)
+  // Use ipgeolocation.io -> Free tier has 1,000 requests per month limit!
+  IPGeolocation location(GEOLOCATION_API_KEY, "IPGEOLOCATION");
+#elif defined(GEOLOCATION_PROVIDER_ABSTRACTAPI)
+  // Use AbstractAPI.com -> Free tier has 1,000 requests AT ALL per account!
+  IPGeolocation location(GEOLOCATION_API_KEY, "ABSTRACTAPI");
+#else
+  // No provider defined -> default to IP-API.com
+  IPGeolocation location(GEOLOCATION_API_KEY, "IPAPI");
+#endif
+
+  IPGeo ipg;
+  if (location.updateStatus(&ipg))
+  {
+    Serial.println(String("Geo Time Zone: ") + String(ipg.tz));
+    Serial.println(String("Geo TZ Offset: ") + String(ipg.offset));          // primary value of interest
+    Serial.println(String("Geo Current Time: ") + String(ipg.current_time)); // currently unused but handy for debugging
+    const double rawOffsetHours = ipg.offset;
+    const int32_t newOffsetSeconds = static_cast<int32_t>(lround(rawOffsetHours * 3600.0));
+
+    if ((newOffsetSeconds % (15 * 60)) != 0)
+    {
+      Serial.print("GeoLoc rejected offset not aligned to 15 min grid (seconds): ");
+      Serial.println(newOffsetSeconds);
+      return false;
+    }
+
+    const bool hasValidStoredOffset = stored_config.config.uclock.is_valid == StoredConfig::valid;
+    const int32_t previousOffsetSeconds = static_cast<int32_t>(stored_config.config.uclock.time_zone_offset);
+    const int32_t defaultOffsetSeconds = 1 * 3600;
+
+    if (hasValidStoredOffset && previousOffsetSeconds != 0 && previousOffsetSeconds != defaultOffsetSeconds)
+    {
+      int32_t diff = newOffsetSeconds - previousOffsetSeconds;
+      if (diff < 0)
+      {
+        diff = -diff;
+      }
+
+      if (diff > (2 * 3600)) // more than 2 hours difference -> reject
+      {
+        Serial.print("GeoLoc offset deviates by more than 2h from stored value (prev: ");
+        Serial.print(previousOffsetSeconds);
+        Serial.print("s, new: ");
+        Serial.print(newOffsetSeconds);
+        Serial.println("s). Ignoring update.");
+        return false;
+      }
+    }
+
+    GeoLocTZoffset = static_cast<double>(newOffsetSeconds) / 3600.0;
+    Serial.println(String("Geo TZ Offset (applied): ") + String(GeoLocTZoffset));
+    return true;
+  }
+
+  Serial.println("Geolocation failed.");
+  return false;
+}
+#endif
+
+#ifdef GEOLOCATION_ENABLED
+void checkUpdateGeoLocNeeded()
+{
+  uint8_t currentDay = uclock.getDay(); // Get current day of month
+  const uint8_t currentWeekday = weekday(uclock.loop_time);
+  const bool isSunday = (currentWeekday == 1); // TimeLib defines Sunday as weekday 1
+
+  // Only on Sundays, and only if the day has changed since last successful update
+  // `isGeoLocWindow` is set to true between 03:00:05 and 03:00:59, because daylight saving time changes usually happen at 03:00 local time.
+  // GeoLoc update mechanism in the main 'loop free time slot' is then triggered, because `GeoLocNeedsUpdate` is set to true here.
+  const bool isGeoLocWindow = isSunday && (currentDay != yesterday) && (uclock.getHour24() == 3) && (uclock.getMinute() == 0) && (uclock.getSecond() > 5);
+
+  if (!GeoLocNeedsUpdate && isGeoLocWindow)
+  {
+    Serial.print("GeoLoc needs update! Current date (DD.MM.YYYY): ");
+    Serial.print(currentDay);
+    Serial.print(".");
+    Serial.print(uclock.getMonth());
+    Serial.print(".");
+    Serial.println(uclock.getYear());
+
+    // Set flags and counters for GeoLoc update process
+    GeoLocNeedsUpdate = true;
+    GeoLocFailedAttempts = 0;
+    GeoLocNextRetryMillis = 0;
+    GeoLocAttemptDay = currentDay;
   }
 }
+
+void processGeoLocUpdate()
+{
+  if (!GeoLocNeedsUpdate)
+  {
+    return; // no update needed
+  }
+
+  const uint32_t now = millis();
+  const uint8_t today = uclock.getDay();
+
+  if (GeoLocAttemptDay != today)
+  { // New day, reset attempt counter
+    GeoLocFailedAttempts = 0;
+    GeoLocNextRetryMillis = 0;
+    GeoLocAttemptDay = today;
+  }
+
+  if (GeoLocFailedAttempts >= GEOLOC_MAX_FAILURES_PER_DAY)
+  {
+    Serial.println("GeoLocation update skipped: failure limit reached for today.");
+    GeoLocNeedsUpdate = false;
+    return; // give up for today
+  }
+
+  if (now < GeoLocNextRetryMillis)
+  {
+    return; // not yet time for next retry
+  }
+
+  Serial.println("Daily update for geolocation timezone offset...");
+
+  const int32_t GeoLocTZOffsetOld = uclock.getTimeZoneOffset() / 3600;
+  Serial.print("Current TZ offset (hours): ");
+  Serial.println(GeoLocTZOffsetOld);
+
+  Serial.println("Querying GeoLocation API...");
+  if (GetGeoLocationTimeZoneOffset())
+  {
+    const int32_t GeoLocTOffsetNew = uclock.getTimeZoneOffset() / 3600;
+    Serial.print("New TZ offset (hours): ");
+    Serial.println(GeoLocTOffsetNew);
+
+    GeoLocNeedsUpdate = false;
+    GeoLocFailedAttempts = 0;
+    GeoLocNextRetryMillis = 0;
+    yesterday = today;
+    return; // success for today!
+  }
+
+  GeoLocFailedAttempts++;
+  if (GeoLocFailedAttempts >= GEOLOC_MAX_FAILURES_PER_DAY)
+  {
+    Serial.println("GeoLocation update aborted after repeated failures today.");
+    GeoLocNeedsUpdate = false;
+    return; // give up for today
+  }
+
+  // Schedule next retry
+  GeoLocNextRetryMillis = now + GEOLOC_RETRY_BACKOFF_MS;
+  Serial.print("GeoLocation retry scheduled in ");
+  Serial.print(GEOLOC_RETRY_BACKOFF_MS / 1000);
+  Serial.println(" seconds.");
+}
+#endif // GEOLOCATION_ENABLED
 
 void updateClockDisplay(TFTs::show_t show)
 {
