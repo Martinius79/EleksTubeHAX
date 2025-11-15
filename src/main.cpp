@@ -193,6 +193,28 @@ void setup()
   Serial.println("EleksTubeHAX https://github.com/aly-fly/EleksTubeHAX");
   Serial.printf("Firmware version: v%s.\n", FIRMWARE_VERSION);
 
+#ifdef HARDWARE_MARVELTUBES_CLOCK11
+  Serial.println("MarvelTubes: GPIO37 toggle test starting (10 minutes)...");
+  pinMode(37, OUTPUT);
+  const uint32_t testDurationMs = 10UL * 60UL * 1000UL; // 10 minutes
+  const uint32_t toggleIntervalMs = 500;
+  uint32_t testStartMs = millis();
+  bool csState = false;
+  digitalWrite(37, DIGIT_CS_INACTIVE_LEVEL);
+  while (millis() - testStartMs < testDurationMs)
+  {
+    digitalWrite(37, csState ? DIGIT_CS_ACTIVE_LEVEL : DIGIT_CS_INACTIVE_LEVEL);
+    // digitalWrite(36, DIGIT_CS_ACTIVE_LEVEL);
+    // delay(15);
+    // digitalWrite(36, DIGIT_CS_INACTIVE_LEVEL);
+    Serial.printf("GPIO37 state -> %s\n", csState ? "ACTIVE" : "INACTIVE");
+    csState = !csState;
+    delay(toggleIntervalMs);
+  }
+  digitalWrite(37, DIGIT_CS_INACTIVE_LEVEL);
+  Serial.println("MarvelTubes: GPIO37 toggle test finished.");
+#endif
+
   // Report memory configuration (heap + PSRAM if available).
   Serial.printf("Flash chip size: %u bytes (%.2f MB)\n", ESP.getFlashChipSize(), ESP.getFlashChipSize() / (1024.0 * 1024.0));
   Serial.printf("Total heap: %u bytes, free heap: %u bytes\n", ESP.getHeapSize(), ESP.getFreeHeap());
@@ -260,7 +282,7 @@ void setup()
 
   // Setup the displays (TFTs) initaly and show bootup message(s).
   tfts.begin(); // ...and count number of clock faces available...
-  tfts.fillScreen(TFT_RED);
+  tfts.fillScreen(TFT_BLACK);
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
   tfts.setCursor(0, 0, 2); // Font 2. 16 pixel high
   tfts.println("Starting Setup...");
@@ -282,6 +304,29 @@ void setup()
   tfts.println("WiFi start...");
   Serial.println("WiFi start...");
   WifiBegin();
+    #ifdef HARDWARE_MARVELTUBES_CLOCK11
+    tfts.chip_select.disableDigitCSPins(0);
+    tfts.chip_select.disableDigitCSPins(1);
+    tfts.chip_select.disableDigitCSPins(2);
+    tfts.chip_select.disableDigitCSPins(3);
+    tfts.chip_select.disableDigitCSPins(4);
+    tfts.chip_select.disableDigitCSPins(5);
+
+    Serial.println("Running MarvelTubes CS diagnostic sequence...");
+    tfts.setTextFont(8);
+    tfts.fillScreen(TFT_BLACK);
+    for (uint8_t digit = 0; digit < NUM_DIGITS; ++digit)
+    {
+      Serial.printf("Testing digit %u\n", digit);
+      tfts.chip_select.setDigit(digit, false);
+      tfts.fillScreen(TFT_BLACK);
+      tfts.setCursor(0, 0, 2);
+      tfts.printf("Digit %u\n", digit);
+      delay(1000);
+      tfts.chip_select.disableDigitCSPins(digit);
+    }
+    tfts.fillScreen(TFT_BLACK);
+    #endif
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
   // Wait a bit (5x100ms = 0.5 sec) before querying NTP.

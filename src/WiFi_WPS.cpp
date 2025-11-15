@@ -97,8 +97,13 @@ void WifiBegin()
   if (stored_config.config.wifi.WPS_connected != StoredConfig::valid)
   {
     // Config is invalid, probably a new device never had its config written.
-    Serial.println("Loaded Wifi config is invalid. Not connecting to WiFi.");
-    WiFiStartWps(); // infinite loop until connected
+    Serial.println("Loaded Wifi config is invalid. No known WiFi network! Starting Wi-Fi Protected Setup (WPS)...");
+    WiFiStartWps(); // Blocks until connected or timeout
+    if (WifiState != connected)
+    {
+      Serial.println("WPS setup aborted. Continuing without WiFi.");
+      return;
+    }
   }
   else
   {
@@ -151,20 +156,42 @@ void WifiBegin()
 
 #endif
 
+#ifndef WIFI_USE_WPS
   WifiState = connected;
+#endif
 
-  tfts.println("\nConnected! IP:");
-  tfts.println(WiFi.localIP());
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(WiFi.SSID());
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  delay(200);
+  if (WifiState == connected)
+  {
+    tfts.println("\nConnected! IP:");
+    tfts.println(WiFi.localIP());
+    Serial.println("");
+    Serial.print("Connected to ");
+    Serial.println(WiFi.SSID());
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+    delay(200);
+  }
+  else
+  {
+    Serial.println("Connecting to WiFi failed! No WiFi! Clock will eventually not show actual time!");
+  }
 }
 
 void WifiReconnect()
 {
+#ifdef WIFI_USE_WPS
+  if (stored_config.config.wifi.WPS_connected != StoredConfig::valid)
+  {
+    // No valid credentials stored yet (e.g., WPS never succeeded).
+    return;
+  }
+  if (WifiState == wps_active || WifiState == wps_failed)
+  {
+    // Either currently attempting WPS or the last WPS attempt failed and we should not spam reconnects.
+    return;
+  }
+#endif
+
   if ((WifiState == disconnected) && ((millis() - TimeOfWifiReconnectAttempt) > WIFI_RETRY_CONNECTION_SEC * 1000))
   {
     Serial.println("Attempting WiFi reconnection...");
@@ -202,22 +229,38 @@ void WiFiStartWps()
   esp_wifi_wps_enable(&wps_config);
   esp_wifi_wps_start(0);
 
-  // Loop until connected.
+  const uint32_t startTimeMs = millis();
+
+  // Loop until connected or timeout reached.
   tfts.setTextColor(TFT_BLUE, TFT_BLACK);
-  while (WifiState != connected)
+  while (WifiState != connected && (millis() - startTimeMs) < (WIFI_WPS_CONNECT_TIMEOUT_SEC * 1000UL))
   {
     delay(2000);
     tfts.print(".");
     Serial.print(".");
   }
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-  snprintf(stored_config.config.wifi.ssid, sizeof(stored_config.config.wifi.ssid), "%s", WiFi.SSID().c_str()); // Copy the SSID into the stored configuration safely
-  memset(&stored_config.config.wifi.password, 0, sizeof(stored_config.config.wifi.password));                  // Since the password cannot be retrieved from WPS, overwrite it completely
-  stored_config.config.wifi.password[0] = '\0';                                                                // ...and set to an empty string
-  stored_config.config.wifi.WPS_connected = StoredConfig::valid;                                               // Mark the configuration as valid
-  Serial.println();
-  Serial.print("Saving config! Triggered from WPS success...");
-  stored_config.save();
-  Serial.println(" WPS finished.");
+  if (WifiState == connected)
+  {
+    snprintf(stored_config.config.wifi.ssid, sizeof(stored_config.config.wifi.ssid), "%s", WiFi.SSID().c_str()); // Copy the SSID into the stored configuration safely
+    memset(&stored_config.config.wifi.password, 0, sizeof(stored_config.config.wifi.password));                  // Since the password cannot be retrieved from WPS, overwrite it completely
+    stored_config.config.wifi.password[0] = '\0';                                                               // ...and set to an empty string
+    stored_config.config.wifi.WPS_connected = StoredConfig::valid;                                              // Mark the configuration as valid
+    Serial.println();
+    Serial.print("Saving config! Triggered from WPS success...");
+    stored_config.save();
+    Serial.println(" Done.");
+  }
+  else
+  {
+    esp_wifi_wps_disable();
+    WifiState = wps_failed;
+    tfts.setTextColor(TFT_RED, TFT_BLACK);
+    tfts.println("WPS FAILED! NO WiFi");
+    tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+    Serial.println();
+    Serial.println("WPS FAILED! Going on without WiFi.");
+  }
+  Serial.println("WPS finished.");
 }
 #endif
