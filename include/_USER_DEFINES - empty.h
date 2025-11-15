@@ -26,6 +26,7 @@
 
 // ************* WiFi config *************
 #define WIFI_CONNECT_TIMEOUT_SEC 20
+#define WIFI_WPS_CONNECT_TIMEOUT_SEC 120
 #define WIFI_RETRY_CONNECTION_SEC 15
 #define WIFI_USE_WPS                                    // Uncomment to use WPS instead of hard coded wifi credentials
 #define WIFI_SSID "__enter_your_wifi_ssid_here__"       // Not needed if WPS is used
