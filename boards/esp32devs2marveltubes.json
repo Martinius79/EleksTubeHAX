@@ -17,7 +17,8 @@
     "variant": "esp32s2"
   },
   "connectivity": [
-    "wifi"
+    "wifi",
+    "bluetooth"
   ],
   "debug": {
     "openocd_board": "esp32s2.cfg"
