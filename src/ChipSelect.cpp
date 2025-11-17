@@ -1,4 +1,5 @@
 #include "ChipSelect.h"
+#include <driver/gpio.h>
 
 #ifdef HARDWARE_IPSTUBE_CLOCK
 // Define the pins for each LCD's enable wire
@@ -46,7 +47,7 @@ void ChipSelect::begin()
   Serial.println("ChipSelect::begin - Shift register pins prepared, issuing initial update()");
 #endif
   update();
-#else
+#else // !HARDWARE_IPSTUBE_CLOCK && !HARDWARE_MARVELTUBES_CLOCK
 #ifdef DEBUG_OUTPUT_CHIPSELECT
   Serial.println("ChipSelect::begin - Initializing per-digit CS pins");
 #endif
@@ -58,6 +59,7 @@ void ChipSelect::begin()
     Serial.print(lcdEnablePins[i]);
     Serial.println(" as OUTPUT, default disabled");
 #endif
+    gpio_reset_pin(static_cast<gpio_num_t>(lcdEnablePins[i]));
     pinMode(lcdEnablePins[i], OUTPUT);
     digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL);
   }
@@ -69,7 +71,7 @@ void ChipSelect::begin()
   Serial.println(DIGIT_CS_ACTIVE_LEVEL);
   Serial.println("ChipSelect::begin - Finished!");
 #endif
-#endif
+#endif // !HARDWARE_IPSTUBE_CLOCK && !HARDWARE_MARVELTUBES_CLOCK
 }
 
 void ChipSelect::clear(bool update_)
@@ -99,6 +101,33 @@ void ChipSelect::setAll(bool update_)
   Serial.println("ChipSelect::setAll - Enabling all per-digit CS pins");
 #endif
   enableAllCSPins();
+#endif
+}
+
+void ChipSelect::reclaimPins()
+{
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.println("ChipSelect::reclaimPins - Reclaiming control of per-digit CS pins");
+#endif
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+  for (int i = 0; i < numLCDs; ++i)
+  {
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::reclaimPins - Reclaiming pin with gpio_reset_pin for GPIO: ");
+    Serial.println(lcdEnablePins[i]);
+#endif
+    gpio_reset_pin(static_cast<gpio_num_t>(lcdEnablePins[i]));
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::reclaimPins - Setting pin to OUTPUT for pin: ");
+    Serial.println(lcdEnablePins[i]);
+#endif
+    pinMode(lcdEnablePins[i], OUTPUT);
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::reclaimPins - Setting pin to DIGIT_CS_INACTIVE_LEVEL for pin: ");
+    Serial.println(lcdEnablePins[i]);
+#endif
+    digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL); // start with disabled CS
+  }
 #endif
 }
 
@@ -235,7 +264,8 @@ void ChipSelect::enableAllCSPins()
 #ifdef DEBUG_OUTPUT_CHIPSELECT
     Serial.print("ChipSelect::enableAllCSPins - Pin ");
     Serial.print(lcdEnablePins[i]);
-    Serial.println(" -> ACTIVATEDISPLAYS");
+    Serial.print(" to DIGIT_CS_ACTIVE_LEVEL: ");
+    Serial.println(DIGIT_CS_ACTIVE_LEVEL);
 #endif
     digitalWrite(lcdEnablePins[i], DIGIT_CS_ACTIVE_LEVEL);
   }
@@ -254,7 +284,8 @@ void ChipSelect::disableAllCSPins()
 #ifdef DEBUG_OUTPUT_CHIPSELECT
     Serial.print("ChipSelect::disableAllCSPins - Pin ");
     Serial.print(lcdEnablePins[i]);
-    Serial.println(" -> DEACTIVATEDISPLAYS");
+    Serial.print(" to DIGIT_CS_INACTIVE_LEVEL: ");
+    Serial.println(DIGIT_CS_INACTIVE_LEVEL);
 #endif
     digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL);
   }
@@ -269,7 +300,8 @@ void ChipSelect::enableDigitCSPins(uint8_t digit)
   Serial.print(digit);
   Serial.print(" pin ");
   Serial.print(lcdEnablePins[digit]);
-  Serial.println(" -> ACTIVATEDISPLAYS");
+  Serial.print(" to DIGIT_CS_ACTIVE_LEVEL: ");
+  Serial.println(DIGIT_CS_ACTIVE_LEVEL);
 #endif
   // enable the LCD for the given digit
   digitalWrite(lcdEnablePins[digit], DIGIT_CS_ACTIVE_LEVEL);
@@ -284,7 +316,8 @@ void ChipSelect::disableDigitCSPins(uint8_t digit)
   Serial.print(digit);
   Serial.print(" pin ");
   Serial.print(lcdEnablePins[digit]);
-  Serial.println(" -> DEACTIVATEDISPLAYS");
+  Serial.print(" to DIGIT_CS_INACTIVE_LEVEL: ");
+  Serial.println(DIGIT_CS_INACTIVE_LEVEL);
 #endif
   // disable the LCD for the given digit
   digitalWrite(lcdEnablePins[digit], DIGIT_CS_INACTIVE_LEVEL);

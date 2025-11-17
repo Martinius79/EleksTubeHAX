@@ -8,10 +8,12 @@
 #ifndef USER_DEFINES_H_
 #define USER_DEFINES_H_
 
-// #define DEBUG_OUTPUT        // Uncomment for general Debug printing via serial interface
+#define DEBUG_OUTPUT        // Uncomment for general Debug printing via serial interface
 // #define DEBUG_OUTPUT_IMAGES // Uncomment for Debug printing of image loading and drawing
+#define DEBUG_OUTPUT_TFT    // Uncomment for Debug printing of TFT display initialization and image drawing
+#define DEBUG_OUTPUT_CHIPSELECT // Uncomment for Debug printing of Chip Select pin operations
 // #define DEBUG_OUTPUT_MQTT   // Uncomment for Debug printing of MQTT messages
-// #define DEBUG_OUTPUT_RTC    // Uncomment for Debug printing of RTC chip initialization and time setting
+#define DEBUG_OUTPUT_RTC    // Uncomment for Debug printing of RTC chip initialization and time setting
 // #define DEBUG_OUTPUT_GEO    // Uncomment for Debug printing of Geolocation info
 
 // ************* Clock font file type selection (.clk or .bmp)  *************

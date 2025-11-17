@@ -45,6 +45,12 @@ void TFTs::begin()
   Serial.println("TFTs::begin() - init() finished.");
   Serial.println("TFTs::begin() - Calling fillScreen(TFT_BLACK)");
 #endif
+
+#if defined(HARDWARE_MARVELTUBES_CLOCK)
+  chip_select.reclaimPins(); // regain control of per-digit CS pins after TFT_eSPI::init()
+  chip_select.setAll(); // After regain control, start with all displays selected again
+#endif
+
   fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - fillScreen(TFT_BLACK) finished.");
@@ -108,6 +114,7 @@ void TFTs::reinit()
 #endif
     InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
     init();                    // Initialize the super class (again).
+    chip_select.reclaimPins();
     fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
     enableAllDisplays();       // Signal, that the displays are enabled now
 #ifdef DEBUG_OUTPUT_TFT

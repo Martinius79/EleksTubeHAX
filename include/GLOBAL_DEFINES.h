@@ -637,11 +637,11 @@
 #define CGRAM_OFFSET // Library will add offsets required
 
 #define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
+#define TFT_MISO -1 // No MISO
 
-// #define TFT_MISO (-1) // No MISO
 #define TFT_MOSI (40)
 #define TFT_SCLK (39)
-#define TFT_CS (-1)  // MUST be -1 for this clock -> chipselect class does the magic also without a shift register
+#define TFT_CS -1  // MUST be -1 for this clock -> chipselect class does the magic also without a shift register
 #define TFT_DC (41)  // Data Command, aka Register Select or RS
 #define TFT_RST (42) // Connect reset to ensure display initialises
 
