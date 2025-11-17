@@ -480,7 +480,7 @@ bool MQTTStart(bool restart)
     }
     Serial.println("Connecting to MQTT...");
     // Attempt to connect. Set the last will (LWT) message if the connection get lost.
-    if (MQTTclient.connect(UniqueDeviceName, // MQTT client id
+    if (MQTTclient.connect(UniqueDeviceNameLower, // MQTT client id
                            MQTT_USERNAME,    // MQTT username
                            MQTT_PASSWORD     // MQTT password
 #ifndef MQTT_CLIENT_ID_FOR_SMARTNEST

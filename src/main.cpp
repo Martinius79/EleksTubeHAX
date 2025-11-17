@@ -1,3 +1,145 @@
+// Minimal sketch that powers the TFT and fills it with red using TFT_eSPI directly.
+#include <Arduino.h>
+#include <TFT_eSPI.h>
+#include "GLOBAL_DEFINES.h"
+
+TFT_eSPI tft = TFT_eSPI();
+
+constexpr uint8_t kCsPins[] = {15, 33, 34, 35, 36, 37};
+
+// static void selectDisplay(int pinToEnable)
+// {
+//   for (uint8_t pin : kCsPins)
+//   {
+//     Serial.println("Setting pin " + String(pin) + " to " + String((pin == pinToEnable) ? DIGIT_CS_ACTIVE_LEVEL : DIGIT_CS_INACTIVE_LEVEL));
+//     digitalWrite(pin, (pin == pinToEnable) ? DIGIT_CS_ACTIVE_LEVEL : DIGIT_CS_INACTIVE_LEVEL);
+//   }
+// }
+
+void setup()
+{
+  Serial.begin(115200);
+  delay(2500);
+  Serial.println("\nMarvelTubes demo: solid red via TFT_eSPI");
+
+  
+
+  for (uint8_t pin : kCsPins)
+  {
+    Serial.println("Configuring CS pin: " + String(pin));
+    pinMode(pin, OUTPUT);
+    Serial.println("Setting pin " + String(pin) + " to inactive level: " + String(DIGIT_CS_INACTIVE_LEVEL));
+    digitalWrite(pin, DIGIT_CS_INACTIVE_LEVEL); // start with all CS lines inactive
+  }
+
+  Serial.println("Enabling TFT power...");
+  Serial.println("Setting TFT_ENABLE_PIN mode to OUTPUT");
+  pinMode(TFT_ENABLE_PIN, OUTPUT);
+  Serial.println("Activating TFT power pin" + String(TFT_ENABLE_PIN) + " to level: " + String(ACTIVATEDISPLAYS));
+  digitalWrite(TFT_ENABLE_PIN, ACTIVATEDISPLAYS); // Ensure panel power is enabled
+
+  // read pin 37
+  Serial.println("1 Reading pin 37 value: " + String(digitalRead(37)));
+  // read pin 36
+  Serial.println("1 Reading pin 36 value: " + String(digitalRead(36)));
+  tft.fillScreen(TFT_RED);
+
+  // Serial.println("Initializing TFT...");
+  tft.init();
+
+  // read pin 37
+  Serial.println("2 Reading pin 37 value: " + String(digitalRead(37)));
+  // read pin 36
+  Serial.println("2 Reading pin 36 value: " + String(digitalRead(36)));
+
+  // gpio_reset_pin(GPIO_NUM_37);
+  // pinMode(37, OUTPUT);
+  // digitalWrite(37, DIGIT_CS_INACTIVE_LEVEL); // start with all CS lines inactive
+
+  // read pin 37
+  Serial.println("3 Reading pin 37 value: " + String(digitalRead(37)));
+  // gpio_reset_pin(GPIO_NUM_36);
+  // pinMode(36, OUTPUT);
+  // digitalWrite(36, DIGIT_CS_INACTIVE_LEVEL); // start with all CS lines inactive
+
+  // read pin 36
+  Serial.println("3 Reading pin 36 value: " + String(digitalRead(36)));
+
+  tft.setRotation(0);
+
+  // Serial.println("Filling screen with colors...");
+  // Serial.println("Filling screen RED...");
+  // // read pin 37
+  // Serial.println("1 Reading pin 37 value: " + String(digitalRead(37)));
+  // // read pin 36
+  // Serial.println("1 Reading pin 36 value: " + String(digitalRead(36)));
+  // tft.fillScreen(TFT_RED);
+  // // read pin 37
+  // Serial.println("2 Reading pin 37 value: " + String(digitalRead(37)));
+  // // read pin 36
+  // Serial.println("2 Reading pin 36 value: " + String(digitalRead(36)));
+  // delay(2000);
+  // Serial.println("Filling screen YELLOW...");
+  // tft.fillScreen(TFT_YELLOW);
+  // delay(2000);
+  // Serial.println("Filling screen GREEN...");
+  // tft.fillScreen(TFT_GREEN);
+  // delay(2000);
+  // Serial.println("Filling screen BLACK...");
+  // tft.fillScreen(TFT_BLACK);
+
+  // for (int cycle = 0; cycle < 10; ++cycle)
+  // {
+  //   Serial.println("Cycle: " + String(cycle));
+  //   for (uint8_t pin : kCsPins)
+  //   {
+  //     Serial.println("Activating CS pin: " + String(pin));
+  //     digitalWrite(pin, DIGIT_CS_ACTIVE_LEVEL);
+  //     delay(10);
+  //     // selectDisplay(pin);
+  //     Serial.println("Filling screen RED on pin: " + String(pin));
+  //     tft.fillScreen(TFT_RED);
+  //     Serial.println("Holding RED for 5 seconds...");
+  //     delay(5000);
+  //     Serial.println("Turning screen BLACK on pin: " + String(pin));
+  //     tft.fillScreen(TFT_BLACK);
+  //     Serial.println("Deactivating CS pin: " + String(pin));
+  //     digitalWrite(pin, DIGIT_CS_INACTIVE_LEVEL);
+  //     delay(10);
+  //   }
+  // }
+
+  // selectDisplay(-1); // release all displays
+}
+
+void loop()
+{
+  Serial.println("In the loop...");
+  static const uint32_t toggleIntervalMs = 5000;
+  static const uint32_t testDurationMs = 10UL * 60UL * 1000UL; // 10 minutes
+  static uint32_t startMs = millis();
+  static bool state = false;
+
+  digitalWrite(37, state ? DIGIT_CS_ACTIVE_LEVEL : DIGIT_CS_INACTIVE_LEVEL);
+  digitalWrite(35, state ? DIGIT_CS_ACTIVE_LEVEL : DIGIT_CS_INACTIVE_LEVEL);
+  Serial.printf("GPIO37 -> %s, GPIO35 -> %s\n", state ? "ACTIVE" : "INACTIVE", state ? "ACTIVE" : "INACTIVE");
+  state = !state;
+
+  if (millis() - startMs >= testDurationMs)
+  {
+    Serial.println("Toggle test complete. Holding both pins inactive.");
+    digitalWrite(37, DIGIT_CS_INACTIVE_LEVEL);
+    digitalWrite(35, DIGIT_CS_INACTIVE_LEVEL);
+    while (true)
+    {
+      delay(1000);
+    }
+  }
+
+  delay(toggleIntervalMs);
+}
+
+#if 0
 /*
  * Author: Aljaz Ogrin
  * Project: Alternative firmware for EleksTube IPS clock
@@ -6,18 +148,18 @@
  * Based on: https://github.com/SmittyHalibut/EleksTubeHAX
  */
 
-#include <nvs_flash.h>
-#include <stdint.h>
-#include <math.h>
-#include <Wire.h>
+// #include <nvs_flash.h>
+// #include <stdint.h>
+// #include <math.h>
+// #include <Wire.h>
 #include "GLOBAL_DEFINES.h"
-#include "Backlights.h"
-#include "Buttons.h"
-#include "Clock.h"
-#include "Menu.h"
-#include "StoredConfig.h"
+// #include "Backlights.h"
+// #include "Buttons.h"
+// #include "Clock.h"
+// #include "Menu.h"
+// #include "StoredConfig.h"
 #include "TFTs.h"
-#include "WiFi_WPS.h"
+// #include "WiFi_WPS.h"
 
 #ifdef GEOLOCATION_ENABLED
 #include "IPGeolocation_AO.h"
@@ -139,47 +281,47 @@ void HandleGesture()
 }
 #endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
 
-char UniqueDeviceName[32];      // Enough space for <DeviceName> + 6 hex chars + null
-char UniqueDeviceNameLower[32]; // Lowercase variant used for MQTT topics
+// char UniqueDeviceName[32];      // Enough space for <DeviceName> + 6 hex chars + null
+// char UniqueDeviceNameLower[32]; // Lowercase variant used for MQTT topics
 
-Backlights backlights;
-Buttons buttons;
+// Backlights backlights;
+// Buttons buttons;
 TFTs tfts;
-Clock uclock;
-Menu menu;
-StoredConfig stored_config;
+// Clock uclock;
+// Menu menu;
+// StoredConfig stored_config;
 
-#ifdef GEOLOCATION_ENABLED
-double GeoLocTZoffset = 0;
-bool GetGeoLocationTimeZoneOffset();
-constexpr uint8_t GEOLOC_MAX_FAILURES_PER_DAY = 4;
-constexpr uint32_t GEOLOC_RETRY_BACKOFF_MS = 5UL * 60UL * 1000UL;
-uint8_t GeoLocFailedAttempts = 0;
-uint32_t GeoLocNextRetryMillis = 0;
-uint8_t GeoLocAttemptDay = 0;
-bool GeoLocNeedsUpdate = false;
-void processGeoLocUpdate(void);
-void checkUpdateGeoLocNeeded(void);
-uint8_t yesterday = 0;
-#endif
+// #ifdef GEOLOCATION_ENABLED
+// double GeoLocTZoffset = 0;
+// bool GetGeoLocationTimeZoneOffset();
+// constexpr uint8_t GEOLOC_MAX_FAILURES_PER_DAY = 4;
+// constexpr uint32_t GEOLOC_RETRY_BACKOFF_MS = 5UL * 60UL * 1000UL;
+// uint8_t GeoLocFailedAttempts = 0;
+// uint32_t GeoLocNextRetryMillis = 0;
+// uint8_t GeoLocAttemptDay = 0;
+// bool GeoLocNeedsUpdate = false;
+// void processGeoLocUpdate(void);
+// void checkUpdateGeoLocNeeded(void);
+// uint8_t yesterday = 0;
+// #endif
 
-#ifdef DIMMING
-bool isDimmingNeeded = false;
-uint8_t hour_old = 255;
-#endif
+// #ifdef DIMMING
+// bool isDimmingNeeded = false;
+// uint8_t hour_old = 255;
+// #endif
 
-uint32_t lastMQTTCommandExecuted = (uint32_t)-1;
+// uint32_t lastMQTTCommandExecuted = (uint32_t)-1;
 
 // Helper function, defined below.
-void updateClockDisplay(TFTs::show_t show = TFTs::yes);
-void setupMenu(void);
-#ifdef DIMMING
-bool isNightTime(uint8_t current_hour);
-void checkDimmingNeeded(void);
-#endif
-#if defined(RTC_SCL_PIN) && defined(RTC_SDA_PIN)
-void scanRtcI2CBus(void);
-#endif
+// void updateClockDisplay(TFTs::show_t show = TFTs::yes);
+// void setupMenu(void);
+// #ifdef DIMMING
+// bool isNightTime(uint8_t current_hour);
+// void checkDimmingNeeded(void);
+// #endif
+// #if defined(RTC_SCL_PIN) && defined(RTC_SDA_PIN)
+// void scanRtcI2CBus(void);
+// #endif
 
 //-----------------------------------------------------------------------
 // Setup
@@ -187,7 +329,7 @@ void scanRtcI2CBus(void);
 void setup()
 {
   Serial.begin(115200);
-  delay(1500); // Wait for serial monitor to catch up
+  delay(2500); // Wait for serial monitor to catch up
 
   Serial.println("\nSystem starting...\n");
   Serial.println("EleksTubeHAX https://github.com/aly-fly/EleksTubeHAX");
@@ -215,17 +357,18 @@ void setup()
   Serial.println("MarvelTubes: GPIO37 toggle test finished.");
 #endif
 
-  // Report memory configuration (heap + PSRAM if available).
-  Serial.printf("Flash chip size: %u bytes (%.2f MB)\n", ESP.getFlashChipSize(), ESP.getFlashChipSize() / (1024.0 * 1024.0));
-  Serial.printf("Total heap: %u bytes, free heap: %u bytes\n", ESP.getHeapSize(), ESP.getFreeHeap());
-  if (ESP.getPsramSize() > 0)
-  {
-    Serial.printf("Total PSRAM: %u bytes, free PSRAM: %u bytes\n", ESP.getPsramSize(), ESP.getFreePsram());
-  }
-  else
-  {
-    Serial.println("PSRAM not present or disabled");
-  }
+  // // Report memory configuration (heap + PSRAM if available).
+  // Serial.printf("Flash chip size: %u bytes (%.2f MB)\n", ESP.getFlashChipSize(), ESP.getFlashChipSize() / (1024.0 * 1024.0));
+  // Serial.printf("Total heap: %u bytes, free heap: %u bytes\n", ESP.getHeapSize(), ESP.getFreeHeap());
+  // if (ESP.getPsramSize() > 0)
+  // {
+  //   Serial.printf("Total PSRAM: %u bytes, free PSRAM: %u bytes\n", ESP.getPsramSize(), ESP.getFreePsram());
+  // }
+
+  // else
+  // {
+  //   Serial.println("PSRAM not present or disabled");
+  // }
 
 // #if defined(RTC_SCL_PIN) && defined(RTC_SDA_PIN)
 //   scanRtcI2CBus();
@@ -233,183 +376,183 @@ void setup()
 
 
   // Prepare unique device name
-#ifdef MQTT_CLIENT_ID_FOR_SMARTNEST
-  snprintf(UniqueDeviceName, sizeof(UniqueDeviceName), "%s", MQTT_CLIENT_ID_FOR_SMARTNEST); // Use fixed ID for smartnest.cz
-#else
-  {
-    // Generate unique ID for other cases
-    // ESP.getEfuseMac() returns the 48-bit MAC address in the lower bits of the value (little-endian byte order when viewed as an integer).
-    // We extract all 6 bytes and store them in the canonical MAC order (MSB first).
-    uint64_t rawmac = ESP.getEfuseMac() & 0xFFFFFFFFFFFFULL; // Keep only lower 48 bits, comes in reverse order
-    uint8_t mac_bytes[6];
-    for (int i = 0; i < 6; i++)
-    {
-      mac_bytes[i] = (rawmac >> (8 * i)) & 0xFF; // LSB first
-    }
-    // Generate a unique device name using the last 3 bytes of the MAC address to make the name shorter but still unique enough to avoid collisions
-    snprintf(UniqueDeviceName, sizeof(UniqueDeviceName), "%s-%02X%02X%02X", DEVICE_NAME,
-             mac_bytes[3], mac_bytes[4], mac_bytes[5]);
-  }
-#endif // #ifdef MQTT_CLIENT_ID_FOR_SMARTNEST
-  // Prepare lowercase variant for MQTT topic usage
-  for (size_t i = 0; i < sizeof(UniqueDeviceName); ++i)
-  {
-    char c = UniqueDeviceName[i];
-    UniqueDeviceNameLower[i] = (char)tolower((int)c);
-    if (c == '\0')
-      break;
-  }
-  Serial.printf("Set device name: \"%s\" (lowercase: %s).\n", UniqueDeviceName, UniqueDeviceNameLower);
+// #ifdef MQTT_CLIENT_ID_FOR_SMARTNEST
+//   snprintf(UniqueDeviceName, sizeof(UniqueDeviceName), "%s", MQTT_CLIENT_ID_FOR_SMARTNEST); // Use fixed ID for smartnest.cz
+// #else
+//   {
+//     // Generate unique ID for other cases
+//     // ESP.getEfuseMac() returns the 48-bit MAC address in the lower bits of the value (little-endian byte order when viewed as an integer).
+//     // We extract all 6 bytes and store them in the canonical MAC order (MSB first).
+//     uint64_t rawmac = ESP.getEfuseMac() & 0xFFFFFFFFFFFFULL; // Keep only lower 48 bits, comes in reverse order
+//     uint8_t mac_bytes[6];
+//     for (int i = 0; i < 6; i++)
+//     {
+//       mac_bytes[i] = (rawmac >> (8 * i)) & 0xFF; // LSB first
+//     }
+//     // Generate a unique device name using the last 3 bytes of the MAC address to make the name shorter but still unique enough to avoid collisions
+//     snprintf(UniqueDeviceName, sizeof(UniqueDeviceName), "%s-%02X%02X%02X", DEVICE_NAME,
+//              mac_bytes[3], mac_bytes[4], mac_bytes[5]);
+//   }
+// #endif // #ifdef MQTT_CLIENT_ID_FOR_SMARTNEST
+//   // Prepare lowercase variant for MQTT topic usage
+//   for (size_t i = 0; i < sizeof(UniqueDeviceName); ++i)
+//   {
+//     char c = UniqueDeviceName[i];
+//     UniqueDeviceNameLower[i] = (char)tolower((int)c);
+//     if (c == '\0')
+//       break;
+//   }
+//   Serial.printf("Set device name: \"%s\" (lowercase: %s).\n", UniqueDeviceName, UniqueDeviceNameLower);
 
-  Serial.print("Init NVS flash partition usage...");
-  esp_err_t ret = nvs_flash_init(); // Initialize NVS
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-  {
-    Serial.println("");
-    Serial.println("No free pages in or newer version of NVS partition found. Erasing NVS flash partition...");
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    ret = nvs_flash_init();
-  }
-  ESP_ERROR_CHECK(ret);
-  Serial.println("Done.");
+  // Serial.print("Init NVS flash partition usage...");
+  // esp_err_t ret = nvs_flash_init(); // Initialize NVS
+  // if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+  // {
+  //   Serial.println("");
+  //   Serial.println("No free pages in or newer version of NVS partition found. Erasing NVS flash partition...");
+  //   ESP_ERROR_CHECK(nvs_flash_erase());
+  //   ret = nvs_flash_init();
+  // }
+  // ESP_ERROR_CHECK(ret);
+  // Serial.println("Done.");
 
-  stored_config.begin();
-  stored_config.load();
+  // stored_config.begin();
+  // stored_config.load();
 
-  backlights.begin(&stored_config.config.backlights);
-  buttons.begin();
-  menu.begin();
+  // backlights.begin(&stored_config.config.backlights);
+  // buttons.begin();
+  // menu.begin();
 
   // Setup the displays (TFTs) initaly and show bootup message(s).
-  tfts.begin(); // ...and count number of clock faces available...
-  tfts.fillScreen(TFT_BLACK);
-  tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-  tfts.setCursor(0, 0, 2); // Font 2. 16 pixel high
-  tfts.println("Starting Setup...");
+  // tfts.begin(); // ...and count number of clock faces available...
+  // tfts.fillScreen(TFT_BLACK);
+  // tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+  // tfts.setCursor(0, 0, 2); // Font 2. 16 pixel high
+  // tfts.println("Starting Setup...");
 
-#ifdef HARDWARE_NOVELLIFE_CLOCK
-  // Init the Gesture sensor
-  tfts.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tfts.print("Gest start...");
-  Serial.print("Gesture Sensor start...");
-  GestureStart(); // TODO put into class
-  tfts.println("Done!");
-  Serial.println("Done!");
-  tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-#endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
+// #ifdef HARDWARE_NOVELLIFE_CLOCK
+//   // Init the Gesture sensor
+//   tfts.setTextColor(TFT_ORANGE, TFT_BLACK);
+//   tfts.print("Gest start...");
+//   Serial.print("Gesture Sensor start...");
+//   GestureStart(); // TODO put into class
+//   tfts.println("Done!");
+//   Serial.println("Done!");
+//   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+// #endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
 
-  // Setup WiFi connection. Must be done before setting up Clock.
-  // This is done outside Clock so the network can be used for other things.
-  tfts.setTextColor(TFT_GREENYELLOW, TFT_BLACK);
-  tfts.println("WiFi start...");
-  Serial.println("WiFi start...");
-  WifiBegin();
-    #ifdef HARDWARE_MARVELTUBES_CLOCK11
-    tfts.chip_select.disableDigitCSPins(0);
-    tfts.chip_select.disableDigitCSPins(1);
-    tfts.chip_select.disableDigitCSPins(2);
-    tfts.chip_select.disableDigitCSPins(3);
-    tfts.chip_select.disableDigitCSPins(4);
-    tfts.chip_select.disableDigitCSPins(5);
+  // // Setup WiFi connection. Must be done before setting up Clock.
+  // // This is done outside Clock so the network can be used for other things.
+  // tfts.setTextColor(TFT_GREENYELLOW, TFT_BLACK);
+  // tfts.println("WiFi start...");
+  // Serial.println("WiFi start...");
+  // WifiBegin();
+  //   #ifdef HARDWARE_MARVELTUBES_CLOCK11
+  //   tfts.chip_select.disableDigitCSPins(0);
+  //   tfts.chip_select.disableDigitCSPins(1);
+  //   tfts.chip_select.disableDigitCSPins(2);
+  //   tfts.chip_select.disableDigitCSPins(3);
+  //   tfts.chip_select.disableDigitCSPins(4);
+  //   tfts.chip_select.disableDigitCSPins(5);
 
-    Serial.println("Running MarvelTubes CS diagnostic sequence...");
-    tfts.setTextFont(8);
-    tfts.fillScreen(TFT_BLACK);
-    for (uint8_t digit = 0; digit < NUM_DIGITS; ++digit)
-    {
-      Serial.printf("Testing digit %u\n", digit);
-      tfts.chip_select.setDigit(digit, false);
-      tfts.fillScreen(TFT_BLACK);
-      tfts.setCursor(0, 0, 2);
-      tfts.printf("Digit %u\n", digit);
-      delay(1000);
-      tfts.chip_select.disableDigitCSPins(digit);
-    }
-    tfts.fillScreen(TFT_BLACK);
-    #endif
-  tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+  //   Serial.println("Running MarvelTubes CS diagnostic sequence...");
+  //   tfts.setTextFont(8);
+  //   tfts.fillScreen(TFT_BLACK);
+  //   for (uint8_t digit = 0; digit < NUM_DIGITS; ++digit)
+  //   {
+  //     Serial.printf("Testing digit %u\n", digit);
+  //     tfts.chip_select.setDigit(digit, false);
+  //     tfts.fillScreen(TFT_BLACK);
+  //     tfts.setCursor(0, 0, 2);
+  //     tfts.printf("Digit %u\n", digit);
+  //     delay(1000);
+  //     tfts.chip_select.disableDigitCSPins(digit);
+  //   }
+  //   tfts.fillScreen(TFT_BLACK);
+  //   #endif
+  // tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
-  // Wait a bit (5x100ms = 0.5 sec) before querying NTP.
-  for (uint8_t ndx = 0; ndx < 5; ndx++)
-  {
-    tfts.print(">");
-    delay(100);
-  }
-  tfts.println("");
+  // // Wait a bit (5x100ms = 0.5 sec) before querying NTP.
+  // for (uint8_t ndx = 0; ndx < 5; ndx++)
+  // {
+  //   tfts.print(">");
+  //   delay(100);
+  // }
+  // tfts.println("");
 
-  // Setup the clock. It needs WiFi to be established already.
-  tfts.setTextColor(TFT_MAGENTA, TFT_BLACK);
-  tfts.print("Clock start...");
-  Serial.println("\nClock start-up...");
-  uclock.begin(&stored_config.config.uclock);
-  tfts.println("Done!");
-  Serial.println("\nClock start-up done!");
-  tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+  // // Setup the clock. It needs WiFi to be established already.
+  // tfts.setTextColor(TFT_MAGENTA, TFT_BLACK);
+  // tfts.print("Clock start...");
+  // Serial.println("\nClock start-up...");
+  // uclock.begin(&stored_config.config.uclock);
+  // tfts.println("Done!");
+  // Serial.println("\nClock start-up done!");
+  // tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
-#if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
-  // Setup MQTT.
-  tfts.setTextColor(TFT_YELLOW, TFT_BLACK);
-  tfts.print("MQTT start...");
-  Serial.println("\nMQTT start...");
-  MQTTStart(false);
-  tfts.println("Done!");
-  Serial.println("MQTT start Done!");
-  tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-#endif
+// #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
+//   // Setup MQTT.
+//   tfts.setTextColor(TFT_YELLOW, TFT_BLACK);
+//   tfts.print("MQTT start...");
+//   Serial.println("\nMQTT start...");
+//   MQTTStart(false);
+//   tfts.println("Done!");
+//   Serial.println("MQTT start Done!");
+//   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+// #endif
 
-#ifdef GEOLOCATION_ENABLED
-  tfts.setTextColor(TFT_CYAN, TFT_BLACK);
-  tfts.println("GeoLoc query...");
-  if (GetGeoLocationTimeZoneOffset())
-  {
-    tfts.print("TZ: ");
-    Serial.print("TZ: ");
-    tfts.println(GeoLocTZoffset);
-    Serial.println(GeoLocTZoffset);
-    uclock.setTimeZoneOffset(GeoLocTZoffset * 3600);
-    Serial.println();
-    Serial.print("Saving config! Triggered by timezone change...");
-    stored_config.save();
-    tfts.println("Done!");
-    Serial.println("Done!");
-    tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-  }
-  else
-  {
-    tfts.setTextColor(TFT_RED, TFT_BLACK);
-    tfts.println("GeoLoc FAILED");
-    Serial.println("GeoLoc failed!");
-    tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-  }
-#endif
+// #ifdef GEOLOCATION_ENABLED
+//   tfts.setTextColor(TFT_CYAN, TFT_BLACK);
+//   tfts.println("GeoLoc query...");
+//   if (GetGeoLocationTimeZoneOffset())
+//   {
+//     tfts.print("TZ: ");
+//     Serial.print("TZ: ");
+//     tfts.println(GeoLocTZoffset);
+//     Serial.println(GeoLocTZoffset);
+//     uclock.setTimeZoneOffset(GeoLocTZoffset * 3600);
+//     Serial.println();
+//     Serial.print("Saving config! Triggered by timezone change...");
+//     stored_config.save();
+//     tfts.println("Done!");
+//     Serial.println("Done!");
+//     tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+//   }
+//   else
+//   {
+//     tfts.setTextColor(TFT_RED, TFT_BLACK);
+//     tfts.println("GeoLoc FAILED");
+//     Serial.println("GeoLoc failed!");
+//     tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+//   }
+// #endif
 
-  if (uclock.getActiveGraphicIdx() > tfts.NumberOfClockFaces)
-  {
-    uclock.setActiveGraphicIdx(tfts.NumberOfClockFaces);
-    Serial.println("Last selected index of clock face is larger than currently available number of image sets.");
-  }
-  if (uclock.getActiveGraphicIdx() < 1)
-  {
-    uclock.setActiveGraphicIdx(1);
-    Serial.println("Last selected index of clock face is less than 1.");
-  }
-  tfts.current_graphic = uclock.getActiveGraphicIdx();
+  // if (uclock.getActiveGraphicIdx() > tfts.NumberOfClockFaces)
+  // {
+  //   uclock.setActiveGraphicIdx(tfts.NumberOfClockFaces);
+  //   Serial.println("Last selected index of clock face is larger than currently available number of image sets.");
+  // }
+  // if (uclock.getActiveGraphicIdx() < 1)
+  // {
+  //   uclock.setActiveGraphicIdx(1);
+  //   Serial.println("Last selected index of clock face is less than 1.");
+  // }
+  // tfts.current_graphic = uclock.getActiveGraphicIdx();
 
-  tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-  tfts.println("Done with Setup!");
-  Serial.println("\nDone with Setup!");
+  // tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+  // tfts.println("Done with Setup!");
+  // Serial.println("\nDone with Setup!");
 
-  // Leave bootup messages on screen for a few seconds (10x200ms = 2 sec).
-  for (uint8_t ndx = 0; ndx < 10; ndx++)
-  {
-    tfts.print(">");
-    delay(200);
-  }
+  // // Leave bootup messages on screen for a few seconds (10x200ms = 2 sec).
+  // for (uint8_t ndx = 0; ndx < 10; ndx++)
+  // {
+  //   tfts.print(">");
+  //   delay(200);
+  // }
 
   // Start up the clock displays.
   tfts.fillScreen(TFT_BLACK);
-  uclock.loop();
-  updateClockDisplay(TFTs::force); // Draw all the clock digits
+  // uclock.loop();
+  // updateClockDisplay(TFTs::force); // Draw all the clock digits
   Serial.println("Starting main loop...");
 }
 
@@ -420,509 +563,509 @@ void loop()
 {
   uint32_t millis_at_top = millis();
 
-  // Do all the maintenance work.
-  WifiReconnect(); // If not connected to WiFi, attempt to reconnect
+//   // Do all the maintenance work.
+//   WifiReconnect(); // If not connected to WiFi, attempt to reconnect
 
-#if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
-  MQTTLoopFrequently();
+// #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
+//   MQTTLoopFrequently();
 
-  bool MQTTCommandReceived =
-      MQTTCommandMainPowerReceived ||
-      MQTTCommandBackPowerReceived ||
-      MQTTCommandStateReceived ||
-      MQTTCommandBrightnessReceived ||
-      MQTTCommandMainBrightnessReceived ||
-      MQTTCommandBackBrightnessReceived ||
-      MQTTCommandPatternReceived ||
-      MQTTCommandBackPatternReceived ||
-      MQTTCommandBackColorPhaseReceived ||
-      MQTTCommandGraphicReceived ||
-      MQTTCommandMainGraphicReceived ||
-      MQTTCommandUseTwelveHoursReceived ||
-      MQTTCommandBlankZeroHoursReceived ||
-      MQTTCommandPulseBpmReceived ||
-      MQTTCommandBreathBpmReceived ||
-      MQTTCommandRainbowSecReceived;
+//   bool MQTTCommandReceived =
+//       MQTTCommandMainPowerReceived ||
+//       MQTTCommandBackPowerReceived ||
+//       MQTTCommandStateReceived ||
+//       MQTTCommandBrightnessReceived ||
+//       MQTTCommandMainBrightnessReceived ||
+//       MQTTCommandBackBrightnessReceived ||
+//       MQTTCommandPatternReceived ||
+//       MQTTCommandBackPatternReceived ||
+//       MQTTCommandBackColorPhaseReceived ||
+//       MQTTCommandGraphicReceived ||
+//       MQTTCommandMainGraphicReceived ||
+//       MQTTCommandUseTwelveHoursReceived ||
+//       MQTTCommandBlankZeroHoursReceived ||
+//       MQTTCommandPulseBpmReceived ||
+//       MQTTCommandBreathBpmReceived ||
+//       MQTTCommandRainbowSecReceived;
 
-  if (MQTTCommandMainPowerReceived)
-  {
-    MQTTCommandMainPowerReceived = false;
-    if (MQTTCommandMainPower)
-    {
-      // Perform reinit, enable, redraw only if displays are actually off. HA sends ON command together with clock face change which causes flickering.
-      if (!tfts.isEnabled())
-      {
-#ifdef HARDWARE_ELEKSTUBE_CLOCK // Original EleksTube hardware and direct clones need a reinit to wake up the displays properly
-        tfts.reinit();
-#else
-        tfts.enableAllDisplays(); // For all other clocks, just enable the displays
-#endif
-        updateClockDisplay(TFTs::force); // Redraw all the clock digits; needed because the displays was blanked before turning off
-      }
-    }
-    else
-    {
-      tfts.chip_select.setAll();
-      tfts.fillScreen(TFT_BLACK); // Blank the screens before turning off; needed for all clocks without a real power switch circuit to "simulate" the switched-off displays
-      tfts.disableAllDisplays();
-    }
-  }
+//   if (MQTTCommandMainPowerReceived)
+//   {
+//     MQTTCommandMainPowerReceived = false;
+//     if (MQTTCommandMainPower)
+//     {
+//       // Perform reinit, enable, redraw only if displays are actually off. HA sends ON command together with clock face change which causes flickering.
+//       if (!tfts.isEnabled())
+//       {
+// #ifdef HARDWARE_ELEKSTUBE_CLOCK // Original EleksTube hardware and direct clones need a reinit to wake up the displays properly
+//         tfts.reinit();
+// #else
+//         tfts.enableAllDisplays(); // For all other clocks, just enable the displays
+// #endif
+//         updateClockDisplay(TFTs::force); // Redraw all the clock digits; needed because the displays was blanked before turning off
+//       }
+//     }
+//     else
+//     {
+//       tfts.chip_select.setAll();
+//       tfts.fillScreen(TFT_BLACK); // Blank the screens before turning off; needed for all clocks without a real power switch circuit to "simulate" the switched-off displays
+//       tfts.disableAllDisplays();
+//     }
+//   }
 
-  if (MQTTCommandBackPowerReceived)
-  {
-    MQTTCommandBackPowerReceived = false;
-    if (MQTTCommandBackPower)
-    {
-      backlights.PowerOn();
-    }
-    else
-    {
-      backlights.PowerOff();
-    }
-  }
+//   if (MQTTCommandBackPowerReceived)
+//   {
+//     MQTTCommandBackPowerReceived = false;
+//     if (MQTTCommandBackPower)
+//     {
+//       backlights.PowerOn();
+//     }
+//     else
+//     {
+//       backlights.PowerOff();
+//     }
+//   }
 
-  if (MQTTCommandStateReceived)
-  {
-    MQTTCommandStateReceived = false;
-    randomSeed(millis());
-    uint8_t idx;
-    if (MQTTCommandState >= 90)
-    {
-      idx = random(1, tfts.NumberOfClockFaces + 1);
-    }
-    else
-    {
-      idx = (MQTTCommandState / 5) - 1;
-    } // 10..40 -> graphic 1..6
-    Serial.print("Graphic change request from MQTT; command: ");
-    Serial.print(MQTTCommandState);
-    Serial.print(", index: ");
-    Serial.println(idx);
-    uclock.setClockGraphicsIdx(idx);
-    tfts.current_graphic = uclock.getActiveGraphicIdx();
-    updateClockDisplay(TFTs::force); // Redraw everything
-  }
+//   if (MQTTCommandStateReceived)
+//   {
+//     MQTTCommandStateReceived = false;
+//     randomSeed(millis());
+//     uint8_t idx;
+//     if (MQTTCommandState >= 90)
+//     {
+//       idx = random(1, tfts.NumberOfClockFaces + 1);
+//     }
+//     else
+//     {
+//       idx = (MQTTCommandState / 5) - 1;
+//     } // 10..40 -> graphic 1..6
+//     Serial.print("Graphic change request from MQTT; command: ");
+//     Serial.print(MQTTCommandState);
+//     Serial.print(", index: ");
+//     Serial.println(idx);
+//     uclock.setClockGraphicsIdx(idx);
+//     tfts.current_graphic = uclock.getActiveGraphicIdx();
+//     updateClockDisplay(TFTs::force); // Redraw everything
+//   }
 
-  if (MQTTCommandMainBrightnessReceived)
-  {
-    MQTTCommandMainBrightnessReceived = false;
-    tfts.dimming = MQTTCommandMainBrightness;
-    tfts.ProcessUpdatedDimming();
-    updateClockDisplay(TFTs::force);
-  }
+//   if (MQTTCommandMainBrightnessReceived)
+//   {
+//     MQTTCommandMainBrightnessReceived = false;
+//     tfts.dimming = MQTTCommandMainBrightness;
+//     tfts.ProcessUpdatedDimming();
+//     updateClockDisplay(TFTs::force);
+//   }
 
-  if (MQTTCommandBackBrightnessReceived)
-  {
-    MQTTCommandBackBrightnessReceived = false;
-    backlights.setIntensity(uint8_t(MQTTCommandBackBrightness));
-  }
+//   if (MQTTCommandBackBrightnessReceived)
+//   {
+//     MQTTCommandBackBrightnessReceived = false;
+//     backlights.setIntensity(uint8_t(MQTTCommandBackBrightness));
+//   }
 
-  if (MQTTCommandPatternReceived)
-  {
-    MQTTCommandPatternReceived = false;
+//   if (MQTTCommandPatternReceived)
+//   {
+//     MQTTCommandPatternReceived = false;
 
-    for (int8_t i = 0; i < Backlights::num_patterns; i++)
-    {
-      Serial.print("New pattern ");
-      Serial.print(MQTTCommandPattern);
-      Serial.print(", check pattern ");
-      Serial.println(Backlights::patterns_str[i]);
-      if (strcmp(MQTTCommandPattern, (Backlights::patterns_str[i]).c_str()) == 0)
-      {
-        backlights.setPattern(Backlights::patterns(i));
-        break;
-      }
-    }
-  }
+//     for (int8_t i = 0; i < Backlights::num_patterns; i++)
+//     {
+//       Serial.print("New pattern ");
+//       Serial.print(MQTTCommandPattern);
+//       Serial.print(", check pattern ");
+//       Serial.println(Backlights::patterns_str[i]);
+//       if (strcmp(MQTTCommandPattern, (Backlights::patterns_str[i]).c_str()) == 0)
+//       {
+//         backlights.setPattern(Backlights::patterns(i));
+//         break;
+//       }
+//     }
+//   }
 
-  if (MQTTCommandBackPatternReceived)
-  {
-    MQTTCommandBackPatternReceived = false;
-    for (int8_t i = 0; i < Backlights::num_patterns; i++)
-    {
-      Serial.print("new pattern ");
-      Serial.print(MQTTCommandBackPattern);
-      Serial.print(", check pattern ");
-      Serial.println(Backlights::patterns_str[i]);
-      if (strcmp(MQTTCommandBackPattern, (Backlights::patterns_str[i]).c_str()) == 0)
-      {
-        backlights.setPattern(Backlights::patterns(i));
-        break;
-      }
-    }
-  }
+//   if (MQTTCommandBackPatternReceived)
+//   {
+//     MQTTCommandBackPatternReceived = false;
+//     for (int8_t i = 0; i < Backlights::num_patterns; i++)
+//     {
+//       Serial.print("new pattern ");
+//       Serial.print(MQTTCommandBackPattern);
+//       Serial.print(", check pattern ");
+//       Serial.println(Backlights::patterns_str[i]);
+//       if (strcmp(MQTTCommandBackPattern, (Backlights::patterns_str[i]).c_str()) == 0)
+//       {
+//         backlights.setPattern(Backlights::patterns(i));
+//         break;
+//       }
+//     }
+//   }
 
-  if (MQTTCommandBackColorPhaseReceived)
-  {
-    MQTTCommandBackColorPhaseReceived = false;
+//   if (MQTTCommandBackColorPhaseReceived)
+//   {
+//     MQTTCommandBackColorPhaseReceived = false;
 
-    backlights.setColorPhase(MQTTCommandBackColorPhase);
-  }
+//     backlights.setColorPhase(MQTTCommandBackColorPhase);
+//   }
 
-  if (MQTTCommandGraphicReceived)
-  {
-    MQTTCommandGraphicReceived = false;
+//   if (MQTTCommandGraphicReceived)
+//   {
+//     MQTTCommandGraphicReceived = false;
 
-    uclock.setClockGraphicsIdx(MQTTCommandGraphic);
-    tfts.current_graphic = uclock.getActiveGraphicIdx();
-    updateClockDisplay(TFTs::force); // Redraw everything
-  }
+//     uclock.setClockGraphicsIdx(MQTTCommandGraphic);
+//     tfts.current_graphic = uclock.getActiveGraphicIdx();
+//     updateClockDisplay(TFTs::force); // Redraw everything
+//   }
 
-  if (MQTTCommandMainGraphicReceived)
-  {
-    MQTTCommandMainGraphicReceived = false;
-    uclock.setClockGraphicsIdx(MQTTCommandMainGraphic);
-    tfts.current_graphic = uclock.getActiveGraphicIdx();
-    updateClockDisplay(TFTs::force); // Redraw everything
-  }
+//   if (MQTTCommandMainGraphicReceived)
+//   {
+//     MQTTCommandMainGraphicReceived = false;
+//     uclock.setClockGraphicsIdx(MQTTCommandMainGraphic);
+//     tfts.current_graphic = uclock.getActiveGraphicIdx();
+//     updateClockDisplay(TFTs::force); // Redraw everything
+//   }
 
-  if (MQTTCommandUseTwelveHoursReceived)
-  {
-    MQTTCommandUseTwelveHoursReceived = false;
-    uclock.setTwelveHour(MQTTCommandUseTwelveHours);
-  }
+//   if (MQTTCommandUseTwelveHoursReceived)
+//   {
+//     MQTTCommandUseTwelveHoursReceived = false;
+//     uclock.setTwelveHour(MQTTCommandUseTwelveHours);
+//   }
 
-  if (MQTTCommandBlankZeroHoursReceived)
-  {
-    MQTTCommandBlankZeroHoursReceived = false;
-    uclock.setBlankHoursZero(MQTTCommandBlankZeroHours);
-  }
+//   if (MQTTCommandBlankZeroHoursReceived)
+//   {
+//     MQTTCommandBlankZeroHoursReceived = false;
+//     uclock.setBlankHoursZero(MQTTCommandBlankZeroHours);
+//   }
 
-  if (MQTTCommandPulseBpmReceived)
-  {
-    MQTTCommandPulseBpmReceived = false;
-    backlights.setPulseRate(MQTTCommandPulseBpm);
-  }
+//   if (MQTTCommandPulseBpmReceived)
+//   {
+//     MQTTCommandPulseBpmReceived = false;
+//     backlights.setPulseRate(MQTTCommandPulseBpm);
+//   }
 
-  if (MQTTCommandBreathBpmReceived)
-  {
-    MQTTCommandBreathBpmReceived = false;
-    backlights.setBreathRate(MQTTCommandBreathBpm);
-  }
+//   if (MQTTCommandBreathBpmReceived)
+//   {
+//     MQTTCommandBreathBpmReceived = false;
+//     backlights.setBreathRate(MQTTCommandBreathBpm);
+//   }
 
-  if (MQTTCommandRainbowSecReceived)
-  {
-    MQTTCommandRainbowSecReceived = false;
-    backlights.setRainbowDuration(MQTTCommandRainbowSec);
-  }
+//   if (MQTTCommandRainbowSecReceived)
+//   {
+//     MQTTCommandRainbowSecReceived = false;
+//     backlights.setRainbowDuration(MQTTCommandRainbowSec);
+//   }
 
-  MQTTStatusMainPower = tfts.isEnabled();
-  MQTTStatusBackPower = backlights.getPower();
-  MQTTStatusState = (uclock.getActiveGraphicIdx() + 1) * 5; // 10
-  MQTTStatusBrightness = backlights.getIntensity();
-  MQTTStatusMainBrightness = tfts.dimming;
-  MQTTStatusBackBrightness = backlights.getIntensity();
-  strcpy(MQTTStatusPattern, backlights.getPatternStr().c_str());
-  strcpy(MQTTStatusBackPattern, backlights.getPatternStr().c_str());
-  backlights.getPatternStr().toCharArray(MQTTStatusBackPattern, backlights.getPatternStr().length() + 1);
-  MQTTStatusBackColorPhase = backlights.getColorPhase();
-  MQTTStatusGraphic = uclock.getActiveGraphicIdx();
-  MQTTStatusMainGraphic = uclock.getActiveGraphicIdx();
-  MQTTStatusUseTwelveHours = uclock.getTwelveHour();
-  MQTTStatusBlankZeroHours = uclock.getBlankHoursZero();
-  MQTTStatusPulseBpm = backlights.getPulseRate();
-  MQTTStatusBreathBpm = backlights.getBreathRate();
-  MQTTStatusRainbowSec = backlights.getRainbowDuration();
+//   MQTTStatusMainPower = tfts.isEnabled();
+//   MQTTStatusBackPower = backlights.getPower();
+//   MQTTStatusState = (uclock.getActiveGraphicIdx() + 1) * 5; // 10
+//   MQTTStatusBrightness = backlights.getIntensity();
+//   MQTTStatusMainBrightness = tfts.dimming;
+//   MQTTStatusBackBrightness = backlights.getIntensity();
+//   strcpy(MQTTStatusPattern, backlights.getPatternStr().c_str());
+//   strcpy(MQTTStatusBackPattern, backlights.getPatternStr().c_str());
+//   backlights.getPatternStr().toCharArray(MQTTStatusBackPattern, backlights.getPatternStr().length() + 1);
+//   MQTTStatusBackColorPhase = backlights.getColorPhase();
+//   MQTTStatusGraphic = uclock.getActiveGraphicIdx();
+//   MQTTStatusMainGraphic = uclock.getActiveGraphicIdx();
+//   MQTTStatusUseTwelveHours = uclock.getTwelveHour();
+//   MQTTStatusBlankZeroHours = uclock.getBlankHoursZero();
+//   MQTTStatusPulseBpm = backlights.getPulseRate();
+//   MQTTStatusBreathBpm = backlights.getBreathRate();
+//   MQTTStatusRainbowSec = backlights.getRainbowDuration();
 
-  if (MQTTCommandReceived)
-  {
-    lastMQTTCommandExecuted = millis();
+//   if (MQTTCommandReceived)
+//   {
+//     lastMQTTCommandExecuted = millis();
 
-    MQTTReportBackEverything(true);
-  }
+//     MQTTReportBackEverything(true);
+//   }
 
-  if (lastMQTTCommandExecuted != -1)
-  {
-    if (((millis() - lastMQTTCommandExecuted) > (MQTT_SAVE_PREFERENCES_AFTER_SEC * 1000)) && menu.getState() == Menu::idle)
-    { // Save the config after a while (default is 60 seconds) if no new MQTT command was received and we are not in the menu.
-      lastMQTTCommandExecuted = -1;
+//   if (lastMQTTCommandExecuted != -1)
+//   {
+//     if (((millis() - lastMQTTCommandExecuted) > (MQTT_SAVE_PREFERENCES_AFTER_SEC * 1000)) && menu.getState() == Menu::idle)
+//     { // Save the config after a while (default is 60 seconds) if no new MQTT command was received and we are not in the menu.
+//       lastMQTTCommandExecuted = -1;
 
-      Serial.print("Saving config...");
-      stored_config.save();
-      Serial.println(" Done.");
-    }
-  }
-#endif
+//       Serial.print("Saving config...");
+//       stored_config.save();
+//       Serial.println(" Done.");
+//     }
+//   }
+// #endif
 
-  buttons.loop();
+//   buttons.loop();
 
-#ifdef HARDWARE_NOVELLIFE_CLOCK
-  HandleGestureInterupt();
-#endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
+// #ifdef HARDWARE_NOVELLIFE_CLOCK
+//   HandleGestureInterupt();
+// #endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
 
-// if the device has one button only, no power button functionality is needed!
-#ifndef ONE_BUTTON_ONLY_MENU
-  // Power button: If in menu, exit menu. Else turn off displays and backlight.
-  if (buttons.power.isDownEdge() && (menu.getState() == Menu::idle))
-  { // Power button was pressed: if in the menu, exit menu, else turn off displays and backlight.
-    if (tfts.isEnabled())
-    { // Check if TFT state is enabled and switch OFF the LCDs and LED backlights.
-      tfts.chip_select.setAll();
-      tfts.fillScreen(TFT_BLACK); // Blank the screens before turning off; needed for all clocks without a real power switch circuit
-      tfts.disableAllDisplays();
-      backlights.PowerOff();
-    }
-    else
-    {                           // TFT state is disabled, turn ON the displays and backlights
-#ifdef HARDWARE_ELEKSTUBE_CLOCK // Original EleksTube hardware and direct clones need a reinit to wake up the displays properly
-      tfts.reinit();
-#else
-      tfts.enableAllDisplays(); // For all other clocks, just enable the displays
-#endif
-      updateClockDisplay(TFTs::force); // Redraw all the clock digits; needed because the displays was blanked before turning off
-      backlights.PowerOn();
-    }
-  }
-#endif // ONE_BUTTON_ONLY_MENU
+// // if the device has one button only, no power button functionality is needed!
+// #ifndef ONE_BUTTON_ONLY_MENU
+//   // Power button: If in menu, exit menu. Else turn off displays and backlight.
+//   if (buttons.power.isDownEdge() && (menu.getState() == Menu::idle))
+//   { // Power button was pressed: if in the menu, exit menu, else turn off displays and backlight.
+//     if (tfts.isEnabled())
+//     { // Check if TFT state is enabled and switch OFF the LCDs and LED backlights.
+//       tfts.chip_select.setAll();
+//       tfts.fillScreen(TFT_BLACK); // Blank the screens before turning off; needed for all clocks without a real power switch circuit
+//       tfts.disableAllDisplays();
+//       backlights.PowerOff();
+//     }
+//     else
+//     {                           // TFT state is disabled, turn ON the displays and backlights
+// #ifdef HARDWARE_ELEKSTUBE_CLOCK // Original EleksTube hardware and direct clones need a reinit to wake up the displays properly
+//       tfts.reinit();
+// #else
+//       tfts.enableAllDisplays(); // For all other clocks, just enable the displays
+// #endif
+//       updateClockDisplay(TFTs::force); // Redraw all the clock digits; needed because the displays was blanked before turning off
+//       backlights.PowerOn();
+//     }
+//   }
+// #endif // ONE_BUTTON_ONLY_MENU
 
-  menu.loop(buttons); // Must be called after buttons.loop()
-  backlights.loop();
-  uclock.loop();
+//   menu.loop(buttons); // Must be called after buttons.loop()
+//   backlights.loop();
+//   uclock.loop();
 
-#ifdef DIMMING
-  checkDimmingNeeded(); // Night or day time brightness change
-#endif
+// #ifdef DIMMING
+//   checkDimmingNeeded(); // Night or day time brightness change
+// #endif
 
-  updateClockDisplay(); // Draw only the changed clock digits!
+// updateClockDisplay(); // Draw only the changed clock digits!
 
-#ifdef GEOLOCATION_ENABLED
-  checkUpdateGeoLocNeeded(); // Check if it is time to update geolocation based timezone offset (just once per day)
-#endif
+// #ifdef GEOLOCATION_ENABLED
+//   checkUpdateGeoLocNeeded(); // Check if it is time to update geolocation based timezone offset (just once per day)
+// #endif
 
-  // Menu
-  if (menu.stateChanged() && tfts.isEnabled())
-  {
-    Menu::states menu_state = menu.getState();
-    int8_t menu_change = menu.getChange();
+//   // Menu
+//   if (menu.stateChanged() && tfts.isEnabled())
+//   {
+//     Menu::states menu_state = menu.getState();
+//     int8_t menu_change = menu.getChange();
 
-    if (menu_state == Menu::idle)
-    {
-      // We just changed into idle, so force a redraw of all clock digits and save the config.
-      updateClockDisplay(TFTs::force); // Redraw everything
-      Serial.println();
-      Serial.print("Saving config! Triggered from leaving menu...");
-      stored_config.save();
-      Serial.println(" Done.");
-    }
-    else
-    {
-      // Backlight Pattern
-      if (menu_state == Menu::backlight_pattern)
-      {
-        if (menu_change != 0)
-        {
-          backlights.setNextPattern(menu_change);
-        }
-        setupMenu();
-        tfts.println("Pattern:");
-        tfts.println(backlights.getPatternStr());
-      }
-      // Backlight Color
-      else if (menu_state == Menu::pattern_color)
-      {
-        if (menu_change != 0)
-        {
-          backlights.adjustColorPhase(menu_change * 16);
-        }
-        setupMenu();
-        tfts.println("Color:");
-        tfts.printf("%06X\n", backlights.getColor());
-      }
-      // Backlight Intensity
-      else if (menu_state == Menu::backlight_intensity)
-      {
-        if (menu_change != 0)
-        {
-          backlights.adjustIntensity(menu_change);
-        }
-        setupMenu();
-        tfts.println("Intensity:");
-        tfts.println(backlights.getIntensity());
-      }
-      // 12 Hour or 24 Hour mode?
-      else if (menu_state == Menu::twelve_hour)
-      {
-        if (menu_change != 0)
-        {
-          uclock.toggleTwelveHour();
-          tfts.setDigit(HOURS_TENS, uclock.getHoursTens(), TFTs::force);
-          tfts.setDigit(HOURS_ONES, uclock.getHoursOnes(), TFTs::force);
-        }
-        setupMenu();
-        tfts.println("Hour format");
-        tfts.println(uclock.getTwelveHour() ? "12 hour" : "24 hour");
-      }
-      // Blank leading zeros on the hours?
-      else if (menu_state == Menu::blank_hours_zero)
-      {
-        if (menu_change != 0)
-        {
-          uclock.toggleBlankHoursZero();
-          tfts.setDigit(HOURS_TENS, uclock.getHoursTens(), TFTs::force);
-        }
-        setupMenu();
-        tfts.println("Blank zero?");
-        tfts.println(uclock.getBlankHoursZero() ? "yes" : "no");
-      }
-      // UTC Offset, hours
-      else if (menu_state == Menu::utc_offset_hour)
-      {
-        time_t currOffset = uclock.getTimeZoneOffset();
+//     if (menu_state == Menu::idle)
+//     {
+//       // We just changed into idle, so force a redraw of all clock digits and save the config.
+//       updateClockDisplay(TFTs::force); // Redraw everything
+//       Serial.println();
+//       Serial.print("Saving config! Triggered from leaving menu...");
+//       stored_config.save();
+//       Serial.println(" Done.");
+//     }
+//     else
+//     {
+//       // Backlight Pattern
+//       if (menu_state == Menu::backlight_pattern)
+//       {
+//         if (menu_change != 0)
+//         {
+//           backlights.setNextPattern(menu_change);
+//         }
+//         setupMenu();
+//         tfts.println("Pattern:");
+//         tfts.println(backlights.getPatternStr());
+//       }
+//       // Backlight Color
+//       else if (menu_state == Menu::pattern_color)
+//       {
+//         if (menu_change != 0)
+//         {
+//           backlights.adjustColorPhase(menu_change * 16);
+//         }
+//         setupMenu();
+//         tfts.println("Color:");
+//         tfts.printf("%06X\n", backlights.getColor());
+//       }
+//       // Backlight Intensity
+//       else if (menu_state == Menu::backlight_intensity)
+//       {
+//         if (menu_change != 0)
+//         {
+//           backlights.adjustIntensity(menu_change);
+//         }
+//         setupMenu();
+//         tfts.println("Intensity:");
+//         tfts.println(backlights.getIntensity());
+//       }
+//       // 12 Hour or 24 Hour mode?
+//       else if (menu_state == Menu::twelve_hour)
+//       {
+//         if (menu_change != 0)
+//         {
+//           uclock.toggleTwelveHour();
+//           tfts.setDigit(HOURS_TENS, uclock.getHoursTens(), TFTs::force);
+//           tfts.setDigit(HOURS_ONES, uclock.getHoursOnes(), TFTs::force);
+//         }
+//         setupMenu();
+//         tfts.println("Hour format");
+//         tfts.println(uclock.getTwelveHour() ? "12 hour" : "24 hour");
+//       }
+//       // Blank leading zeros on the hours?
+//       else if (menu_state == Menu::blank_hours_zero)
+//       {
+//         if (menu_change != 0)
+//         {
+//           uclock.toggleBlankHoursZero();
+//           tfts.setDigit(HOURS_TENS, uclock.getHoursTens(), TFTs::force);
+//         }
+//         setupMenu();
+//         tfts.println("Blank zero?");
+//         tfts.println(uclock.getBlankHoursZero() ? "yes" : "no");
+//       }
+//       // UTC Offset, hours
+//       else if (menu_state == Menu::utc_offset_hour)
+//       {
+//         time_t currOffset = uclock.getTimeZoneOffset();
 
-        if (menu_change != 0)
-        {
-          // calculate the new offset
-          time_t newOffsetAdjustmentValue = menu_change * 3600;
-          time_t newOffset = currOffset + newOffsetAdjustmentValue;
+//         if (menu_change != 0)
+//         {
+//           // calculate the new offset
+//           time_t newOffsetAdjustmentValue = menu_change * 3600;
+//           time_t newOffset = currOffset + newOffsetAdjustmentValue;
 
-          // check if the new offset is within the allowed range of -12 to +12 hours
-          // If the minutes part of the offset is 0, we want to change from +12 to -12 or vice versa (without changing the shown time on the displays)
-          // If the minutes part is not 0: We want to wrap around to the other side and change the minutes part (i.e. from 11:45 directly to -11:15)
-          bool offsetWrapAround = false;
-          if (newOffset > 43200)
-          { // we just "passed" +12 hours -> set to -12 hours
-            newOffset = -43200;
-            offsetWrapAround = true;
-          }
-          if (newOffset < -43200 && !offsetWrapAround)
-          { // we just passed -12 hours -> set to +12 hours
-            newOffset = 43200;
-          }
+//           // check if the new offset is within the allowed range of -12 to +12 hours
+//           // If the minutes part of the offset is 0, we want to change from +12 to -12 or vice versa (without changing the shown time on the displays)
+//           // If the minutes part is not 0: We want to wrap around to the other side and change the minutes part (i.e. from 11:45 directly to -11:15)
+//           bool offsetWrapAround = false;
+//           if (newOffset > 43200)
+//           { // we just "passed" +12 hours -> set to -12 hours
+//             newOffset = -43200;
+//             offsetWrapAround = true;
+//           }
+//           if (newOffset < -43200 && !offsetWrapAround)
+//           { // we just passed -12 hours -> set to +12 hours
+//             newOffset = 43200;
+//           }
 
-          uclock.setTimeZoneOffset(newOffset); // set the new offset
-          uclock.loop();                       // update the clock time and redraw the changed digits -> will "flicker" the menu for a short time, but without, menu is not redrawn correctly
-#ifdef DIMMING
-          checkDimmingNeeded(); // check if we need dimming for the night, because timezone was changed
-#endif
-          currOffset = uclock.getTimeZoneOffset(); // get the new offset as current offset for the menu
-        }
-        setupMenu();
-        tfts.println("UTC Offset");
-        tfts.println(" +/- Hour");
-        char offsetStr[11];
-        int8_t offset_hour = currOffset / 3600;
-        int8_t offset_min = (currOffset % 3600) / 60;
-        if (offset_min <= 0 && offset_hour <= 0)
-        { // negative timezone value -> Make them positive and print a minus in front
-          offset_min = -offset_min;
-          offset_hour = -offset_hour;
-          snprintf(offsetStr, sizeof(offsetStr), "-%d:%02d", offset_hour, offset_min);
-        }
-        else
-        {
-          if (offset_min >= 0 && offset_hour >= 0)
-          { // postive timezone value for hours and minutes -> show a plus in front
-            snprintf(offsetStr, sizeof(offsetStr), "+%d:%02d", offset_hour, offset_min);
-          }
-        }
-        if (offset_min == 0 && offset_hour == 0)
-        { // we don't want a sign in front of the 0:00 case
-          snprintf(offsetStr, sizeof(offsetStr), "%d:%02d", offset_hour, offset_min);
-        }
-        tfts.println(offsetStr);
-      } // END UTC Offset, hours
-      // BEGIN UTC Offset, 15 minutes
-      else if (menu_state == Menu::utc_offset_15m)
-      {
-        time_t currOffset = uclock.getTimeZoneOffset();
+//           uclock.setTimeZoneOffset(newOffset); // set the new offset
+//           uclock.loop();                       // update the clock time and redraw the changed digits -> will "flicker" the menu for a short time, but without, menu is not redrawn correctly
+// #ifdef DIMMING
+//           checkDimmingNeeded(); // check if we need dimming for the night, because timezone was changed
+// #endif
+//           currOffset = uclock.getTimeZoneOffset(); // get the new offset as current offset for the menu
+//         }
+//         setupMenu();
+//         tfts.println("UTC Offset");
+//         tfts.println(" +/- Hour");
+//         char offsetStr[11];
+//         int8_t offset_hour = currOffset / 3600;
+//         int8_t offset_min = (currOffset % 3600) / 60;
+//         if (offset_min <= 0 && offset_hour <= 0)
+//         { // negative timezone value -> Make them positive and print a minus in front
+//           offset_min = -offset_min;
+//           offset_hour = -offset_hour;
+//           snprintf(offsetStr, sizeof(offsetStr), "-%d:%02d", offset_hour, offset_min);
+//         }
+//         else
+//         {
+//           if (offset_min >= 0 && offset_hour >= 0)
+//           { // postive timezone value for hours and minutes -> show a plus in front
+//             snprintf(offsetStr, sizeof(offsetStr), "+%d:%02d", offset_hour, offset_min);
+//           }
+//         }
+//         if (offset_min == 0 && offset_hour == 0)
+//         { // we don't want a sign in front of the 0:00 case
+//           snprintf(offsetStr, sizeof(offsetStr), "%d:%02d", offset_hour, offset_min);
+//         }
+//         tfts.println(offsetStr);
+//       } // END UTC Offset, hours
+//       // BEGIN UTC Offset, 15 minutes
+//       else if (menu_state == Menu::utc_offset_15m)
+//       {
+//         time_t currOffset = uclock.getTimeZoneOffset();
 
-        if (menu_change != 0)
-        {
-          time_t newOffsetAdjustmentValue = menu_change * 900; // calculate the new offset
-          time_t newOffset = currOffset + newOffsetAdjustmentValue;
+//         if (menu_change != 0)
+//         {
+//           time_t newOffsetAdjustmentValue = menu_change * 900; // calculate the new offset
+//           time_t newOffset = currOffset + newOffsetAdjustmentValue;
 
-          // check if the new offset is within the allowed range of -12 to +12 hours
-          // same behaviour as for the +/-1 hour offset, but with 15 minutes steps
-          bool offsetWrapAround = false;
-          if (newOffset > 43200)
-          { // we just "passed" +12 hours -> set to -12 hours
-            newOffset = -43200;
-            offsetWrapAround = true;
-          }
-          if (newOffset < -43200 && !offsetWrapAround)
-          { // we just passed -12 hours -> set to +12 hours
-            newOffset = 43200;
-          }
+//           // check if the new offset is within the allowed range of -12 to +12 hours
+//           // same behaviour as for the +/-1 hour offset, but with 15 minutes steps
+//           bool offsetWrapAround = false;
+//           if (newOffset > 43200)
+//           { // we just "passed" +12 hours -> set to -12 hours
+//             newOffset = -43200;
+//             offsetWrapAround = true;
+//           }
+//           if (newOffset < -43200 && !offsetWrapAround)
+//           { // we just passed -12 hours -> set to +12 hours
+//             newOffset = 43200;
+//           }
 
-          uclock.setTimeZoneOffset(newOffset); // set the new offset
-          uclock.loop();                       // update the clock time and redraw the changed digits -> will "flicker" the menu for a short time, but without, menu is not redrawn correctly
-#ifdef DIMMING
-          checkDimmingNeeded(); // check if we need dimming for the night, because timezone was changed
-#endif
-          currOffset = uclock.getTimeZoneOffset(); // get the new offset as current offset for the menu
-        }
-        setupMenu();
-        tfts.println("UTC Offset");
-        tfts.println(" +/- 15m");
-        char offsetStr[11];
-        int8_t offset_hour = currOffset / 3600;
-        int8_t offset_min = (currOffset % 3600) / 60;
-        if (offset_min <= 0 && offset_hour <= 0)
-        { // negative timezone value -> Make them positive and print a minus in front
-          offset_min = -offset_min;
-          offset_hour = -offset_hour;
-          snprintf(offsetStr, sizeof(offsetStr), "-%d:%02d", offset_hour, offset_min);
-        }
-        else
-        {
-          if (offset_min >= 0 && offset_hour >= 0)
-          { // postive timezone value for hours and minutes -> show a plus in front
-            snprintf(offsetStr, sizeof(offsetStr), "+%d:%02d", offset_hour, offset_min);
-          }
-        }
-        if (offset_min == 0 && offset_hour == 0)
-        { // we don't want a sign in front of the 0:00 case so overwrite the string
-          snprintf(offsetStr, sizeof(offsetStr), "%d:%02d", offset_hour, offset_min);
-        }
-        tfts.println(offsetStr);
-      } // END UTC Offset, 15 minutes
-      // select clock face
-      else if (menu_state == Menu::selected_graphic)
-      {
-        if (menu_change != 0)
-        {
-          uclock.adjustClockGraphicsIdx(menu_change);
+//           uclock.setTimeZoneOffset(newOffset); // set the new offset
+//           uclock.loop();                       // update the clock time and redraw the changed digits -> will "flicker" the menu for a short time, but without, menu is not redrawn correctly
+// #ifdef DIMMING
+//           checkDimmingNeeded(); // check if we need dimming for the night, because timezone was changed
+// #endif
+//           currOffset = uclock.getTimeZoneOffset(); // get the new offset as current offset for the menu
+//         }
+//         setupMenu();
+//         tfts.println("UTC Offset");
+//         tfts.println(" +/- 15m");
+//         char offsetStr[11];
+//         int8_t offset_hour = currOffset / 3600;
+//         int8_t offset_min = (currOffset % 3600) / 60;
+//         if (offset_min <= 0 && offset_hour <= 0)
+//         { // negative timezone value -> Make them positive and print a minus in front
+//           offset_min = -offset_min;
+//           offset_hour = -offset_hour;
+//           snprintf(offsetStr, sizeof(offsetStr), "-%d:%02d", offset_hour, offset_min);
+//         }
+//         else
+//         {
+//           if (offset_min >= 0 && offset_hour >= 0)
+//           { // postive timezone value for hours and minutes -> show a plus in front
+//             snprintf(offsetStr, sizeof(offsetStr), "+%d:%02d", offset_hour, offset_min);
+//           }
+//         }
+//         if (offset_min == 0 && offset_hour == 0)
+//         { // we don't want a sign in front of the 0:00 case so overwrite the string
+//           snprintf(offsetStr, sizeof(offsetStr), "%d:%02d", offset_hour, offset_min);
+//         }
+//         tfts.println(offsetStr);
+//       } // END UTC Offset, 15 minutes
+//       // select clock face
+//       else if (menu_state == Menu::selected_graphic)
+//       {
+//         if (menu_change != 0)
+//         {
+//           uclock.adjustClockGraphicsIdx(menu_change);
 
-          if (tfts.current_graphic != uclock.getActiveGraphicIdx())
-          {
-            tfts.current_graphic = uclock.getActiveGraphicIdx();
-            updateClockDisplay(TFTs::force); // Redraw everything
-          }
-        }
-        setupMenu();
-        tfts.println("Selected");
-        tfts.println("graphic:");
-        tfts.printf("    %d\n", uclock.getActiveGraphicIdx());
-      }
-#ifdef WIFI_USE_WPS //  WPS code
-      // connect to WiFi using wps pushbutton mode
-      else if (menu_state == Menu::start_wps)
-      {
-        if (menu_change != 0)
-        { // button was pressed
-          if (menu_change < 0)
-          { // left button
-            Serial.println("WiFi WPS start request");
-            tfts.clear();
-            tfts.fillScreen(TFT_BLACK);
-            tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-            tfts.setCursor(0, 0, 4); // Font 4. 26 pixel high
-            WiFiStartWps();
-          }
-        }
-        setupMenu();
-        tfts.println("Connect to WiFi?");
-        tfts.println("Left=WPS");
-      }
-#endif
-    }
-  } // if (menu.stateChanged())
+//           if (tfts.current_graphic != uclock.getActiveGraphicIdx())
+//           {
+//             tfts.current_graphic = uclock.getActiveGraphicIdx();
+//             updateClockDisplay(TFTs::force); // Redraw everything
+//           }
+//         }
+//         setupMenu();
+//         tfts.println("Selected");
+//         tfts.println("graphic:");
+//         tfts.printf("    %d\n", uclock.getActiveGraphicIdx());
+//       }
+// #ifdef WIFI_USE_WPS //  WPS code
+//       // connect to WiFi using wps pushbutton mode
+//       else if (menu_state == Menu::start_wps)
+//       {
+//         if (menu_change != 0)
+//         { // button was pressed
+//           if (menu_change < 0)
+//           { // left button
+//             Serial.println("WiFi WPS start request");
+//             tfts.clear();
+//             tfts.fillScreen(TFT_BLACK);
+//             tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+//             tfts.setCursor(0, 0, 4); // Font 4. 26 pixel high
+//             WiFiStartWps();
+//           }
+//         }
+//         setupMenu();
+//         tfts.println("Connect to WiFi?");
+//         tfts.println("Left=WPS");
+//       }
+// #endif
+//     }
+//   } // if (menu.stateChanged())
 
   uint32_t time_in_loop = millis() - millis_at_top;
   if (time_in_loop < 20)
   {
     // we have free time (loop run took under 20 ms), spend it for loading next image into buffer
-    tfts.LoadNextImage();
+    // tfts.LoadNextImage();
 
     // Do we still have extra time? -> normally not in the same loop where image loading was done, but in the next loops
     time_in_loop = millis() - millis_at_top;
@@ -954,257 +1097,259 @@ void loop()
 #endif // DEBUG_OUTPUT
 }
 
-#if defined(RTC_SCL_PIN) && defined(RTC_SDA_PIN)
-void scanRtcI2CBus(void)
-{
-  Serial.printf("Scanning I2C bus (SDA=%d, SCL=%d)...\n", RTC_SDA_PIN, RTC_SCL_PIN);
-  Wire.begin(RTC_SDA_PIN, RTC_SCL_PIN);
-  uint8_t devicesFound = 0;
-  for (uint8_t address = 1; address < 0x78; ++address)
-  {
-    Wire.beginTransmission(address);
-    uint8_t error = Wire.endTransmission();
-    if (error == 0)
-    {
-      Serial.printf("I2C device found at 0x%02X\n", address);
-      devicesFound++;
-    }
-    else if (error == 4)
-    {
-      Serial.printf("Unknown error at 0x%02X\n", address);
-    }
-    delay(2);
-  }
-  if (devicesFound == 0)
-  {
-    Serial.println("No I2C devices found");
-  }
-  Serial.println("I2C scan done");
-}
-#endif
+// #if defined(RTC_SCL_PIN) && defined(RTC_SDA_PIN)
+// void scanRtcI2CBus(void)
+// {
+//   Serial.printf("Scanning I2C bus (SDA=%d, SCL=%d)...\n", RTC_SDA_PIN, RTC_SCL_PIN);
+//   Wire.begin(RTC_SDA_PIN, RTC_SCL_PIN);
+//   uint8_t devicesFound = 0;
+//   for (uint8_t address = 1; address < 0x78; ++address)
+//   {
+//     Wire.beginTransmission(address);
+//     uint8_t error = Wire.endTransmission();
+//     if (error == 0)
+//     {
+//       Serial.printf("I2C device found at 0x%02X\n", address);
+//       devicesFound++;
+//     }
+//     else if (error == 4)
+//     {
+//       Serial.printf("Unknown error at 0x%02X\n", address);
+//     }
+//     delay(2);
+//   }
+//   if (devicesFound == 0)
+//   {
+//     Serial.println("No I2C devices found");
+//   }
+//   Serial.println("I2C scan done");
+// }
+// #endif
 
-void setupMenu()
-{                                  // Prepare drawing of the menu texts
-  tfts.chip_select.setHoursTens(); // use most left display
-  tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-  tfts.fillRect(0, 120, 135, 120, TFT_BLACK); // use lower half of the display, fill with black
-  tfts.setCursor(0, 124, 4);                  // use font 4 - 26 pixel high - for the menu text
-}
+// void setupMenu()
+// {                                  // Prepare drawing of the menu texts
+//   tfts.chip_select.setHoursTens(); // use most left display
+//   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+//   tfts.fillRect(0, 120, 135, 120, TFT_BLACK); // use lower half of the display, fill with black
+//   tfts.setCursor(0, 124, 4);                  // use font 4 - 26 pixel high - for the menu text
+// }
 
-#ifdef DIMMING
-bool isNightTime(uint8_t current_hour)
-{ // check the actual hour is in the defined "night time"
-  if (DAY_TIME < NIGHT_TIME)
-  { // "Night" spans across midnight so it is split between two days
-    return (current_hour < DAY_TIME) || (current_hour >= NIGHT_TIME);
-  }
-  else
-  { // "Night" starts after midnight, entirely contained within the current day
-    return (current_hour >= NIGHT_TIME) && (current_hour < DAY_TIME);
-  }
-}
+// #ifdef DIMMING
+// bool isNightTime(uint8_t current_hour)
+// { // check the actual hour is in the defined "night time"
+//   if (DAY_TIME < NIGHT_TIME)
+//   { // "Night" spans across midnight so it is split between two days
+//     return (current_hour < DAY_TIME) || (current_hour >= NIGHT_TIME);
+//   }
+//   else
+//   { // "Night" starts after midnight, entirely contained within the current day
+//     return (current_hour >= NIGHT_TIME) && (current_hour < DAY_TIME);
+//   }
+// }
 
-void checkDimmingNeeded()
-{                                             // dim the display in the defined night time
-  uint8_t current_hour = uclock.getHour24();  // for internal calcs we always use 24h format
-  isDimmingNeeded = current_hour != hour_old; // check, if the hour has changed since last loop (from time passing by or from timezone change)
-  if (isDimmingNeeded)
-  {
-    Serial.print("Current hour = ");
-    Serial.print(current_hour);
-    Serial.print(", Night Time Start = ");
-    Serial.print(NIGHT_TIME);
-    Serial.print(", Day Time Start = ");
-    Serial.println(DAY_TIME);
-    if (isNightTime(current_hour))
-    { // check if it is in the defined night time
-      Serial.println("Set to night time mode (dimmed)!");
-      tfts.dimming = TFT_DIMMED_INTENSITY;
-      tfts.ProcessUpdatedDimming();
-      backlights.setDimming(true);
-    }
-    else
-    {
-      Serial.println("Set to day time mode (max brightness)!");
-      tfts.dimming = 255; // 0..255
-      tfts.ProcessUpdatedDimming();
-      backlights.setDimming(false);
-    }
-    updateClockDisplay(TFTs::force); // Redraw everything; software dimming will be done here
-    hour_old = current_hour;
-  }
-}
-#endif // DIMMING
+// void checkDimmingNeeded()
+// {                                             // dim the display in the defined night time
+//   uint8_t current_hour = uclock.getHour24();  // for internal calcs we always use 24h format
+//   isDimmingNeeded = current_hour != hour_old; // check, if the hour has changed since last loop (from time passing by or from timezone change)
+//   if (isDimmingNeeded)
+//   {
+//     Serial.print("Current hour = ");
+//     Serial.print(current_hour);
+//     Serial.print(", Night Time Start = ");
+//     Serial.print(NIGHT_TIME);
+//     Serial.print(", Day Time Start = ");
+//     Serial.println(DAY_TIME);
+//     if (isNightTime(current_hour))
+//     { // check if it is in the defined night time
+//       Serial.println("Set to night time mode (dimmed)!");
+//       tfts.dimming = TFT_DIMMED_INTENSITY;
+//       tfts.ProcessUpdatedDimming();
+//       backlights.setDimming(true);
+//     }
+//     else
+//     {
+//       Serial.println("Set to day time mode (max brightness)!");
+//       tfts.dimming = 255; // 0..255
+//       tfts.ProcessUpdatedDimming();
+//       backlights.setDimming(false);
+//     }
+//     updateClockDisplay(TFTs::force); // Redraw everything; software dimming will be done here
+//     hour_old = current_hour;
+//   }
+// }
+// #endif // DIMMING
 
-#ifdef GEOLOCATION_ENABLED
-bool GetGeoLocationTimeZoneOffset()
-{
-  Serial.println("\nStarting Geolocation API query...");
+// #ifdef GEOLOCATION_ENABLED
+// bool GetGeoLocationTimeZoneOffset()
+// {
+//   Serial.println("\nStarting Geolocation API query...");
 
-#ifdef GEOLOCATION_PROVIDER_IPAPI
-  // Use IP-API.com -> Free tier has a 45 requests per minute limit!
-  IPGeolocation location(GEOLOCATION_API_KEY, "IPAPI");
-#elif defined(GEOLOCATION_PROVIDER_IPGEOLOCATION)
-  // Use ipgeolocation.io -> Free tier has 1,000 requests per month limit!
-  IPGeolocation location(GEOLOCATION_API_KEY, "IPGEOLOCATION");
-#elif defined(GEOLOCATION_PROVIDER_ABSTRACTAPI)
-  // Use AbstractAPI.com -> Free tier has 1,000 requests AT ALL per account!
-  IPGeolocation location(GEOLOCATION_API_KEY, "ABSTRACTAPI");
-#else
-  // No provider defined -> default to IP-API.com
-  IPGeolocation location(GEOLOCATION_API_KEY, "IPAPI");
-#endif
+// #ifdef GEOLOCATION_PROVIDER_IPAPI
+//   // Use IP-API.com -> Free tier has a 45 requests per minute limit!
+//   IPGeolocation location(GEOLOCATION_API_KEY, "IPAPI");
+// #elif defined(GEOLOCATION_PROVIDER_IPGEOLOCATION)
+//   // Use ipgeolocation.io -> Free tier has 1,000 requests per month limit!
+//   IPGeolocation location(GEOLOCATION_API_KEY, "IPGEOLOCATION");
+// #elif defined(GEOLOCATION_PROVIDER_ABSTRACTAPI)
+//   // Use AbstractAPI.com -> Free tier has 1,000 requests AT ALL per account!
+//   IPGeolocation location(GEOLOCATION_API_KEY, "ABSTRACTAPI");
+// #else
+//   // No provider defined -> default to IP-API.com
+//   IPGeolocation location(GEOLOCATION_API_KEY, "IPAPI");
+// #endif
 
-  IPGeo ipg;
-  if (location.updateStatus(&ipg))
-  {
-    Serial.println(String("Geo Time Zone: ") + String(ipg.tz));
-    Serial.println(String("Geo TZ Offset: ") + String(ipg.offset));          // primary value of interest
-    Serial.println(String("Geo Current Time: ") + String(ipg.current_time)); // currently unused but handy for debugging
-    const double rawOffsetHours = ipg.offset;
-    const int32_t newOffsetSeconds = static_cast<int32_t>(lround(rawOffsetHours * 3600.0));
+//   IPGeo ipg;
+//   if (location.updateStatus(&ipg))
+//   {
+//     Serial.println(String("Geo Time Zone: ") + String(ipg.tz));
+//     Serial.println(String("Geo TZ Offset: ") + String(ipg.offset));          // primary value of interest
+//     Serial.println(String("Geo Current Time: ") + String(ipg.current_time)); // currently unused but handy for debugging
+//     const double rawOffsetHours = ipg.offset;
+//     const int32_t newOffsetSeconds = static_cast<int32_t>(lround(rawOffsetHours * 3600.0));
 
-    if ((newOffsetSeconds % (15 * 60)) != 0)
-    {
-      Serial.print("GeoLoc rejected offset not aligned to 15 min grid (seconds): ");
-      Serial.println(newOffsetSeconds);
-      return false;
-    }
+//     if ((newOffsetSeconds % (15 * 60)) != 0)
+//     {
+//       Serial.print("GeoLoc rejected offset not aligned to 15 min grid (seconds): ");
+//       Serial.println(newOffsetSeconds);
+//       return false;
+//     }
 
-    const bool hasValidStoredOffset = stored_config.config.uclock.is_valid == StoredConfig::valid;
-    const int32_t previousOffsetSeconds = static_cast<int32_t>(stored_config.config.uclock.time_zone_offset);
-    const int32_t defaultOffsetSeconds = 1 * 3600;
+//     const bool hasValidStoredOffset = stored_config.config.uclock.is_valid == StoredConfig::valid;
+//     const int32_t previousOffsetSeconds = static_cast<int32_t>(stored_config.config.uclock.time_zone_offset);
+//     const int32_t defaultOffsetSeconds = 1 * 3600;
 
-    if (hasValidStoredOffset && previousOffsetSeconds != 0 && previousOffsetSeconds != defaultOffsetSeconds)
-    {
-      int32_t diff = newOffsetSeconds - previousOffsetSeconds;
-      if (diff < 0)
-      {
-        diff = -diff;
-      }
+//     if (hasValidStoredOffset && previousOffsetSeconds != 0 && previousOffsetSeconds != defaultOffsetSeconds)
+//     {
+//       int32_t diff = newOffsetSeconds - previousOffsetSeconds;
+//       if (diff < 0)
+//       {
+//         diff = -diff;
+//       }
 
-      if (diff > (2 * 3600)) // more than 2 hours difference -> reject
-      {
-        Serial.print("GeoLoc offset deviates by more than 2h from stored value (prev: ");
-        Serial.print(previousOffsetSeconds);
-        Serial.print("s, new: ");
-        Serial.print(newOffsetSeconds);
-        Serial.println("s). Ignoring update.");
-        return false;
-      }
-    }
+//       if (diff > (2 * 3600)) // more than 2 hours difference -> reject
+//       {
+//         Serial.print("GeoLoc offset deviates by more than 2h from stored value (prev: ");
+//         Serial.print(previousOffsetSeconds);
+//         Serial.print("s, new: ");
+//         Serial.print(newOffsetSeconds);
+//         Serial.println("s). Ignoring update.");
+//         return false;
+//       }
+//     }
 
-    GeoLocTZoffset = static_cast<double>(newOffsetSeconds) / 3600.0;
-    Serial.println(String("Geo TZ Offset (applied): ") + String(GeoLocTZoffset));
-    return true;
-  }
+//     GeoLocTZoffset = static_cast<double>(newOffsetSeconds) / 3600.0;
+//     Serial.println(String("Geo TZ Offset (applied): ") + String(GeoLocTZoffset));
+//     return true;
+//   }
 
-  Serial.println("Geolocation failed.");
-  return false;
-}
-#endif
+//   Serial.println("Geolocation failed.");
+//   return false;
+// }
+// #endif
 
-#ifdef GEOLOCATION_ENABLED
-void checkUpdateGeoLocNeeded()
-{
-  uint8_t currentDay = uclock.getDay(); // Get current day of month
-  const uint8_t currentWeekday = weekday(uclock.loop_time);
-  const bool isSunday = (currentWeekday == 1); // TimeLib defines Sunday as weekday 1
+// #ifdef GEOLOCATION_ENABLED
+// void checkUpdateGeoLocNeeded()
+// {
+//   uint8_t currentDay = uclock.getDay(); // Get current day of month
+//   const uint8_t currentWeekday = weekday(uclock.loop_time);
+//   const bool isSunday = (currentWeekday == 1); // TimeLib defines Sunday as weekday 1
 
-  // Only on Sundays, and only if the day has changed since last successful update
-  // `isGeoLocWindow` is set to true between 03:00:05 and 03:00:59, because daylight saving time changes usually happen at 03:00 local time.
-  // GeoLoc update mechanism in the main 'loop free time slot' is then triggered, because `GeoLocNeedsUpdate` is set to true here.
-  const bool isGeoLocWindow = isSunday && (currentDay != yesterday) && (uclock.getHour24() == 3) && (uclock.getMinute() == 0) && (uclock.getSecond() > 5);
+//   // Only on Sundays, and only if the day has changed since last successful update
+//   // `isGeoLocWindow` is set to true between 03:00:05 and 03:00:59, because daylight saving time changes usually happen at 03:00 local time.
+//   // GeoLoc update mechanism in the main 'loop free time slot' is then triggered, because `GeoLocNeedsUpdate` is set to true here.
+//   const bool isGeoLocWindow = isSunday && (currentDay != yesterday) && (uclock.getHour24() == 3) && (uclock.getMinute() == 0) && (uclock.getSecond() > 5);
 
-  if (!GeoLocNeedsUpdate && isGeoLocWindow)
-  {
-    Serial.print("GeoLoc needs update! Current date (DD.MM.YYYY): ");
-    Serial.print(currentDay);
-    Serial.print(".");
-    Serial.print(uclock.getMonth());
-    Serial.print(".");
-    Serial.println(uclock.getYear());
+//   if (!GeoLocNeedsUpdate && isGeoLocWindow)
+//   {
+//     Serial.print("GeoLoc needs update! Current date (DD.MM.YYYY): ");
+//     Serial.print(currentDay);
+//     Serial.print(".");
+//     Serial.print(uclock.getMonth());
+//     Serial.print(".");
+//     Serial.println(uclock.getYear());
 
-    // Set flags and counters for GeoLoc update process
-    GeoLocNeedsUpdate = true;
-    GeoLocFailedAttempts = 0;
-    GeoLocNextRetryMillis = 0;
-    GeoLocAttemptDay = currentDay;
-  }
-}
+//     // Set flags and counters for GeoLoc update process
+//     GeoLocNeedsUpdate = true;
+//     GeoLocFailedAttempts = 0;
+//     GeoLocNextRetryMillis = 0;
+//     GeoLocAttemptDay = currentDay;
+//   }
+// }
 
-void processGeoLocUpdate()
-{
-  if (!GeoLocNeedsUpdate)
-  {
-    return; // no update needed
-  }
+// void processGeoLocUpdate()
+// {
+//   if (!GeoLocNeedsUpdate)
+//   {
+//     return; // no update needed
+//   }
 
-  const uint32_t now = millis();
-  const uint8_t today = uclock.getDay();
+//   const uint32_t now = millis();
+//   const uint8_t today = uclock.getDay();
 
-  if (GeoLocAttemptDay != today)
-  { // New day, reset attempt counter
-    GeoLocFailedAttempts = 0;
-    GeoLocNextRetryMillis = 0;
-    GeoLocAttemptDay = today;
-  }
+//   if (GeoLocAttemptDay != today)
+//   { // New day, reset attempt counter
+//     GeoLocFailedAttempts = 0;
+//     GeoLocNextRetryMillis = 0;
+//     GeoLocAttemptDay = today;
+//   }
 
-  if (GeoLocFailedAttempts >= GEOLOC_MAX_FAILURES_PER_DAY)
-  {
-    Serial.println("GeoLocation update skipped: failure limit reached for today.");
-    GeoLocNeedsUpdate = false;
-    return; // give up for today
-  }
+//   if (GeoLocFailedAttempts >= GEOLOC_MAX_FAILURES_PER_DAY)
+//   {
+//     Serial.println("GeoLocation update skipped: failure limit reached for today.");
+//     GeoLocNeedsUpdate = false;
+//     return; // give up for today
+//   }
 
-  if (now < GeoLocNextRetryMillis)
-  {
-    return; // not yet time for next retry
-  }
+//   if (now < GeoLocNextRetryMillis)
+//   {
+//     return; // not yet time for next retry
+//   }
 
-  Serial.println("Daily update for geolocation timezone offset...");
+//   Serial.println("Daily update for geolocation timezone offset...");
 
-  const int32_t GeoLocTZOffsetOld = uclock.getTimeZoneOffset() / 3600;
-  Serial.print("Current TZ offset (hours): ");
-  Serial.println(GeoLocTZOffsetOld);
+//   const int32_t GeoLocTZOffsetOld = uclock.getTimeZoneOffset() / 3600;
+//   Serial.print("Current TZ offset (hours): ");
+//   Serial.println(GeoLocTZOffsetOld);
 
-  Serial.println("Querying GeoLocation API...");
-  if (GetGeoLocationTimeZoneOffset())
-  {
-    const int32_t GeoLocTOffsetNew = uclock.getTimeZoneOffset() / 3600;
-    Serial.print("New TZ offset (hours): ");
-    Serial.println(GeoLocTOffsetNew);
+//   Serial.println("Querying GeoLocation API...");
+//   if (GetGeoLocationTimeZoneOffset())
+//   {
+//     const int32_t GeoLocTOffsetNew = uclock.getTimeZoneOffset() / 3600;
+//     Serial.print("New TZ offset (hours): ");
+//     Serial.println(GeoLocTOffsetNew);
 
-    GeoLocNeedsUpdate = false;
-    GeoLocFailedAttempts = 0;
-    GeoLocNextRetryMillis = 0;
-    yesterday = today;
-    return; // success for today!
-  }
+//     GeoLocNeedsUpdate = false;
+//     GeoLocFailedAttempts = 0;
+//     GeoLocNextRetryMillis = 0;
+//     yesterday = today;
+//     return; // success for today!
+//   }
 
-  GeoLocFailedAttempts++;
-  if (GeoLocFailedAttempts >= GEOLOC_MAX_FAILURES_PER_DAY)
-  {
-    Serial.println("GeoLocation update aborted after repeated failures today.");
-    GeoLocNeedsUpdate = false;
-    return; // give up for today
-  }
+//   GeoLocFailedAttempts++;
+//   if (GeoLocFailedAttempts >= GEOLOC_MAX_FAILURES_PER_DAY)
+//   {
+//     Serial.println("GeoLocation update aborted after repeated failures today.");
+//     GeoLocNeedsUpdate = false;
+//     return; // give up for today
+//   }
 
-  // Schedule next retry
-  GeoLocNextRetryMillis = now + GEOLOC_RETRY_BACKOFF_MS;
-  Serial.print("GeoLocation retry scheduled in ");
-  Serial.print(GEOLOC_RETRY_BACKOFF_MS / 1000);
-  Serial.println(" seconds.");
-}
-#endif // GEOLOCATION_ENABLED
+//   // Schedule next retry
+//   GeoLocNextRetryMillis = now + GEOLOC_RETRY_BACKOFF_MS;
+//   Serial.print("GeoLocation retry scheduled in ");
+//   Serial.print(GEOLOC_RETRY_BACKOFF_MS / 1000);
+//   Serial.println(" seconds.");
+// }
+// #endif // GEOLOCATION_ENABLED
 
-void updateClockDisplay(TFTs::show_t show)
-{
-  // Refresh, starting with seconds.
-  tfts.setDigit(SECONDS_ONES, uclock.getSecondsOnes(), show);
-  tfts.setDigit(SECONDS_TENS, uclock.getSecondsTens(), show);
-  tfts.setDigit(MINUTES_ONES, uclock.getMinutesOnes(), show);
-  tfts.setDigit(MINUTES_TENS, uclock.getMinutesTens(), show);
-  tfts.setDigit(HOURS_ONES, uclock.getHoursOnes(), show);
-  tfts.setDigit(HOURS_TENS, uclock.getHoursTens(), show);
-}
+// void updateClockDisplay(TFTs::show_t show)
+// {
+//   // Refresh, starting with seconds.
+//   tfts.setDigit(SECONDS_ONES, uclock.getSecondsOnes(), show);
+//   tfts.setDigit(SECONDS_TENS, uclock.getSecondsTens(), show);
+//   tfts.setDigit(MINUTES_ONES, uclock.getMinutesOnes(), show);
+//   tfts.setDigit(MINUTES_TENS, uclock.getMinutesTens(), show);
+//   tfts.setDigit(HOURS_ONES, uclock.getHoursOnes(), show);
+//   tfts.setDigit(HOURS_TENS, uclock.getHoursTens(), show);
+// }
+
+#endif // Legacy firmware block disabled while running TFT_eSPI BMP demo

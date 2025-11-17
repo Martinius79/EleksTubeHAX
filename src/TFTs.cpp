@@ -1,6 +1,6 @@
-#include "MQTT_client_ips.h"
+// #include "MQTT_client_ips.h"
 #include "TFTs.h"
-#include "WiFi_WPS.h"
+// #include "WiFi_WPS.h"
 
 void TFTs::begin()
 {
@@ -239,11 +239,11 @@ void TFTs::setDigit(uint8_t digit, uint8_t value, show_t show)
     {
       showDigit(digit);
 
-      if (digit == SECONDS_ONES)
-        if (WifiState != connected)
-        {
-          showNoWifiStatus();
-        }
+      // if (digit == SECONDS_ONES)
+      //   if (WifiState != connected)
+      //   {
+      //     showNoWifiStatus();
+      //   }
 
 #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
       if (digit == SECONDS_TENS)

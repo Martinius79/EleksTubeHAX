@@ -4,8 +4,8 @@
 #define FS_NO_GLOBALS
 #include <FS.h>
 #include <SPIFFS.h>
-#include <TFT_eSPI.h>
 #include "GLOBAL_DEFINES.h"
+#include <TFT_eSPI.h>
 #include "ChipSelect.h"
 
 class TFTs : public TFT_eSPI
@@ -78,7 +78,7 @@ private:
 
   static uint16_t UnpackedImageBuffer[TFT_HEIGHT][TFT_WIDTH];
   uint8_t FileInBuffer = 255; // invalid, always load first image
-  uint8_t NextFileRequired = 0;
+  uint8_t NextFileRequired = 10;
 
   String patterns_str[9] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
   void loadClockFacesNames();
