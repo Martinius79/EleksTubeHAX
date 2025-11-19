@@ -61,7 +61,15 @@ void ChipSelect::begin()
 #endif
     gpio_reset_pin(static_cast<gpio_num_t>(lcdEnablePins[i]));
     pinMode(lcdEnablePins[i], OUTPUT);
+    delay(20); // small delay to ensure proper initialization
     digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL);
+    delay(20); // small delay to ensure proper initialization
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::begin - read back pin ");
+    Serial.print(lcdEnablePins[i]);
+    Serial.print(" value: ");
+    Serial.println(digitalRead(lcdEnablePins[i]));
+#endif
   }
 #ifdef DEBUG_OUTPUT_CHIPSELECT
   Serial.println("ChipSelect::begin - All CS pins set to DIGIT_CS_INACTIVE_LEVEL (disabled)");
@@ -122,11 +130,13 @@ void ChipSelect::reclaimPins()
     Serial.println(lcdEnablePins[i]);
 #endif
     pinMode(lcdEnablePins[i], OUTPUT);
+    delay(20); // small delay to ensure proper initialization
 #ifdef DEBUG_OUTPUT_CHIPSELECT
     Serial.print("ChipSelect::reclaimPins - Setting pin to DIGIT_CS_INACTIVE_LEVEL for pin: ");
     Serial.println(lcdEnablePins[i]);
 #endif
     digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL); // start with disabled CS
+    delay(20); // small delay to ensure proper initialization
   }
 #endif
 }
@@ -189,6 +199,7 @@ void ChipSelect::update()
   // so all writing done by the eTFT_SPI lib functions in the time, the pin is low, will write out directly to the LCD.
   //"Update" never will work, because, if pin was HIGH, no writing was done.
   digitalWrite(lcdEnablePins[currentLCD], DIGIT_CS_ACTIVE_LEVEL);
+  delay(20); // small delay to ensure proper enabling
 #ifdef DEBUG_OUTPUT_CHIPSELECT
   Serial.print("ChipSelect::update - Maintaining digit ");
   Serial.print(currentLCD);
@@ -268,6 +279,13 @@ void ChipSelect::enableAllCSPins()
     Serial.println(DIGIT_CS_ACTIVE_LEVEL);
 #endif
     digitalWrite(lcdEnablePins[i], DIGIT_CS_ACTIVE_LEVEL);
+    delay(20); // small delay to ensure proper enabling
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::enableAllCSPins - read back pin ");
+    Serial.print(lcdEnablePins[i]);
+    Serial.print(" value: ");
+    Serial.println(digitalRead(lcdEnablePins[i]));
+#endif
   }
 #endif
 }
@@ -288,6 +306,13 @@ void ChipSelect::disableAllCSPins()
     Serial.println(DIGIT_CS_INACTIVE_LEVEL);
 #endif
     digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL);
+    delay(20); // small delay to ensure proper disabling
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+    Serial.print("ChipSelect::disableAllCSPins - read back pin ");
+    Serial.print(lcdEnablePins[i]);
+    Serial.print(" value: ");
+    Serial.println(digitalRead(lcdEnablePins[i]));
+#endif
   }
 #endif
 }
@@ -305,6 +330,13 @@ void ChipSelect::enableDigitCSPins(uint8_t digit)
 #endif
   // enable the LCD for the given digit
   digitalWrite(lcdEnablePins[digit], DIGIT_CS_ACTIVE_LEVEL);
+  delay(20); // small delay to ensure proper enabling
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::enableDigitCSPins - read back pin ");
+  Serial.print(lcdEnablePins[digit]);
+  Serial.print(" value: ");
+  Serial.println(digitalRead(lcdEnablePins[digit]));
+#endif
 #endif
 }
 
@@ -321,5 +353,12 @@ void ChipSelect::disableDigitCSPins(uint8_t digit)
 #endif
   // disable the LCD for the given digit
   digitalWrite(lcdEnablePins[digit], DIGIT_CS_INACTIVE_LEVEL);
+  delay(20); // small delay to ensure proper disabling
+#ifdef DEBUG_OUTPUT_CHIPSELECT
+  Serial.print("ChipSelect::disableDigitCSPins - read back pin ");
+  Serial.print(lcdEnablePins[digit]);
+  Serial.print(" value: ");
+  Serial.println(digitalRead(lcdEnablePins[digit]));
+#endif
 #endif
 }

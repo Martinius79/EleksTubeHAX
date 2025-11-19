@@ -9,13 +9,28 @@ void TFTs::begin()
 #endif
   chip_select.begin();
 #ifdef DEBUG_OUTPUT_TFT
-  Serial.println("TFTs::begin() - chip_select.begin() finished.");
-  Serial.println("TFTs::begin() - Calling chip_select.setAll()");
+  // Serial.println("TFTs::begin() - InvalidateImageInBuffer() finished.");
+  Serial.println("TFTs::begin() - Calling init()");
 #endif
-  chip_select.setAll(); // Start with all displays selected
+  init();                    // Initialize the super class.
 #ifdef DEBUG_OUTPUT_TFT
-  Serial.println("TFTs::begin() - chip_select.setAll() finished.");
+  Serial.println("TFTs::begin() - init() finished.");
+  // Serial.println("TFTs::begin() - Calling fillScreen(TFT_BLACK)");
 #endif
+
+#if defined(HARDWARE_MARVELTUBES_CLOCK)
+  chip_select.reclaimPins(); // regain control of per-digit CS pins after TFT_eSPI::init()
+#endif
+
+
+// #ifdef DEBUG_OUTPUT_TFT
+//   Serial.println("TFTs::begin() - chip_select.begin() finished.");
+//   Serial.println("TFTs::begin() - Calling chip_select.setAll()");
+// #endif
+//   chip_select.setAll(); // Start with all displays selected
+// #ifdef DEBUG_OUTPUT_TFT
+//   Serial.println("TFTs::begin() - chip_select.setAll() finished.");
+// #endif
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
   // If hardware dimming is used, init ledc, set the pin and channel for PWM and set frequency and resolution
@@ -25,41 +40,68 @@ void TFTs::begin()
   Serial.println(TFT_ENABLE_PIN);
   Serial.print("TFTs::begin() - TFT_PWM_CHANNEL: ");
   Serial.println(TFT_PWM_CHANNEL);
+  Serial.print("TFTs::begin() - TFT_PWM_FREQ: ");
+  Serial.println(TFT_PWM_FREQ);
+  Serial.print("TFTs::begin() - TFT_PWM_RESOLUTION: ");
+  Serial.println(TFT_PWM_RESOLUTION);
+  Serial.println("TFTs::begin() - Step 1 - Setting up LEDC with PWM for TFT dimming.");
 #endif
+// delay(5000); // small delay to ensure proper initialization
   ledcSetup(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);           // PWM, globally defined
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - Step 1 finished - PWM setup step 1 finished."); 
+  Serial.println("TFTs::begin() - Step 2 set calculated dimming value to keep displays disabled.");
+#endif
+// delay(5000); // small delay to ensure proper initialization
+  ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(0)); // keep displays disabled until soft-start runs  
+  delay(20); // small delay to ensure proper initialization
+// delay(5000); // small delay to ensure proper initialization
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - Step 2 finished.");
+ Serial.println("TFTs::begin() - Step 3 - Attaching TFT_ENABLE_PIN to TFT_PWM_CHANNEL.");
+#endif
+// delay(5000); // small delay to ensure proper initialization
   ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);                         // Attach the pin to the PWM channel
+  delay(20); // small delay to ensure proper initialization
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - Step 3 finished.");
+  Serial.println("TFTs::begin() - Step 4 - Setting PWM frequency and resolution again to ensure proper dimming functionality.");
+#endif
   ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION); // need to set the frequency and resolution again to have the hardware dimming working properly
+  delay(20); // small delay to ensure proper initialization
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - Step 4 finished.");
+#endif
+
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - PWM setup finished.");
 #endif
 #else
   pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
+
   InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
-#ifdef DEBUG_OUTPUT_TFT
-  Serial.println("TFTs::begin() - InvalidateImageInBuffer() finished.");
-  Serial.println("TFTs::begin() - Calling init()");
-#endif
-  init();                    // Initialize the super class.
-#ifdef DEBUG_OUTPUT_TFT
-  Serial.println("TFTs::begin() - init() finished.");
-  Serial.println("TFTs::begin() - Calling fillScreen(TFT_BLACK)");
-#endif
 
-#if defined(HARDWARE_MARVELTUBES_CLOCK)
-  chip_select.reclaimPins(); // regain control of per-digit CS pins after TFT_eSPI::init()
+  // chip_select.reclaimPins(); // After TFT_eSPI::init(), regain control of per-digit CS pins
   chip_select.setAll(); // After regain control, start with all displays selected again
-#endif
+  // chip_select.setDigit(2); // Select one digit to start with to avoid all-on state
 
-  fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
 #ifdef DEBUG_OUTPUT_TFT
-  Serial.println("TFTs::begin() - fillScreen(TFT_BLACK) finished.");
+  // Serial.println("TFTs::begin() - chip_select.reclaimPins() and chip_select.setAll() finished.");
+  Serial.println("TFTs::begin() - Calling fillScreen(TFT_RED)");
+#endif
+  fillScreen(TFT_RED);     // to avoid/reduce flickering patterns on the screens
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - fillScreen(TFT_RED) finished.");
   Serial.println("TFTs::begin() - Calling enableAllDisplays()");
+  // delay(5000); // small delay to ensure proper initialization
 #endif
   enableAllDisplays();       // Signal, that the displays are enabled now and do the hardware dimming, if available and enabled
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - enableAllDisplays() finished.");
 #endif
+
+// delay(5000); // small delay to ensure proper initialization
 
   if (!SPIFFS.begin()) // Initialize SPIFFS
   {
@@ -100,23 +142,50 @@ void TFTs::reinit()
   Serial.println("TFTs::reinit() - Reinitializing displays.");
 #endif
     // Start with all displays selected.
-    chip_select.begin();
-    chip_select.setAll(); // Start again with all displays selected.
+  chip_select.begin();
+  chip_select.setAll(); // Start again with all displays selected.
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
-    ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
-    ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::reinit() - Using hardware dimming with PWM.");
+  Serial.print("TFTs::reinit() - TFT_ENABLE_PIN: ");
+  Serial.println(TFT_ENABLE_PIN);
+  Serial.print("TFTs::reinit() - TFT_PWM_CHANNEL: ");
+  Serial.println(TFT_PWM_CHANNEL);
+  Serial.print("TFTs::reinit() - TFT_PWM_FREQ: ");
+  Serial.println(TFT_PWM_FREQ);
+  Serial.print("TFTs::reinit() - TFT_PWM_RESOLUTION: ");
+  Serial.println(TFT_PWM_RESOLUTION);
+  Serial.println("TFTs::reinit() - Setting up PWM for TFT dimming.");
+#endif
+  delay(5000); // small delay to ensure proper initialization
+  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::reinit() - PWM setup step 2 finished.");
+  Serial.println("TFTs::reinit() - Setting PWM frequency and resolution.");
+#endif
+delay(5000); // small delay to ensure proper initialization
+  delay(20); // small delay to ensure proper initialization
+  ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::reinit() - PWM setup step 3 finished.");
+  Serial.println("TFTs::reinit() - Setting initial PWM value to keep displays disabled.");
+#endif
+delay(5000); // small delay to ensure proper initialization
+  delay(20); // small delay to ensure proper initialization
+  ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(0));
+  delay(20); // small delay to ensure proper initialization
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::reinit() - PWM reconfiguration finished.");
 #endif
 #else
-    pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
+  pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
-    InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
-    init();                    // Initialize the super class (again).
-    chip_select.reclaimPins();
-    fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
-    enableAllDisplays();       // Signal, that the displays are enabled now
+  InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
+  init();                    // Initialize the super class (again).
+  chip_select.reclaimPins();
+  fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
+  enableAllDisplays();       // Signal, that the displays are enabled now
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::reinit() - Full reinitialization finished.");
 #endif
@@ -124,7 +193,7 @@ void TFTs::reinit()
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::reinit() - Skipping full initialization, just re-enabling displays.");
 #endif
-    enableAllDisplays(); // skip full inintialization, just reenable displays by signaling to enable them
+  enableAllDisplays(); // skip full inintialization, just reenable displays by signaling to enable them
 #endif                         // TFT_SKIP_REINIT
   }
 #ifdef DEBUG_OUTPUT_TFT
@@ -199,8 +268,87 @@ void TFTs::showNoMqttStatus()
   print("NO MQTT!");
 }
 
+// void TFTs::softStartDisplays()
+// {
+// #ifdef DEBUG_OUTPUT_TFT
+//   Serial.println("TFTs::softStartDisplays()");
+//   Serial.print("TFTs::softStartDisplays() - dimming: ");
+//   Serial.println(dimming);
+//   Serial.print("TFTs::softStartDisplays() - CALCDIMVALUE(dimming): ");
+//   Serial.println(CALCDIMVALUE(dimming));
+//   Serial.println("TFTs::softStartDisplays() - Starting ramp-up.");
+// #endif
+// #ifdef DIM_WITH_ENABLE_PIN_PWM
+//   rampToPwm(CALCDIMVALUE(dimming));
+// #else
+//   digitalWrite(TFT_ENABLE_PIN, ACTIVATEDISPLAYS);
+// #endif
+// #ifdef DEBUG_OUTPUT_TFT
+//   Serial.print("TFTs::softStartDisplays() - dimming complete, final value: ");
+//   Serial.println(CALCDIMVALUE(dimming));
+//   Serial.println("TFTs::softStartDisplays() - Finished.");
+// #endif
+// }
+
+// #ifdef DIM_WITH_ENABLE_PIN_PWM
+// void TFTs::rampToPwm(uint32_t target)
+// {
+// #ifdef DEBUG_OUTPUT_TFT
+//   Serial.print("TFTs::rampToPwm() - target: ");
+//   Serial.println(target);
+//   Serial.println("TFTs::rampToPwm() - ledcRead.");
+// #endif
+//   uint32_t current = ledcRead(TFT_PWM_CHANNEL);
+//   constexpr uint8_t step = 8;
+//   constexpr uint8_t pauseMs = 5;
+
+//   if (current == target)
+//   {
+//     ledcWrite(TFT_PWM_CHANNEL, target);
+//     return;
+//   }
+
+//   if (current < target)
+//   {
+//     while (current < target)
+//     {
+//       current = (current + step <= target) ? current + step : target;
+//       ledcWrite(TFT_PWM_CHANNEL, current);
+//       delay(pauseMs);
+//     }
+//   }
+//   else
+//   {
+//     while (current > target)
+//     {
+//       current = (current >= target + step) ? current - step : target;
+//       ledcWrite(TFT_PWM_CHANNEL, current);
+//       delay(pauseMs);
+//     }
+//   }
+
+//   ledcWrite(TFT_PWM_CHANNEL, target);
+// }
+// #endif
+
 void TFTs::enableAllDisplays()
 {
+//   if (TFTsEnabled)
+//   {
+// #ifndef DIM_WITH_ENABLE_PIN_PWM
+//     digitalWrite(TFT_ENABLE_PIN, ACTIVATEDISPLAYS);
+// #else
+//     ProcessUpdatedDimming();
+// #endif
+//     return;
+//   }
+
+//   TFTsEnabled = true;
+// #ifndef DIM_WITH_ENABLE_PIN_PWM
+//   digitalWrite(TFT_ENABLE_PIN, ACTIVATEDISPLAYS);
+// #else
+//   softStartDisplays();
+// #endif
   // Turn "power" on to displays.
   TFTsEnabled = true;
 #ifndef DIM_WITH_ENABLE_PIN_PWM
@@ -350,17 +498,40 @@ void TFTs::InvalidateImageInBuffer()
 
 void TFTs::ProcessUpdatedDimming()
 {
+// #ifdef DIM_WITH_ENABLE_PIN_PWM
+//   // hardware dimming is done via PWM on the pin defined by TFT_ENABLE_PIN
+//   // ONLY for IPSTUBE clocks in the moment! Other clocks may be damaged!
+//   const uint32_t target = TFTsEnabled ? CALCDIMVALUE(dimming) : CALCDIMVALUE(0);
+//   rampToPwm(target);
 #ifdef DIM_WITH_ENABLE_PIN_PWM
   // hardware dimming is done via PWM on the pin defined by TFT_ENABLE_PIN
   // ONLY for IPSTUBE clocks in the moment! Other clocks may be damaged!
   if (TFTsEnabled)
   {
+#ifdef DEBUG_OUTPUT_TFT
+    Serial.print("TFTs::ProcessUpdatedDimming() - Setting dimming to: ");
+    Serial.println(dimming);
+#endif
+    // set PWM to calculated dimming value
+// delay(5000); // small delay to ensure proper dimming change
     ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(dimming));
+#ifdef DEBUG_OUTPUT_TFT
+    Serial.print("TFTs::ProcessUpdatedDimming() - PWM set to: ");
+    Serial.println(CALCDIMVALUE(dimming));
+#endif
   }
   else
   {
+#ifdef DEBUG_OUTPUT_TFT
+    Serial.println("TFTs::ProcessUpdatedDimming() - Displays disabled, setting PWM to 0.");
+#endif
     // no dimming means 255 (full brightness)
+// delay(5000); // small delay to ensure proper dimming change
     ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(0));
+    delay(20); // small delay to ensure proper dimming change
+#ifdef DEBUG_OUTPUT_TFT
+    Serial.println("TFTs::ProcessUpdatedDimming() - PWM set to 0.");
+#endif
   }
 #else
   // "software" dimming is done via alpha blending in the image drawing function

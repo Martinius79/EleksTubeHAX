@@ -69,6 +69,11 @@ private:
   uint8_t digits[NUM_DIGITS];
   bool TFTsEnabled = false;
 
+//   void softStartDisplays();
+// #ifdef DIM_WITH_ENABLE_PIN_PWM
+//   void rampToPwm(uint32_t target);
+// #endif
+
   bool FileExists(const char *path);
   int8_t CountNumberOfClockFaces();
   bool LoadImageIntoBuffer(uint8_t file_index);

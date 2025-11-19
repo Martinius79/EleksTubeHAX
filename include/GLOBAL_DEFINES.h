@@ -29,7 +29,7 @@
 // #define HARDWARE_NOVELLIFE_CLOCK      // NovelLife clocks
 // #define HARDWARE_PUNKCYBER_CLOCK      // PunkCyber / RGB Glow tube / PCBway clocks
 // #define HARDWARE_IPSTUBE_CLOCK        // Clocks with 8MB flash on PCB (like the IPSTube model H401 and H402)
-// #define HARDWARE_MARVELTUBES_CLOCK // MarvelTubes clock with 16MB flash on PCB
+#define HARDWARE_MARVELTUBES_CLOCK // MarvelTubes clock with 16MB flash on PCB
 
 #ifdef HARDWARE_PUNKCYBER_CLOCK
 // Everything else is the same, except digits are swapped from left to right.
@@ -628,7 +628,7 @@
 
 #define TFT_PWM_CHANNEL 0 // Use PWM channel 0 for TFT dimming
 
-#define DIM_WITH_ENABLE_PIN_PWM // Enable hardware dimming with TFT_ENABLE_PIN
+// #define DIM_WITH_ENABLE_PIN_PWM // Enable hardware dimming with TFT_ENABLE_PIN
 
 // Configure library \TFT_eSPI\User_Setup.h: ST7789 135 x 240 display with no chip select line.
 #define ST7789_DRIVER // Configure all registers
@@ -656,11 +656,11 @@
 // #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
 #define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
 
-// #define SPI_FREQUENCY  27000000
-#define SPI_FREQUENCY 40000000
+#define SPI_FREQUENCY  27000000
+// #define SPI_FREQUENCY 40000000
 
 // Definitions for PWM frequency and resolution for TFT dimming.
-#define TFT_PWM_FREQ 20000   // PWM frequency for TFT dimming (Hz)
+#define TFT_PWM_FREQ 2000   // PWM frequency for TFT dimming (Hz)
 #define TFT_PWM_RESOLUTION 8 // PWM resolution for TFT dimming (bits)
 
 // Force the TFT_eSPI library to not over-write all this

@@ -282,10 +282,35 @@ void setup()
 
   // Setup the displays (TFTs) initaly and show bootup message(s).
   tfts.begin(); // ...and count number of clock faces available...
-  tfts.fillScreen(TFT_BLACK);
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.printf("setup() - TFTs::begin() finished.\n");
+#endif
+
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.printf("setup() - TFTs::setTextColor(TFT_WHITE, TFT_BLACK) starting...\n");
+#endif
+  // tfts.fillScreen(TFT_BLACK);
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.printf("setup() - TFTs::setTextColor(TFT_WHITE, TFT_BLACK) finished.\n");
+#endif
+  // delay(5000);
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.printf("setup() - TFTs::setCursor(0, 0, 2) starting...\n");
+#endif
   tfts.setCursor(0, 0, 2); // Font 2. 16 pixel high
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.printf("setup() - TFTs::setCursor(0, 0, 2) finished.\n");
+#endif
+  // delay(5000);
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.printf("setup() - TFTs::println(\"Starting Setup...\") starting...\n");
+#endif
   tfts.println("Starting Setup...");
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.printf("setup() - TFTs::println(\"Starting Setup...\") finished.\n");
+#endif
+  delay(5000);
 
 #ifdef HARDWARE_NOVELLIFE_CLOCK
   // Init the Gesture sensor
@@ -300,10 +325,18 @@ void setup()
 
   // Setup WiFi connection. Must be done before setting up Clock.
   // This is done outside Clock so the network can be used for other things.
+  
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.printf("setup() - tfts.setTextColor(TFT_GREENYELLOW, TFT_BLACK) starting...\n");  
+#endif
   tfts.setTextColor(TFT_GREENYELLOW, TFT_BLACK);
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.printf("setup() - tfts.setTextColor(TFT_GREENYELLOW, TFT_BLACK) finished.\n");  
+#endif
   tfts.println("WiFi start...");
   Serial.println("WiFi start...");
   WifiBegin();
+delay(5000);
     #ifdef HARDWARE_MARVELTUBES_CLOCK11
     tfts.chip_select.disableDigitCSPins(0);
     tfts.chip_select.disableDigitCSPins(1);
