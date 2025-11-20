@@ -187,7 +187,7 @@ void scanRtcI2CBus(void);
 void setup()
 {
   Serial.begin(115200);
-  delay(1500); // Wait for serial monitor to catch up
+  delay(2500); // Wait for serial monitor to catch up
 
   Serial.println("\nSystem starting...\n");
   Serial.println("EleksTubeHAX https://github.com/aly-fly/EleksTubeHAX");
@@ -273,15 +273,26 @@ void setup()
   ESP_ERROR_CHECK(ret);
   Serial.println("Done.");
 
+#ifndef TFT_INIT_RED_ONLY
   stored_config.begin();
   stored_config.load();
 
   backlights.begin(&stored_config.config.backlights);
   buttons.begin();
   menu.begin();
+#endif
+
+  Serial.println("starting TFTs...");
 
   // Setup the displays (TFTs) initaly and show bootup message(s).
   tfts.begin(); // ...and count number of clock faces available...
+
+#ifdef TFT_INIT_RED_ONLY
+  Serial.println("TFT_INIT_RED_ONLY active - skipping remainder of setup.");
+  delay(5000);
+  return;
+#endif
+
   tfts.fillScreen(TFT_BLACK);
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
   tfts.setCursor(0, 0, 2); // Font 2. 16 pixel high
@@ -413,6 +424,16 @@ void setup()
   Serial.println("Starting main loop...");
 }
 
+#ifdef TFT_INIT_RED_ONLY
+//-----------------------------------------------------------------------
+// Main loop (minimal test mode)
+//-----------------------------------------------------------------------
+void loop()
+{
+  Serial.println("loop() running in TFT_INIT_RED_ONLY mode.");
+  delay(1000); // keep task watchdog satisfied
+}
+#else
 //-----------------------------------------------------------------------
 // Main loop
 //-----------------------------------------------------------------------
@@ -953,6 +974,8 @@ void loop()
   }
 #endif // DEBUG_OUTPUT
 }
+
+#endif // TFT_INIT_RED_ONLY
 
 #if defined(RTC_SCL_PIN) && defined(RTC_SDA_PIN)
 void scanRtcI2CBus(void)

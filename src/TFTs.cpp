@@ -10,11 +10,13 @@ void TFTs::begin()
   chip_select.begin();
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - chip_select.begin() finished.");
+  delay(2000);
   Serial.println("TFTs::begin() - Calling chip_select.setAll()");
 #endif
   chip_select.setAll(); // Start with all displays selected
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - chip_select.setAll() finished.");
+  delay(2000);
 #endif
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
@@ -33,33 +35,71 @@ void TFTs::begin()
   Serial.println("TFTs::begin() - PWM setup finished.");
 #endif
 #else
+#ifdef DEBUG_OUTPUT_TFT
+  Serial.println("TFTs::begin() - Not using hardware dimming with PWM.");
+  Serial.print("TFTs::begin() - TFT_ENABLE_PIN: ");
+  Serial.println(TFT_ENABLE_PIN);  
+#endif
   pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
+  Serial.println("TFTs::begin() - After setting up TFT_ENABLE_PIN.");
+  delay(2000);
+  Serial.println("TFTs::begin() - Calling InvalidateImageInBuffer()");
   InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - InvalidateImageInBuffer() finished.");
+
   Serial.println("TFTs::begin() - Calling init()");
 #endif
   init();                    // Initialize the super class.
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - init() finished.");
-  Serial.println("TFTs::begin() - Calling fillScreen(TFT_BLACK)");
+  delay(2000);
+  Serial.println("TFTs::begin() - Calling reclaimPins()");
 #endif
-
 #if defined(HARDWARE_MARVELTUBES_CLOCK)
   chip_select.reclaimPins(); // regain control of per-digit CS pins after TFT_eSPI::init()
+  Serial.println("TFTs::begin() - After reclaimPins()");
+  delay(2000);
+  Serial.println("TFTs::begin() - Calling chip_select.setAll()");
   chip_select.setAll(); // After regain control, start with all displays selected again
+  Serial.println("TFTs::begin() - chip_select.setAll() finished.");
+  delay(2000);
 #endif
 
+#ifdef TFT_INIT_RED_ONLY
+  Serial.println("TFTs::begin() - Calling fillScreen(TFT_RED)");
+  fillScreen(TFT_RED);     // minimal-test mode: show solid red immediately
+  Serial.println("TFTs::begin() - fillScreen(TFT_RED) finished.");
+  delay(2000);
+#else
+  Serial.println("TFTs::begin() - Calling fillScreen(TFT_BLACK)");
   fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
-#ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - fillScreen(TFT_BLACK) finished.");
+#endif
+
+#ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - Calling enableAllDisplays()");
 #endif
   enableAllDisplays();       // Signal, that the displays are enabled now and do the hardware dimming, if available and enabled
+  delay(2000);
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - enableAllDisplays() finished.");
 #endif
+
+#ifdef TFT_INIT_RED_ONLY
+  NumberOfClockFaces = 0; // skip any further assets in minimal test mode
+  
+  
+  
+  
+  
+  return;
+
+
+
+
+  #endif
 
   if (!SPIFFS.begin()) // Initialize SPIFFS
   {
@@ -204,7 +244,10 @@ void TFTs::enableAllDisplays()
   // Turn "power" on to displays.
   TFTsEnabled = true;
 #ifndef DIM_WITH_ENABLE_PIN_PWM
+  Serial.println("TFTs::enableAllDisplays() - Enabling displays via TFT_ENABLE_PIN.");
   digitalWrite(TFT_ENABLE_PIN, ACTIVATEDISPLAYS);
+  Serial.println("TFTs::enableAllDisplays() - Displays enabled.");
+  delay(2000);  
 #else
   // if hardware dimming is used, only activate with the current dimming value
   ProcessUpdatedDimming();
@@ -216,7 +259,10 @@ void TFTs::disableAllDisplays()
   // Turn "power" off to displays.
   TFTsEnabled = false;
 #ifndef DIM_WITH_ENABLE_PIN_PWM
+  Serial.println("TFTs::disableAllDisplays() - Disabling displays via TFT_ENABLE_PIN.");
   digitalWrite(TFT_ENABLE_PIN, DEACTIVATEDISPLAYS);
+  Serial.println("TFTs::disableAllDisplays() - Displays disabled.");
+  delay(2000);
 #else
   // if hardware dimming is used, deactivate via the dimming value
   ProcessUpdatedDimming();
@@ -244,7 +290,11 @@ void TFTs::setDigit(uint8_t digit, uint8_t value, show_t show)
 
     if (show != no && (old_value != value || show == force))
     {
+      Serial.print("TFTs::setDigit() - call showDigit(");
+      Serial.print(digit);
+      Serial.println(")");
       showDigit(digit);
+      Serial.println("TFTs::setDigit() - showDigit() finished.");
 
       if (digit == SECONDS_ONES)
         if (WifiState != connected)
