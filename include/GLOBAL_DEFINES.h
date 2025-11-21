@@ -29,7 +29,7 @@
 // #define HARDWARE_NOVELLIFE_CLOCK      // NovelLife clocks
 // #define HARDWARE_PUNKCYBER_CLOCK      // PunkCyber / RGB Glow tube / PCBway clocks
 // #define HARDWARE_IPSTUBE_CLOCK        // Clocks with 8MB flash on PCB (like the IPSTube model H401 and H402)
-#define HARDWARE_MARVELTUBES_CLOCK // MarvelTubes clock with 16MB flash on PCB
+// #define HARDWARE_MARVELTUBES_CLOCK // MarvelTubes clock with 16MB flash on PCB
 
 #ifdef HARDWARE_PUNKCYBER_CLOCK
 // Everything else is the same, except digits are swapped from left to right.
@@ -617,6 +617,8 @@
 #define RTC_SCL_PIN (20)
 #define RTC_SDA_PIN (21)
 
+// #define TFT_SKIP_REINIT
+
 // No chip select shift register! Directly connected to ESP32 GPIOs
 // #define CSSR_DATA_PIN (-1)
 // #define CSSR_CLOCK_PIN (-1)
@@ -628,7 +630,7 @@
 
 #define TFT_PWM_CHANNEL 0 // Use PWM channel 0 for TFT dimming
 
-// #define DIM_WITH_ENABLE_PIN_PWM // Enable hardware dimming with TFT_ENABLE_PIN
+#define DIM_WITH_ENABLE_PIN_PWM // Enable hardware dimming with TFT_ENABLE_PIN
 
 // Configure library \TFT_eSPI\User_Setup.h: ST7789 135 x 240 display with no chip select line.
 #define ST7789_DRIVER // Configure all registers
