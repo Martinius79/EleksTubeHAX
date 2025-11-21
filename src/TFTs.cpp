@@ -2,6 +2,41 @@
 #include "TFTs.h"
 #include "WiFi_WPS.h"
 
+#if defined(ST7789_DRIVER)
+void TFTs::setDisplayOn(bool enabled)
+{
+  startWrite();
+  writecommand(enabled ? ST7789_DISPON : ST7789_DISPOFF);
+  endWrite();
+}
+
+void TFTs::clearEntireCgram(uint16_t color)
+{
+  constexpr uint16_t cgramWidth = 240;
+  constexpr uint16_t cgramHeight = 320;
+  const uint32_t pixelCount = static_cast<uint32_t>(cgramWidth) * cgramHeight;
+
+  startWrite();
+
+  writecommand(ST7789_CASET);
+  writedata(0x00);
+  writedata(0x00);
+  writedata(static_cast<uint8_t>((cgramWidth - 1) >> 8));
+  writedata(static_cast<uint8_t>((cgramWidth - 1) & 0xFF));
+
+  writecommand(ST7789_RASET);
+  writedata(0x00);
+  writedata(0x00);
+  writedata(static_cast<uint8_t>((cgramHeight - 1) >> 8));
+  writedata(static_cast<uint8_t>((cgramHeight - 1) & 0xFF));
+
+  writecommand(ST7789_RAMWR);
+  pushBlock(color, pixelCount);
+
+  endWrite();
+}
+#endif
+
 void TFTs::begin()
 {
 #ifdef DEBUG_OUTPUT_TFT
@@ -10,13 +45,13 @@ void TFTs::begin()
   chip_select.begin();
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - chip_select.begin() finished.");
-  delay(2000);
+  // delay(2000);
   Serial.println("TFTs::begin() - Calling chip_select.setAll()");
 #endif
   chip_select.setAll(); // Start with all displays selected
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - chip_select.setAll() finished.");
-  delay(2000);
+  // delay(2000);
 #endif
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
@@ -43,7 +78,7 @@ void TFTs::begin()
   pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
   Serial.println("TFTs::begin() - After setting up TFT_ENABLE_PIN.");
-  delay(2000);
+  // delay(2000);
   Serial.println("TFTs::begin() - Calling InvalidateImageInBuffer()");
   InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
 #ifdef DEBUG_OUTPUT_TFT
@@ -60,46 +95,48 @@ void TFTs::begin()
 #if defined(HARDWARE_MARVELTUBES_CLOCK)
   chip_select.reclaimPins(); // regain control of per-digit CS pins after TFT_eSPI::init()
   Serial.println("TFTs::begin() - After reclaimPins()");
-  delay(2000);
+  // delay(2000);
   Serial.println("TFTs::begin() - Calling chip_select.setAll()");
   chip_select.setAll(); // After regain control, start with all displays selected again
   Serial.println("TFTs::begin() - chip_select.setAll() finished.");
-  delay(2000);
+  // delay(2000);
 #endif
 
 #ifdef TFT_INIT_RED_ONLY
-  Serial.println("TFTs::begin() - Calling fillScreen(TFT_RED)");
-  fillScreen(TFT_RED);     // minimal-test mode: show solid red immediately
-  Serial.println("TFTs::begin() - fillScreen(TFT_RED) finished.");
-  delay(2000);
+  const uint16_t startupColor = TFT_RED;
 #else
-  Serial.println("TFTs::begin() - Calling fillScreen(TFT_BLACK)");
-  fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
-  Serial.println("TFTs::begin() - fillScreen(TFT_BLACK) finished.");
+  const uint16_t startupColor = TFT_BLACK;
 #endif
+
+#if defined(ST7789_DRIVER)
+  Serial.println("TFTs::begin() - Forcing display off before first clear");
+  setDisplayOn(false);
+  Serial.println("TFTs::begin() - Clearing full ST7789 frame memory");
+  clearEntireCgram(startupColor);
+#endif
+
+  Serial.println("TFTs::begin() - Calling fillScreen() with startup color");
+  fillScreen(startupColor);     // ensures library state matches chosen startup colour
+  Serial.println("TFTs::begin() - fillScreen() finished.");
 
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - Calling enableAllDisplays()");
 #endif
   enableAllDisplays();       // Signal, that the displays are enabled now and do the hardware dimming, if available and enabled
-  delay(2000);
+  // delay(2000);
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("TFTs::begin() - enableAllDisplays() finished.");
 #endif
 
-#ifdef TFT_INIT_RED_ONLY
-  NumberOfClockFaces = 0; // skip any further assets in minimal test mode
-  
-  
-  
-  
-  
-  return;
+#if defined(ST7789_DRIVER)
+  Serial.println("TFTs::begin() - Turning display on after initial clear");
+  setDisplayOn(true);
+#endif
 
-
-
-
-  #endif
+// #ifdef TFT_INIT_RED_ONLY
+//   NumberOfClockFaces = 0; // skip any further assets in minimal test mode
+//   return;
+// #endif
 
   if (!SPIFFS.begin()) // Initialize SPIFFS
   {
@@ -113,12 +150,24 @@ void TFTs::begin()
 
 #ifdef DEBUG_OUTPUT_TFT
   Serial.println("SPIFFS initialized successfully.");
+
+// #ifdef TFT_INIT_RED_ONLY
+//   NumberOfClockFaces = 0; // skip any further assets in minimal test mode
+//   return;
+// #endif
+
   Serial.println("TFTs::begin() - Calling CountNumberOfClockFaces()");
 #endif
   NumberOfClockFaces = CountNumberOfClockFaces();
 #ifdef DEBUG_OUTPUT_TFT
   Serial.print("TFTs::begin() - NumberOfClockFaces: ");
   Serial.println(NumberOfClockFaces);
+
+// #ifdef TFT_INIT_RED_ONLY
+//   NumberOfClockFaces = 0; // skip any further assets in minimal test mode
+//   return;
+// #endif
+
   Serial.println("TFTs::begin() - Calling loadClockFacesNames()");
 #endif
   loadClockFacesNames();

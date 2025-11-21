@@ -82,6 +82,11 @@ private:
 
   String patterns_str[9] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
   void loadClockFacesNames();
+
+#if defined(ST7789_DRIVER)
+  void setDisplayOn(bool enabled);
+  void clearEntireCgram(uint16_t color);
+#endif
 };
 
 extern TFTs tfts;

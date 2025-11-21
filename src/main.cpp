@@ -273,24 +273,57 @@ void setup()
   ESP_ERROR_CHECK(ret);
   Serial.println("Done.");
 
-#ifndef TFT_INIT_RED_ONLY
+
   stored_config.begin();
   stored_config.load();
 
   backlights.begin(&stored_config.config.backlights);
+  
+  
+
   buttons.begin();
+
   menu.begin();
-#endif
+ #ifndef TFT_INIT_RED_ONLY
+ #endif
 
   Serial.println("starting TFTs...");
 
   // Setup the displays (TFTs) initaly and show bootup message(s).
   tfts.begin(); // ...and count number of clock faces available...
-
 #ifdef TFT_INIT_RED_ONLY
-  Serial.println("TFT_INIT_RED_ONLY active - skipping remainder of setup.");
-  delay(5000);
-  return;
+  // Serial.println("TFT_INIT_RED_ONLY active - skipping remainder of setup.");
+  delay(1000);
+  Serial.println("TFT_INIT_RED_ONLY active - Setting black screen for 5 seconds...");
+  tfts.fillScreen(TFT_BLACK);
+  Serial.println("TFT_INIT_RED_ONLY active - Setting Text color TFT_WHITE on TFT_BLACK.");
+  tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+  Serial.println("TFT_INIT_RED_ONLY active - Setting cursor to (1, 1) with font 1.");
+  tfts.setCursor(1, 1, 1); // Font 2. 16 pixel high
+  Serial.println("TFT_INIT_RED_ONLY active - Waiting 5 seconds...");
+  delay(1000);
+  Serial.println("TFT_INIT_RED_ONLY active - Printing 'Starting Setup...' for 5 seconds...");
+  tfts.println("Starting Setup...");
+  delay(1000);
+  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_YELLOW fill for 5 seconds...");
+  tfts.fillScreen(TFT_YELLOW);
+  delay(1000);
+  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_PINK fill for 5 seconds...");
+  tfts.fillScreen(TFT_PINK);
+  delay(1000);
+  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_GREEN fill for 5 seconds...");
+  tfts.fillScreen(TFT_GREEN);
+  delay(1000);
+  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_BLUE fill for 5 seconds...");
+  tfts.fillScreen(TFT_BLUE);
+  delay(1000);
+  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_WHITE fill for 5 seconds...");
+  tfts.fillScreen(TFT_WHITE);
+  delay(1000);
+
+  // tfts.chip_select.disableAllCSPins();
+
+  // return;
 #endif
 
   tfts.fillScreen(TFT_BLACK);
@@ -315,6 +348,13 @@ void setup()
   tfts.println("WiFi start...");
   Serial.println("WiFi start...");
   WifiBegin();
+
+// #ifdef TFT_INIT_RED_ONLY
+//   Serial.println("TFT_INIT_RED_ONLY active - skipping remainder of setup.");
+ // tfts.chip_select.disableAllCSPins();
+//   return;
+// #endif
+
     #ifdef HARDWARE_MARVELTUBES_CLOCK11
     tfts.chip_select.disableDigitCSPins(0);
     tfts.chip_select.disableDigitCSPins(1);
@@ -356,7 +396,11 @@ void setup()
   tfts.println("Done!");
   Serial.println("\nClock start-up done!");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-
+// #ifdef TFT_INIT_RED_ONLY
+//   Serial.println("TFT_INIT_RED_ONLY active - skipping remainder of setup.");
+//   tfts.chip_select.disableAllCSPins();
+//   return;
+// #endif
 #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
   // Setup MQTT.
   tfts.setTextColor(TFT_YELLOW, TFT_BLACK);
@@ -393,7 +437,11 @@ void setup()
     tfts.setTextColor(TFT_WHITE, TFT_BLACK);
   }
 #endif
-
+// #ifdef TFT_INIT_RED_ONLY
+//   Serial.println("TFT_INIT_RED_ONLY active - skipping remainder of setup.");
+//   tfts.chip_select.disableAllCSPins();
+//   return;
+// #endif
   if (uclock.getActiveGraphicIdx() > tfts.NumberOfClockFaces)
   {
     uclock.setActiveGraphicIdx(tfts.NumberOfClockFaces);
@@ -409,7 +457,11 @@ void setup()
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
   tfts.println("Done with Setup!");
   Serial.println("\nDone with Setup!");
-
+// #ifdef TFT_INIT_RED_ONLY
+//   Serial.println("TFT_INIT_RED_ONLY active - skipping remainder of setup.");
+//   tfts.chip_select.disableAllCSPins();
+//   return;
+// #endif
   // Leave bootup messages on screen for a few seconds (10x200ms = 2 sec).
   for (uint8_t ndx = 0; ndx < 10; ndx++)
   {
@@ -430,7 +482,65 @@ void setup()
 //-----------------------------------------------------------------------
 void loop()
 {
+  static int counter = 1;
+  static int digit = -1;
   Serial.println("loop() running in TFT_INIT_RED_ONLY mode.");
+  
+  if (counter % 2 == 0)
+  {
+    Serial.println("Filling one screen RED.");
+    // Schleife um alle Digits nacheinander anzusteuern
+    // for (int digit = 0; digit <= NUM_DIGITS; digit++)
+    {
+      ++digit;
+      // wenn Digit == NUM_DIGITS+1, dann alle benutzen
+      Serial.printf("Filling digit %d RED.\n", digit);
+      if (digit == NUM_DIGITS)
+      {
+        digit = -1;
+        Serial.println("Filling ALL digits RED.");
+        tfts.chip_select.setAll();
+        tfts.fillScreen(TFT_RED);
+        Serial.println("TFT_INIT_RED_ONLY active - Setting Text color TFT_WHITE on TFT_BLACK.");
+        tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+        Serial.println("TFT_INIT_RED_ONLY active - Setting cursor to (1, 1) with font 2.");
+        tfts.setCursor(1, digit * 3, 4); // Font 2. 16 pixel high  
+        Serial.println("TFT_INIT_RED_ONLY active - Printing Round counter...");
+        tfts.print("Round:...");
+        tfts.println(counter);
+        tfts.chip_select.disableAllCSPins();
+      }else
+      {
+        tfts.chip_select.setDigit(digit, false);
+        tfts.fillScreen(TFT_RED);
+        Serial.println("TFT_INIT_RED_ONLY active - Setting Text color TFT_WHITE on TFT_BLACK.");
+        tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+        Serial.println("TFT_INIT_RED_ONLY active - Setting cursor to (1, 1) with font 2.");
+        tfts.setCursor(1, digit * 3, 4); // Font 2. 16 pixel high  
+        Serial.println("TFT_INIT_RED_ONLY active - Printing Round counter...");
+        tfts.print("Round:...");
+        tfts.println(counter);
+        tfts.chip_select.disableDigitCSPins(digit);
+      }
+    }
+    // tfts.chip_select.setDigit(0, false);
+    // tfts.fillScreen(TFT_RED);    
+  }
+  else
+  {
+    Serial.println("Filling all screens BLUE.");
+    tfts.chip_select.setAll();
+    tfts.fillScreen(TFT_BLUE);
+    Serial.println("TFT_INIT_RED_ONLY active - Setting Text color TFT_WHITE on TFT_BLACK.");
+    tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+    Serial.println("TFT_INIT_RED_ONLY active - Setting cursor to (1, 1) with font 2.");
+    tfts.setCursor(1, digit * 3, 4); // Font 2. 16 pixel high  
+    Serial.println("TFT_INIT_RED_ONLY active - Printing Round counter...");
+    tfts.print("Round:...");
+    tfts.println(counter);
+    tfts.chip_select.disableAllCSPins();
+  }
+  counter++;
   delay(1000); // keep task watchdog satisfied
 }
 #else
