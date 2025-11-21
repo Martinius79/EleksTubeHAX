@@ -102,21 +102,21 @@ void TFTs::begin()
   // delay(2000);
 #endif
 
-#ifdef TFT_INIT_RED_ONLY
-  const uint16_t startupColor = TFT_RED;
-#else
-  const uint16_t startupColor = TFT_BLACK;
-#endif
+// #ifdef TFT_INIT_RED_ONLY
+//   const uint16_t startupColor = TFT_RED;
+// #else
+//   const uint16_t startupColor = TFT_BLACK;
+// #endif
 
-#if defined(ST7789_DRIVER)
-  Serial.println("TFTs::begin() - Forcing display off before first clear");
-  setDisplayOn(false);
-  Serial.println("TFTs::begin() - Clearing full ST7789 frame memory");
-  clearEntireCgram(startupColor);
-#endif
+// #if defined(ST7789_DRIVER)
+//   Serial.println("TFTs::begin() - Forcing display off before first clear");
+//   setDisplayOn(false);
+//   Serial.println("TFTs::begin() - Clearing full ST7789 frame memory");
+//   clearEntireCgram(startupColor);
+// #endif
 
   Serial.println("TFTs::begin() - Calling fillScreen() with startup color");
-  fillScreen(startupColor);     // ensures library state matches chosen startup colour
+  fillScreen(TFT_RED);     // ensures library state matches chosen startup colour
   Serial.println("TFTs::begin() - fillScreen() finished.");
 
 #ifdef DEBUG_OUTPUT_TFT
@@ -128,10 +128,10 @@ void TFTs::begin()
   Serial.println("TFTs::begin() - enableAllDisplays() finished.");
 #endif
 
-#if defined(ST7789_DRIVER)
-  Serial.println("TFTs::begin() - Turning display on after initial clear");
-  setDisplayOn(true);
-#endif
+// #if defined(ST7789_DRIVER)
+//   Serial.println("TFTs::begin() - Turning display on after initial clear");
+//   setDisplayOn(true);
+// #endif
 
 // #ifdef TFT_INIT_RED_ONLY
 //   NumberOfClockFaces = 0; // skip any further assets in minimal test mode

@@ -293,33 +293,33 @@ void setup()
   tfts.begin(); // ...and count number of clock faces available...
 #ifdef TFT_INIT_RED_ONLY
   // Serial.println("TFT_INIT_RED_ONLY active - skipping remainder of setup.");
-  delay(1000);
-  Serial.println("TFT_INIT_RED_ONLY active - Setting black screen for 5 seconds...");
-  tfts.fillScreen(TFT_BLACK);
-  Serial.println("TFT_INIT_RED_ONLY active - Setting Text color TFT_WHITE on TFT_BLACK.");
-  tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-  Serial.println("TFT_INIT_RED_ONLY active - Setting cursor to (1, 1) with font 1.");
-  tfts.setCursor(1, 1, 1); // Font 2. 16 pixel high
-  Serial.println("TFT_INIT_RED_ONLY active - Waiting 5 seconds...");
-  delay(1000);
-  Serial.println("TFT_INIT_RED_ONLY active - Printing 'Starting Setup...' for 5 seconds...");
-  tfts.println("Starting Setup...");
-  delay(1000);
-  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_YELLOW fill for 5 seconds...");
-  tfts.fillScreen(TFT_YELLOW);
-  delay(1000);
-  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_PINK fill for 5 seconds...");
-  tfts.fillScreen(TFT_PINK);
-  delay(1000);
-  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_GREEN fill for 5 seconds...");
-  tfts.fillScreen(TFT_GREEN);
-  delay(1000);
-  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_BLUE fill for 5 seconds...");
-  tfts.fillScreen(TFT_BLUE);
-  delay(1000);
-  Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_WHITE fill for 5 seconds...");
-  tfts.fillScreen(TFT_WHITE);
-  delay(1000);
+  // delay(1000);
+  // Serial.println("TFT_INIT_RED_ONLY active - Setting black screen for 5 seconds...");
+  // tfts.fillScreen(TFT_BLACK);
+  // Serial.println("TFT_INIT_RED_ONLY active - Setting Text color TFT_WHITE on TFT_BLACK.");
+  // tfts.setTextColor(TFT_WHITE, TFT_BLACK);
+  // Serial.println("TFT_INIT_RED_ONLY active - Setting cursor to (1, 1) with font 2.");
+  // tfts.setCursor(1, 1, 2); // Font 2. 16 pixel high
+  // Serial.println("TFT_INIT_RED_ONLY active - Waiting 5 seconds...");
+  // delay(1000);
+  // Serial.println("TFT_INIT_RED_ONLY active - Printing 'Starting Setup...' for 5 seconds...");
+  // tfts.println("Starting Setup...");
+  // delay(1000);
+  // Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_YELLOW fill for 5 seconds...");
+  // tfts.fillScreen(TFT_YELLOW);
+  // delay(1000);
+  // Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_PINK fill for 5 seconds...");
+  // tfts.fillScreen(TFT_PINK);
+  // delay(1000);
+  // Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_GREEN fill for 5 seconds...");
+  // tfts.fillScreen(TFT_GREEN);
+  // delay(1000);
+  // Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_BLUE fill for 5 seconds...");
+  // tfts.fillScreen(TFT_BLUE);
+  // delay(1000);
+  // Serial.println("TFT_INIT_RED_ONLY active - Setting TFT_WHITE fill for 5 seconds...");
+  // tfts.fillScreen(TFT_WHITE);
+  // delay(1000);
 
   // tfts.chip_select.disableAllCSPins();
 
