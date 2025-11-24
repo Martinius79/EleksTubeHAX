@@ -204,6 +204,7 @@ void TFTs::reinit()
     InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
     init();                    // Initialize the super class (again).
     chip_select.reclaimPins();
+    chip_select.setAll(); // Start again with all displays selected.
     fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
     enableAllDisplays();       // Signal, that the displays are enabled now
 #ifdef DEBUG_OUTPUT_TFT

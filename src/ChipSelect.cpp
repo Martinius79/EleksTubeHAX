@@ -106,10 +106,7 @@ void ChipSelect::setAll(bool update_)
 
 void ChipSelect::reclaimPins()
 {
-#ifdef DEBUG_OUTPUT_CHIPSELECT
-  Serial.println("ChipSelect::reclaimPins - Reclaiming control of per-digit CS pins");
-#endif
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+#if defined(HARDWARE_MARVELTUBES_CLOCK)
   for (int i = 0; i < numLCDs; ++i)
   {
 #ifdef DEBUG_OUTPUT_CHIPSELECT
@@ -128,8 +125,9 @@ void ChipSelect::reclaimPins()
 #endif
     digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL); // start with disabled CS
   }
-#endif
+#endif // HARDWARE_MARVELTUBES_CLOCK
 }
+
 
 void ChipSelect::setDigit(uint8_t digit, bool update_)
 {
