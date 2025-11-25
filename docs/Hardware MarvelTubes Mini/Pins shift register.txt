@@ -1,0 +1,15 @@
+
+pin 1 - to Q3 - Goes nowhere -> U4 missing (RTC?)
+pin 2 - LED socket 6 - pin 9 = CS
+pin 3 - LED socket 5 - pin 9 = CS
+pin 4 - VCC
+pin 5 - LED socket 4 - pin 9 = CS
+pin 6 - ??? Latch -> Data
+pin 7 - ??? Clock -> Reset
+pin 8 - LED socket 3 - pin 9 = CS
+pin 9 - LED socket 2 - pin 9 = CS
+pin 10 - LED socket 1 - pin 9 = CS
+pin 11 - GND
+pin 12 - NC
+pin 13 - All LED sockets - pin 2 + pin 3 = VCC + LEDA
+pin 14 - All LED sockets - pin 5 = ?
