@@ -4,20 +4,28 @@
 - Temperature sensor readout in a single block.
 - Limit IP Geolocation to every Sunday (copy code from the fork)
 - Add static zime zone data if IP Geo is disabled  (copy code from the fork)
-
+- Use ipinfo.io for online timezone check, instead of abstractapi.com
 
 
 Martinius:
 
 Fix BUG:
-If power is off, the displays changed, switch on again
-If MQTT is on, but not reachable, always three seconds hanging clock
+1) If power is off, the displays changed, switch on again
+2) If MQTT is on, but not reachable, always three seconds hanging clock
+3) If client ID is present two times, Wifi drops on MQTT message sent (discovery i.e.) -> Infinite loop -> protect against that
+
+change menu order -> clock face selection first!
+
+button mechanism with interrupts -> more then single clicks!
+
+MQTT HA integration for switching Timezones
 
 switch clock faces by left and right buttons
 switch clock faces by single click in IPSTubes
 menu with double click on IPSTubes
 
 Add RLE decoding!!!
+
 switch/Updating dimming must be callable, not only every full hour, because vlues should be changeable from menu for start and stop of dimming
 
 Faster drawings! Must be possible, if framerates up tp 20fps and more are possible on the dispaly, according to other esp32 devs
@@ -27,7 +35,7 @@ Album mode
 nice menu
 "animations", like flip clock
 support jpg and png
-hold all clock face files in RAM
+hold all clock face files in RAM -> only for clocks with PSRAM -> MarvelTubes and NoveLife so far
 new counting and using mechanism for clock faces
 Start/Boot animation
 
@@ -47,3 +55,5 @@ Generate screen safer images programatically (like Matrix rain or flying triangl
 Generate some easy "clock faces" programatically, like seven segment display with different colours or better 16 segment
 directly connected -> generate also "letters" https://de.wikipedia.org/wiki/Segmentanzeige
 moving texts in the displays...
+
+Implement an Alarm clock -> Buzz for the ones with a buzzer -> blink on display, if no buzzer

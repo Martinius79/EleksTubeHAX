@@ -98,7 +98,7 @@ void WifiBegin()  {
 
   WiFi.mode(WIFI_STA);
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);  
-  WiFi.setHostname(DEVICE_NAME);  
+  WiFi.setHostname(DEVICE_NAME);
 
 #ifdef WIFI_USE_WPS   ////  WPS code
   // no data is saved, start WPS imediatelly
@@ -161,7 +161,7 @@ void WifiBegin()  {
   Serial.print("Connected to ");
   Serial.println(WiFi.SSID());
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());  
+  Serial.println(WiFi.localIP());
   delay(200);
 }
 
