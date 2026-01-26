@@ -9,20 +9,28 @@ void TFTs::begin()
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
   // If hardware dimming is used, init ledc, set the pin and channel for PWM and set frequency and resolution
-  ledcSetup(TFT_ENABLE_PIN, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);            // PWM, globally defined
-  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);                         // Attach the pin to the PWM channel
-  ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION); // need to set the frequency and resolution again to have the hardware dimming working properly
+  ledcSetup(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);           // PWM, globally defined
+  ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(0));                         // Set initial dimming value to 0 (off)
 #else
   pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
   InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
   init();                    // Initialize the super class.
+#if defined(HARDWARE_MARVELTUBES_CLOCK)
+  chip_select.reclaimPins(); // regain control of per-digit CS pins after TFT_eSPI::init()
+  chip_select.setAll(); // After regain control, start with all displays selected again  
+#endif
   fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+  delay(100); // give some time to avoid glitches on power up
+  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);                         // Attach the pin to the PWM channel -> this "enables" (backlight power on) the displays
+  ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION); // need to set the frequency and resolution again to have the hardware dimming working properly
+#endif
   enableAllDisplays();       // Signal, that the displays are enabled now and do the hardware dimming, if available and enabled
 
-  if (!SPIFFS.begin()) // Initialize SPIFFS
+  if (!LittleFS.begin(false, "/littlefs", 5, "littlefs")) // Initialize LittleFS (partition label: littlefs)
   {
-    Serial.println("SPIFFS initialization failed!");
+    Serial.println("LittleFS initialization failed!");
     NumberOfClockFaces = 0;
     return;
   }
@@ -48,6 +56,10 @@ void TFTs::reinit()
 #endif
     InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
     init();                    // Initialize the super class (again).
+#if defined(HARDWARE_MARVELTUBES_CLOCK)
+  chip_select.reclaimPins(); // regain control of per-digit CS pins after TFT_eSPI::init()
+  chip_select.setAll(); // After regain control, start with all displays selected again
+#endif
     fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
     enableAllDisplays();       // Signal, that the displays are enabled now
 #else                          // TFT_SKIP_REINIT
@@ -68,10 +80,10 @@ void TFTs::loadClockFacesNames()
   int8_t i = 0;
   const char *filename = "/clockfaces.txt";
   Serial.println("Loading clock face names...");
-  fs::File f = SPIFFS.open(filename);
+  fs::File f = LittleFS.open(filename);
   if (!f)
   {
-    Serial.println("ERROR: SPIFFS clockfaces.txt not found.");
+    Serial.println("ERROR: LittleFS clockfaces.txt not found.");
     return;
   }
   while (f.available() && i < 9)
@@ -190,7 +202,7 @@ void TFTs::showDigit(uint8_t digit)
         NextNumber = 0; // pre-load only seconds, because they are drawn first
       NextFileRequired = current_graphic * 10 + NextNumber;
     }
-#ifdef HARDWARE_IPSTUBE_CLOCK
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
     chip_select.update();
 #endif
   }
@@ -236,7 +248,7 @@ void TFTs::ProcessUpdatedDimming()
 
 bool TFTs::FileExists(const char *path)
 {
-  fs::File f = SPIFFS.open(path, "r");
+  fs::File f = LittleFS.open(path, "r");
   bool Exists = ((f == true) && !f.isDirectory());
   f.close();
   return Exists;
@@ -287,7 +299,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 #endif
 
   // Open requested file on SD card
-  bmpFS = SPIFFS.open(filename, "r");
+  bmpFS = LittleFS.open(filename, "r");
   if (!bmpFS)
   {
     Serial.print("File not found: ");
@@ -305,7 +317,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   uint16_t magic = read16(bmpFS);
   if (magic == 0xFFFF)
   {
-    Serial.print("Can't openfile. Make sure you upload the SPIFFs image with BMPs. : ");
+    Serial.print("Can't openfile. Make sure you upload the LittleFS image with BMPs. : ");
     Serial.println(filename);
     bmpFS.close();
     return (false);
@@ -473,7 +485,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 #endif
 
   // Open requested file on SD card
-  bmpFS = SPIFFS.open(filename, "r");
+  bmpFS = LittleFS.open(filename, "r");
   if (!bmpFS)
   {
     Serial.print("File not found: ");
@@ -490,7 +502,7 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
   uint16_t magic = read16(bmpFS);
   if (magic == 0xFFFF)
   {
-    Serial.print("Can't openfile. Make sure you upload the SPIFFs image with images. : ");
+    Serial.print("Can't openfile. Make sure you upload the LittleFS image with images. : ");
     Serial.println(filename);
     bmpFS.close();
     return (false);
