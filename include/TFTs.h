@@ -4,8 +4,8 @@
 #define FS_NO_GLOBALS
 #include <FS.h>
 #include <LittleFS.h>
-#include <TFT_eSPI.h>
 #include "GLOBAL_DEFINES.h"
+#include <TFT_eSPI.h>
 #include "ChipSelect.h"
 
 class TFTs : public TFT_eSPI

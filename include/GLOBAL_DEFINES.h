@@ -22,14 +22,15 @@
 // ************* Type of the clock hardware  *************
 // Do not uncomment, set by platform.ini file.
 // Only usefull for local builds to see the active #ifdef code parts highlighted.
-// #define HARDWARE_ELEKSTUBE_CLOCK      // Original EleksTube IPS clocks with 4MB flash
-// #define HARDWARE_ELEKSTUBE_GEN2_CLOCK // Original EleksTube clock Gen2.1 (EleksTube IPS Classic Edition/Pro/PR1/PR2, ESP32 Pico D4 Chip)
-// #define HARDWARE_SI_HAI_CLOCK         // Si Hai copy of the clock
-// #define HARDWARE_XUNFENG_CLOCK       // Xunfeng copy of the clock (with ESP32-S2 Wroom)
-// #define HARDWARE_NOVELLIFE_CLOCK      // NovelLife clocks
-// #define HARDWARE_PUNKCYBER_CLOCK      // PunkCyber / RGB Glow tube / PCBway clocks
-// #define HARDWARE_IPSTUBE_CLOCK        // Clocks with 8MB flash on PCB (like the IPSTube model H401 and H402)
-// #define HARDWARE_MARVELTUBES_CLOCK // MarvelTubes clock with 16MB flash on PCB
+// #define HARDWARE_ELEKSTUBE_CLOCK         // Original EleksTube IPS clocks with 4MB flash
+// #define HARDWARE_ELEKSTUBE_GEN2_CLOCK    // Original EleksTube clock Gen2.1 (EleksTube IPS Classic Edition/Pro/PR1/PR2, ESP32 Pico D4 Chip)
+// #define HARDWARE_SI_HAI_CLOCK            // Si Hai copy of the clock
+// #define HARDWARE_XUNFENG_CLOCK           // Xunfeng copy of the clock (with ESP32-S2 Wroom)
+// #define HARDWARE_NOVELLIFE_CLOCK         // NovelLife clocks
+// #define HARDWARE_PUNKCYBER_CLOCK         // PunkCyber / RGB Glow tube / PCBway clocks
+// #define HARDWARE_IPSTUBE_CLOCK           // Clocks with 8MB flash on PCB (like the IPSTube model H401 and H402)
+// #define HARDWARE_MARVELTUBES_CLOCK       // MarvelTubes clock with 16MB flash on PCB
+// #define HARDWARE_MARVELTUBESMINI_CLOCK   // MarvelTubes Mini clock with 4MB flash on PCB and ESP C3 Mini
 
 #ifdef HARDWARE_PUNKCYBER_CLOCK
 // Everything else is the same, except digits are swapped from left to right.
@@ -672,47 +673,47 @@
 
 // WS2812 (or compatible) LEDs on the back of the display modules.
 // Over shift register!
-// #define BACKLIGHTS_PIN (6)    // controls the WS2812B LEDs
+#define BACKLIGHTS_PIN (-1)    // controls the WS2812B LEDs
 #define NUM_BACKLIGHT_LEDS (6) // 6 LEDs, one each on the back of every LCD
 
-#define BUZZER_PIN (5) // Buzzer pin, active HIGH, use with PWM
+// #define BUZZER_PIN (-1) // Buzzer pin, active HIGH, use with PWM
 
 // Buttons, active low, externally pulled up (with actual resistors!).
 #define BUTTON_LEFT_PIN (9)  // Style/Left button
-#define BUTTON_MODE_PIN (2)  // Menu/Mode button
+#define BUTTON_MODE_PIN (1)  // Menu/Mode button
 #define BUTTON_RIGHT_PIN (2) // Time/Right button
-#define BUTTON_POWER_PIN (2) // Alarm/Power button
+#define BUTTON_POWER_PIN (0) // Alarm/Power button
 
 // Chip Select shift register, to select the display
-#define CSSR_DATA_PIN (3)
-#define CSSR_CLOCK_PIN (7)
-#define CSSR_LATCH_PIN (4)
+#define CSSR_DATA_PIN (-1)
+#define CSSR_CLOCK_PIN (-1)
+#define CSSR_LATCH_PIN (-1)
 
 // RTC UNKWONN TYPE! I2C bus! 5609 HDN2mY - ECS-RTC-3225-5609 clone -> I2C ID 0x32 -> RX8025T compatible -> modified driver is working
 // No RTC on MarvelTubes Mini?
-// #define RTC_SCL_PIN (20)
-// #define RTC_SDA_PIN (21)
+#define RTC_SCL_PIN (-1)
+#define RTC_SDA_PIN (-1)
 
 // Power for TFT displays backlight (LEDA) through a MOSFET - so they can all be dimmed and turned on/off.
 // Active is LOW for this clock!
 // over shift register!
-// #define TFT_ENABLE_PIN (4)
+#define TFT_ENABLE_PIN (-1)
 
 // Configure library \TFT_eSPI\User_Setup.h: ST7789 135 x 240 display with no chip select line.
-#define ST7789_DRIVER // Configure all registers
-#define TFT_WIDTH 135
-#define TFT_HEIGHT 240
+#define ST7735_DRIVER // Configure all registers
+#define TFT_WIDTH 80
+#define TFT_HEIGHT 160
 #define CGRAM_OFFSET // Library will add offsets required
 
 // S2 workaround -> S2 needs a fake MISO and CS pin defined, to avoid that the TFT_eSPI library initializes the default FSPI stuff and takes other pins!
-#define TFT_SDA_READ // -> S2 needs this disabled, otherwise the fake MISO pin is not working as expected!
-// #define TFT_MISO (-1) // Fake MISO pin for S2 workaround -> Input pin only, not connected to anything
+// NOTE: Do not enable TFT_SDA_READ here, otherwise TFT_eSPI will force TFT_MISO to -1.
+#define TFT_MISO (8) // MISO shared with MOSI on ESP32-C3 (no separate MISO pin)
 
 #define TFT_MOSI (8) // SPI Data
 #define TFT_SCLK (7) // SPI Clock
-#define TFT_CS (-1)   // Fake CS pin for S2 workaround -> Input pin only, not connected to anything -> we use direct GPIOs for CS later
+#define TFT_CS (-1)   // Chip Select -> over extender?
 #define TFT_DC (10)   // SPI Data Command, aka Register Select or RS
-#define TFT_RST (-1)  // SPI Reset
+#define TFT_RST (-1)  // SPI Reset -> over extender?
 
 // Fonts to load for TFT.
 // #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
@@ -726,7 +727,7 @@
 #define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
 
 // 8MHz for ESP32-C3
-#define SPI_FREQUENCY 8000000
+#define SPI_FREQUENCY 40000000
 
 // Force the TFT_eSPI library to not over-write all this
 #define USER_SETUP_LOADED
