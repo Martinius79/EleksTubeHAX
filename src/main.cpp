@@ -171,6 +171,7 @@ uint8_t hour_old = 255;
 uint32_t lastMQTTCommandExecuted = (uint32_t)-1;
 static constexpr uint8_t EXPANDER_ADDR = 0x19;
 static bool expander_present = false;
+static TFT_eSPI test_tft;
 
 // Helper function, defined below.
 void updateClockDisplay(TFTs::show_t show = TFTs::yes);
@@ -1123,7 +1124,6 @@ void setup()
 //-----------------------------------------------------------------------
 void loop()
 {
-  static bool spi_ready = false;
   static bool tft_inited[NUM_DIGITS] = {false, false, false, false, false, false};
   static uint8_t digit_idx = 0;
   static uint32_t last_tick = 0;
@@ -1134,19 +1134,6 @@ void loop()
 
   if (expander_present)
   {
-    if (!spi_ready)
-    {
-      int8_t miso_pin = TFT_MISO;
-      if (miso_pin < 0)
-      {
-        miso_pin = TFT_MOSI; // share MOSI as dummy MISO
-      }
-      SPI.begin(TFT_SCLK, miso_pin, TFT_MOSI, TFT_CS);
-      pinMode(TFT_DC, OUTPUT);
-      digitalWrite(TFT_DC, HIGH);
-      spi_ready = true;
-    }
-
     if ((millis() - last_tick) >= 1000)
     {
       last_tick = millis();
@@ -1159,10 +1146,12 @@ void loop()
           delay(2);
           if (!tft_inited[i])
           {
-            tftInitSt7735();
+            test_tft.init();
+            test_tft.setRotation(0);
+            test_tft.invertDisplay(true);
             tft_inited[i] = true;
           }
-          tftFillColor(tftInvertColor(TFT_BLACK));
+          test_tft.fillScreen(TFT_BLACK);
         }
         expanderWriteCmd(EXPANDER_ADDR, 0x00, 0xFF);
         clear_after_cycle = false;
@@ -1174,10 +1163,12 @@ void loop()
 
         if (!tft_inited[digit_idx])
         {
-          tftInitSt7735();
+          test_tft.init();
+          test_tft.setRotation(0);
+          test_tft.invertDisplay(true);
           tft_inited[digit_idx] = true;
         }
-        tftFillColor(tftInvertColor(colors[digit_idx]));
+        test_tft.fillScreen(colors[digit_idx]);
 
         expanderWriteCmd(EXPANDER_ADDR, 0x00, 0xFF);
         digit_idx = (uint8_t)((digit_idx + 1) % NUM_DIGITS);
