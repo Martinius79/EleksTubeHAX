@@ -941,17 +941,20 @@ void setup()
 
   if (expander_present)
   {
+    // Polarity register + init sequence from captured original firmware
+    // i2cReplayInitSequence writes reg 0x01=0xFE which likely enables TFT power!
     expanderWriteCmd(EXPANDER_ADDR, 0x02, 0x99);
     i2cReplayInitSequence(EXPANDER_ADDR);
-    // i2cProbeExpander(EXPANDER_ADDR);
-    // i2cRegisterSweep(EXPANDER_ADDR);
-    // i2cCommandProbe(EXPANDER_ADDR);
-    // i2cCommandOutputTest(EXPANDER_ADDR);
-    // i2cCommandBankScan(EXPANDER_ADDR);
-    // i2cCommandHighNibbleScan(EXPANDER_ADDR);
-    // i2cCommand3ByteScan(EXPANDER_ADDR);
-    // i2cUnlockSequenceTest(EXPANDER_ADDR);
-    // i2cSoftResetRecover(EXPANDER_ADDR);
+
+    // Init all displays once via TFT_eSPI (all CS low = broadcast)
+    Serial.println("TFT init (all CS low)...");
+    expanderWriteCmd(EXPANDER_ADDR, 0x00, 0x00);
+    delay(5);
+    test_tft.init(0x0);
+    test_tft.setRotation(0);
+    test_tft.fillScreen(TFT_BLACK);
+    expanderWriteCmd(EXPANDER_ADDR, 0x00, 0xFF); // all CS high
+    Serial.println("TFT init done.");
   }
 
 #if 0
@@ -1124,60 +1127,25 @@ void setup()
 //-----------------------------------------------------------------------
 void loop()
 {
-  static bool tft_inited[NUM_DIGITS] = {false, false, false, false, false, false};
   static uint8_t digit_idx = 0;
   static uint32_t last_tick = 0;
-  static bool clear_after_cycle = false;
 
   const uint8_t cs_masks[NUM_DIGITS] = {0xFE, 0xFD, 0xFB, 0xDF, 0xBF, 0x7F};
   const uint16_t colors[NUM_DIGITS] = {TFT_RED, TFT_GREEN, TFT_BLUE, TFT_YELLOW, TFT_CYAN, TFT_MAGENTA};
 
-  if (expander_present)
+  if (!expander_present) { delay(100); return; }
+
+  uint32_t now = millis();
+
+  if ((now - last_tick) >= 500)
   {
-    if ((millis() - last_tick) >= 1000)
-    {
-      last_tick = millis();
-
-      if (clear_after_cycle)
-      {
-        for (uint8_t i = 0; i < NUM_DIGITS; i++)
-        {
-          expanderWriteCmd(EXPANDER_ADDR, 0x00, cs_masks[i]);
-          delay(2);
-          if (!tft_inited[i])
-          {
-            test_tft.init();
-            test_tft.setRotation(0);
-            test_tft.invertDisplay(true);
-            tft_inited[i] = true;
-          }
-          test_tft.fillScreen(TFT_BLACK);
-        }
-        expanderWriteCmd(EXPANDER_ADDR, 0x00, 0xFF);
-        clear_after_cycle = false;
-      }
-      else
-      {
-        expanderWriteCmd(EXPANDER_ADDR, 0x00, cs_masks[digit_idx]);
-        delay(2);
-
-        if (!tft_inited[digit_idx])
-        {
-          test_tft.init();
-          test_tft.setRotation(0);
-          test_tft.invertDisplay(true);
-          tft_inited[digit_idx] = true;
-        }
-        test_tft.fillScreen(colors[digit_idx]);
-
-        expanderWriteCmd(EXPANDER_ADDR, 0x00, 0xFF);
-        digit_idx = (uint8_t)((digit_idx + 1) % NUM_DIGITS);
-        if (digit_idx == 0)
-        {
-          clear_after_cycle = true;
-        }
-      }
-    }
+    last_tick = now;
+    expanderWriteCmd(EXPANDER_ADDR, 0x00, cs_masks[digit_idx]);
+    delay(2);
+    test_tft.fillScreen(colors[digit_idx]);
+    Serial.printf("Digit %d -> color 0x%04X\n", digit_idx, colors[digit_idx]);
+    expanderWriteCmd(EXPANDER_ADDR, 0x00, 0xFF);
+    digit_idx = (uint8_t)((digit_idx + 1) % NUM_DIGITS);
   }
 
   delay(5);

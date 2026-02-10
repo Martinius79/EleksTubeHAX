@@ -705,9 +705,12 @@
 #define TFT_HEIGHT 160
 #define CGRAM_OFFSET // Library will add offsets required
 
-// S2 workaround -> S2 needs a fake MISO and CS pin defined, to avoid that the TFT_eSPI library initializes the default FSPI stuff and takes other pins!
-// NOTE: Do not enable TFT_SDA_READ here, otherwise TFT_eSPI will force TFT_MISO to -1.
-#define TFT_MISO (8) // MISO shared with MOSI on ESP32-C3 (no separate MISO pin)
+// C3 fix: TFT_SDA_READ must be DISABLED, otherwise TFT_eSPI.h forces TFT_MISO to -1
+// which blocks the SPI port on ESP32-C3 with Arduino Core >= 2.0.15
+// See: https://github.com/Bodmer/TFT_eSPI/issues/3384 and #3743
+// TFT_MISO must be set to a valid unused GPIO (not -1, not same as MOSI!)
+// #define TFT_SDA_READ
+#define TFT_MISO (5) // Dummy MISO pin (unused GPIO) - required for C3 SPI to work
 
 #define TFT_MOSI (8) // SPI Data
 #define TFT_SCLK (7) // SPI Clock
@@ -726,8 +729,8 @@
 // #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
 #define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
 
-// 8MHz for ESP32-C3
-#define SPI_FREQUENCY 40000000
+// 10MHz for ESP32-C3
+#define SPI_FREQUENCY 10000000
 
 // Force the TFT_eSPI library to not over-write all this
 #define USER_SETUP_LOADED

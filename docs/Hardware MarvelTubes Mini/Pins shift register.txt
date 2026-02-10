@@ -1,14 +1,3 @@
----- Opened the serial port COM5 ----
-14:19:04:405 -> [     7][D][esp32-hal-cpu.c:244] setCpuFrequencyMhz(): PLL: 480 / 2 = 240 Mhz, APB: 80000000 Hz
-14:19:04:436 -> [    38][V][esp32-hal-uart.c:330] uartBegin(): UART0 baud(115200) Mode(800001c) rxPin(3) txPin(1)
-14:19:04:446 -> [    48][V][esp32-hal-uart.c:416] uartBegin(): UART0 not installed. Starting installation
-14:19:04:463 -> [    59][V][esp32-hal-uart.c:467] uartBegin(): UART0 initialization done.
-14:19:05:970 -> 
-14:19:05:970 -> System starting...
-
-
-Modern Muse - Estee Lauder
-Dune - Dior
 
 pin 1 - to Q3 - Goes nowhere -> U4 missing (RTC?)
 pin 2 - LED socket 6 - pin 9 = CS

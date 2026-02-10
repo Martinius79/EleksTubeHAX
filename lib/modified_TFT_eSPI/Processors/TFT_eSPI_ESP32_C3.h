@@ -30,9 +30,11 @@
 // Fix IDF problems with ESP32C3
 #if CONFIG_IDF_TARGET_ESP32C3
   // Fix ESP32C3 IDF bug for missing definition (VSPI/FSPI only tested at the moment)
-  #ifndef REG_SPI_BASE
-    #define REG_SPI_BASE(i) DR_REG_SPI2_BASE
+  #ifdef REG_SPI_BASE
+    #undef REG_SPI_BASE
   #endif
+
+  #define REG_SPI_BASE(i) (((i)==2) ? (DR_REG_SPI2_BASE) : (DR_REG_SPI0_BASE - ((i) * 0x1000))) // GPSPI2 and GPSPI3 
 
   // Fix ESP32C3 IDF bug for name change
   #ifndef SPI_MOSI_DLEN_REG
@@ -68,7 +70,8 @@ SPI3_HOST = 2
 */
 
 // ESP32 specific SPI port selection - only SPI2_HOST available on C3
-#define SPI_PORT SPI2_HOST
+  #define SPI_PORT 2
+
 
 #ifdef RPI_DISPLAY_TYPE
   #define CMD_BITS (16-1)
