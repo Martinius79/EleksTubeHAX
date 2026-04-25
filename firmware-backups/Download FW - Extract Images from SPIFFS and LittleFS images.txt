@@ -1,0 +1,229 @@
+Extract the data from the whole file by getting the partiton table with DD
+dd if=FW.bin skip=32768 of=partitions.bin bs=1 count=3072
+Generate partion table CSV
+& "XXX\arduino-esp32\tools\gen_esp32part.exe" 'YYY\pre-built-firmware\partitions.bin' input_partitions.csv
+check the size and starting of the SPIFFS partion
+Extract with DD
+start 2424832 = 0x250000
+size 1664K = 1664K x 1024 = 1703936
+dd if=FW.bin skip=2424832 of=SPIFFS.bin bs=1 count=1703936
+
+check which filesystem is used. if "littlefs" is readable -> LittleFS
+if not, try SPIFFS extraction with mkspiffs
+& 'ZZZ\mkspiffs.exe' -u .\ExtractDir .\SPIFFS.bin
+
+else:
+
+pip install littlefs-python
+
+littlefs-python.exe extract -v --block-size 4096 .\SPIFFS.bin .\ExtractDir\
+
+littlefs-python.exe list -v --block-size 4096 .\SPIFFS.bin
+
+Example from Cyberpunk Clock:
+LittleFS Configuration:
+  Block Size:       4096  /  0x1000
+  Image Size:    1703936  /  0x1A0000
+  Block Count:       416
+  Name Max:          255
+  Image:       SPIFFS.bin
+
+
+
+if you KNOW the values for the littlefs already you can also use mklittlefs
+
+& "FFF\AppData\Local\Arduino15\packages\esp32\tools\mklittlefs\3.0.0-gnu12-dc7f933\mklittlefs.exe" --list --block 4096 --size 1703936 .\SPIFFS.bin
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+for xunfeng image:
+
+
+& "C:\Program Files\Git\usr\bin\dd.exe" if="C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\original_xunfeng_esp32_s2.bin" skip=32768 of="C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\partitions.bin" bs=1 count=3072
+
+& "C:\Users\HomePC2\.platformio\packages\framework-arduinoespressif32@src-537c58760dafe7fcc8a1d9bbcf00b6f6\tools\gen_esp32part.exe" "C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\partitions.bin" input_partitions.csv
+
+# ESP-IDF Partition Table
+# Name, Type, SubType, Offset, Size, Flags
+nvs,data,nvs,0x9000,24K,
+phy_init,data,phy,0xf000,4K,
+factory,app,factory,0x10000,384K,
+storage,data,spiffs,0x70000,2372K,
+custom,data,spiffs,0x2c1000,1276K,
+
+
+& "C:\Program Files\Git\usr\bin\dd.exe" if="C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\original_xunfeng_esp32_s2.bin" skip=458752 of=SPIFFS1.bin bs=1 count=2428928
+& "C:\Program Files\Git\usr\bin\dd.exe" if="C:\Users\HomePC2\Downloads\eCAD\Xunfeng\original_xunfeng_esp32_s2\original_xunfeng_esp32_s2.bin" skip=2887680 of=SPIFFS2.bin bs=1 count=1306624
+
+
+& "D:\Dev\GIT\PythonDis\EleksTube IPS_NTP_NEW_GEN2_20220627\EleksTube IPS.exe_extracted\mkspiffs.exe" -u .\ExtractDir1 .\SPIFFS1.bin
+
+
+
+.\esptool.exe --chip esp32s3 --port COM3 --baud 921600 chip_id
+esptool.py v4.7.0
+Serial port COM3
+Connecting....
+Chip is ESP32-S3 (QFN56) (revision v0.2)
+Features: WiFi, BLE, Embedded PSRAM 8MB (AP_3v3)
+Crystal is 40MHz
+MAC: 10:51:db:72:6c:fc
+Uploading stub...
+Running stub...
+Stub running...
+Changing baud rate to 921600
+Changed.
+Warning: ESP32-S3 has no Chip ID. Reading MAC instead.
+MAC: 10:51:db:72:6c:fc
+Hard resetting via RTS pin...
+
+
+.\esptool.exe --chip esp32s3 --port COM3 --before no_reset --after no_reset --baud 921600 flash_id
+esptool.py v4.7.0
+Serial port COM3
+WARNING: Pre-connection option "no_reset" was selected. Connection may fail if the chip is not in bootloader or flasher stub mode.
+Connecting....
+Chip is ESP32-S3 (QFN56) (revision v0.2)
+Features: WiFi, BLE, Embedded PSRAM 8MB (AP_3v3)
+Crystal is 40MHz
+MAC: 10:51:db:72:6c:fc
+Uploading stub...
+Running stub...
+Stub running...
+Changing baud rate to 921600
+Changed.
+Manufacturer: 5e
+Device: 4018
+Detected flash size: 16MB
+Flash type set in eFuse: quad (4 data lines)
+Flash voltage set by eFuse to 3.3V
+Staying in bootloader.
+
+
+
+& '..\EleksTubeHAX\pre-built-firmware\esptool.exe' --chip esp32 --port COM3 --before no-reset --after no-reset --baud 921600 flash-id
+esptool.py v4.8.1
+Serial port COM3:
+Note: Pre-connection option "no-reset" was selected. Connection may fail if the chip is not in bootloader or flasher stub mode.
+Connecting.....
+Connected to ESP32 on COM3:
+Chip type:          ESP32-D0WDQ6 (revision v1.0)
+Features:           Wi-Fi, BT, Dual Core + LP Core, Vref calibration in eFuse, BLK3 partially reserved, Coding Scheme 3/4
+Crystal frequency:  40MHz
+MAC:                30:ae:a4:75:dc:ac
+
+Uploading stub flasher...
+Running stub flasher...
+Stub flasher running.
+Changing baud rate to 921600...
+Changed.
+
+Flash Memory Information:
+=========================
+Manufacturer: c8
+Device: 6016
+Detected flash size: 4MB
+Flash voltage set by a strapping pin: 1.8V
+
+Staying in bootloader.
+
+
+
+
+esptool --chip esp32s3 --port COM25 --baud 962100 chip-id
+esptool.py v4.8.1
+Serial port COM25:
+Connecting...
+Connected to ESP32-S3 on COM25:
+Chip type:          ESP32-S3 (QFN56) (revision v0.2)
+Features:           Wi-Fi, BT 5 (LE), Dual Core + LP Core, 240MHz, Embedded PSRAM 8MB (AP_3v3)
+Crystal frequency:  40MHz
+USB mode:           USB-Serial/JTAG
+MAC:                98:3d:ae:60:c9:28
+
+Uploading stub flasher...
+Running stub flasher...
+Stub flasher running.
+Changing baud rate to 962100...
+Changed.
+
+Warning: ESP32-S3 has no chip ID. Reading MAC address instead.
+MAC:                98:3d:ae:60:c9:28
+
+Hard resetting via RTS pin...
+PS D:\Dev\GIT\ESP32DevBoardTryouts> esptool --chip esp32s3 --port COM25 --baud 962100 flash-id
+esptool.py v4.8.1
+Serial port COM25:
+Connecting...
+Connected to ESP32-S3 on COM25:
+Chip type:          ESP32-S3 (QFN56) (revision v0.2)
+Features:           Wi-Fi, BT 5 (LE), Dual Core + LP Core, 240MHz, Embedded PSRAM 8MB (AP_3v3)
+Crystal frequency:  40MHz
+USB mode:           USB-Serial/JTAG
+MAC:                98:3d:ae:60:c9:28
+
+Uploading stub flasher...
+Running stub flasher...
+Stub flasher running.
+Changing baud rate to 962100...
+Changed.
+
+Flash Memory Information:
+=========================
+Manufacturer: 5e
+Device: 4018
+Detected flash size: 16MB
+Flash type set in eFuse: quad (4 data lines)
+Flash voltage set by eFuse: 3.3V
+
+Hard resetting via RTS pin...
+
+
+
+Original_FW_ESP32_S3_Dev_Board_Clone_1
+
+
+
+YELLOW
+python -m esptool --chip esp32c3 --baud 962000 --port COM3 read_flash 0x0000 0x400000 ..\2025-11-23_FW_MarvelTubes_Mini_Original.bin
+Warning: Deprecated: Command 'read_flash' is deprecated. Use 'read-flash' instead.
+esptool v5.1.0
+Connected to ESP32-C3 on COM3:
+Chip type:          ESP32-C3 (QFN32) (revision v0.4)
+Features:           Wi-Fi, BT 5 (LE), Single Core, 160MHz, Embedded Flash 4MB (XMC)
+Crystal frequency:  40MHz
+USB mode:           USB-Serial/JTAG
+MAC:                f4:12:fa:30:28:0c
+
+Stub flasher running.
+Changing baud rate to 962000...
+Changed.
+
+Configuring flash size...
+Read 4194304 bytes from 0x00000000 in 46.4 seconds (723.4 kbit/s) to '..\2025-11-23_FW_MarvelTubes_Mini_Original.bin'.                                                              
+
+Hard resetting via RTS pin...
+
+
+GRAY
+python -m esptool --chip esp32c3 --baud 962000 --port COM3 write-flash 0x0000 .\FW_MarvelTubes_Mini_IPS_V1.1.30_Orignal_Manufacturer_Gray_Device.bin --erase-all
+esptool v5.1.0
+Connected to ESP32-C3 on COM3:
+Chip type:          ESP32-C3 (QFN32) (revision v0.4)
+Features:           Wi-Fi, BT 5 (LE), Single Core, 160MHz, Embedded Flash 4MB (XMC)
+Crystal frequency:  40MHz
+USB mode:           USB-Serial/JTAG
+MAC:                d8:85:ac:54:e4:38
+
+WHITE
+python -m esptool --chip esp32c3 --baud 962000 --port COM30 read_flash 0x0000 0x400000 .\FW_MarvelTubes_Mini_IPS_V1.1.30_Orignal_Manufacturer_White_Device.bin   
+Warning: Deprecated: Command 'read_flash' is deprecated. Use 'read-flash' instead.
+esptool v5.1.0
+Connected to ESP32-C3 on COM30:
+Chip type:          ESP32-C3 (QFN32) (revision v0.4)
+Features:           Wi-Fi, BT 5 (LE), Single Core, 160MHz, Embedded Flash 4MB (XMC)
+Crystal frequency:  40MHz
+USB mode:           USB-Serial/JTAG
+MAC:                88:56:a6:70:ac:a8
+
