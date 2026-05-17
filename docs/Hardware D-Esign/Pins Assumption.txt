@@ -1,0 +1,31 @@
+no Buttons!
+
+CS Lines
+
+GPIO 25 - LED 6 - Seconds Oner (most right)
+GPIO 16 - LED 5 - Seconds Tener (second from right)
+GPIO 12 - LED 4 - Minutes Oner (third from right)
+GPIO 4 - LED 3 - Minutes Tener (third from left)
+GPIO 33 - LED 2 - Hours Oner (second from left)
+GPIO 26 - LED 1 - Hours Tener (most left)
+
+TFT Control
+
+GPIO 14 - RST
+GPIO 27 - rs
+GPIO 8 - MOSI
+GPIO 2 - SCLK
+
+Others
+
+GPIO 32 - Backlight
+GPIO ? - Display On/Off
+
+RTC
+
+GPIO ?
+GPIO ?
+
+Buzzer
+
+GPIO ?
