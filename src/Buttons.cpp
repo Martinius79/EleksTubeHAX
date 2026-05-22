@@ -15,7 +15,14 @@ void Button::begin()
   Serial.println(bpin);
 #endif
 
-  pinMode(bpin, INPUT);
+  if (!isValidPin())
+  {
+    button_state = idle;
+    down_last_time = false;
+    return;
+  }
+
+  pinMode(bpin, INPUT_PULLUP);  // pull-up: pin HIGH when idle, LOW when button pressed/ring touched
 
   down_last_time = isButtonDown();
   if (down_last_time)
@@ -30,6 +37,8 @@ void Button::begin()
 
 void Button::loop()
 {
+  if (!isValidPin()) return;
+
   millis_at_last_loop = millis();
   bool down_now = isButtonDown();
 

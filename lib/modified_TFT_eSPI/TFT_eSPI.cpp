@@ -15,6 +15,13 @@
 
 #include "TFT_eSPI.h"
 
+// Debug macro – only active for D-Esign hardware
+#ifdef HARDWARE_DDESIGN_CLOCK
+  #define TFT_INIT_DBG(msg) do { Serial.println(F("[TFT] " msg)); Serial.flush(); } while(0)
+#else
+  #define TFT_INIT_DBG(msg) do {} while(0)
+#endif
+
 #if defined (ESP32)
   #if defined(CONFIG_IDF_TARGET_ESP32S3)
     #include "Processors/TFT_eSPI_ESP32_S3.c" // Tested with SPI and 8-bit parallel
@@ -612,7 +619,9 @@ void TFT_eSPI::init(uint8_t tc)
 {
   if (_booted)
   {
+    TFT_INIT_DBG("initBus...");
     initBus();
+    TFT_INIT_DBG("initBus done.");
 
 #if !defined (ESP32) && !defined(TFT_PARALLEL_8_BIT) && !defined(ARDUINO_ARCH_RP2040) && !defined (ARDUINO_ARCH_MBED)
   // Legacy bitmasks for GPIO
@@ -644,17 +653,24 @@ void TFT_eSPI::init(uint8_t tc)
 #else
   #if !defined(TFT_PARALLEL_8_BIT) && !defined(RP2040_PIO_INTERFACE)
     #if defined (TFT_MOSI) && !defined (TFT_SPI_OVERLAP) && !defined(ARDUINO_ARCH_RP2040) && !defined (ARDUINO_ARCH_MBED)
+      TFT_INIT_DBG("spi.begin(SCLK,MISO,MOSI,-1)...");
       spi.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, -1); // This will set MISO to input
+      TFT_INIT_DBG("spi.begin done.");
     #else
+      TFT_INIT_DBG("spi.begin()...");
       spi.begin(); // This will set MISO to input
+      TFT_INIT_DBG("spi.begin done.");
     #endif
   #endif
 #endif
     lockTransaction = false;
     inTransaction = false;
     locked = true;
+    TFT_INIT_DBG("lock flags set.");
 
+    TFT_INIT_DBG("INIT_TFT_DATA_BUS...");
     INIT_TFT_DATA_BUS;
+    TFT_INIT_DBG("INIT_TFT_DATA_BUS done.");
 
 
 #if defined (TFT_CS) && !defined(RP2040_PIO_INTERFACE)
@@ -677,7 +693,9 @@ void TFT_eSPI::init(uint8_t tc)
 #endif
 
     _booted = false;
+    TFT_INIT_DBG("end_tft_write (boot)...");
     end_tft_write();
+    TFT_INIT_DBG("end_tft_write (boot) done.");
   } // end of: if just _booted
 
   // Toggle RST low to reset
@@ -689,12 +707,14 @@ void TFT_eSPI::init(uint8_t tc)
     }
   #endif
   if (TFT_RST >= 0) {
+    TFT_INIT_DBG("HW reset...");
     writecommand(0x00); // Put SPI bus in known state for TFT with CS tied low
     digitalWrite(TFT_RST, HIGH);
     delay(5);
     digitalWrite(TFT_RST, LOW);
     delay(20);
     digitalWrite(TFT_RST, HIGH);
+    TFT_INIT_DBG("HW reset done.");
   }
   else writecommand(TFT_SWRST); // Software reset
 #else
@@ -703,7 +723,9 @@ void TFT_eSPI::init(uint8_t tc)
 
   delay(150); // Wait for reset to complete
 
+  TFT_INIT_DBG("begin_tft_write...");
   begin_tft_write();
+  TFT_INIT_DBG("begin_tft_write done.");
 
   tc = tc; // Suppress warning
 
@@ -712,8 +734,10 @@ void TFT_eSPI::init(uint8_t tc)
     #include "TFT_Drivers/ILI9341_Init.h"
 
 #elif defined (ST7735_DRIVER)
+    TFT_INIT_DBG("ST7735 driver init...");
     tabcolor = tc;
     #include "TFT_Drivers/ST7735_Init.h"
+    TFT_INIT_DBG("ST7735 driver init done.");
 
 #elif defined (ILI9163_DRIVER)
     #include "TFT_Drivers/ILI9163_Init.h"
@@ -779,7 +803,9 @@ void TFT_eSPI::init(uint8_t tc)
   writecommand(TFT_INVOFF);
 #endif
 
+  TFT_INIT_DBG("end_tft_write (final)...");
   end_tft_write();
+  TFT_INIT_DBG("end_tft_write (final) done.");
 
   setRotation(rotation);
 

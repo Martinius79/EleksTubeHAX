@@ -31,6 +31,7 @@
 // #define HARDWARE_IPSTUBE_CLOCK           // Clocks with 8MB flash on PCB (like the IPSTube model H401 and H402)
 // #define HARDWARE_MARVELTUBES_CLOCK       // MarvelTubes clock with 16MB flash on PCB
 // #define HARDWARE_MARVELTUBESMINI_CLOCK   // MarvelTubes Mini clock with 4MB flash on PCB and ESP C3 Mini
+// #define HARDWARE_DDESIGN_CLOCK           // D-Esign clock with ESP32 WROOM-32, small ST7735 80x160 displays, direct GPIO CS lines
 
 #ifdef HARDWARE_PUNKCYBER_CLOCK
 // Everything else is the same, except digits are swapped from left to right.
@@ -89,7 +90,7 @@
 #define HOURS_TENS_MAP (0x01 << HOURS_TENS)
 
 // Define the activate and deactivate state for the display power transistor and how the dimming value is calculated.
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK)) // for all clocks, except IPSTube and MarvelTubes
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK)) // for all clocks, except IPSTube, MarvelTubes and D-Esign
 #define ACTIVATEDISPLAYS HIGH                                                  // Activate is HIGH
 #define DEACTIVATEDISPLAYS LOW                                                 // Deactivate is LOW
 #define CALCDIMVALUE(x) (x)                                                    // Dimming value is directly used for software dimming
@@ -99,9 +100,13 @@
 #define CALCDIMVALUE(x) (255 - x)                                              // Dimming value is "inverted" for hardware dimming for IPSTube
 #endif
 
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK)
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK)
 #define DIGIT_CS_ACTIVE_LEVEL LOW
 #define DIGIT_CS_INACTIVE_LEVEL HIGH
+// #elif defined(HARDWARE_DDESIGN_CLOCK)
+// // CS direct connection (standard active LOW) - SOT-23 transistors are LEDA drivers, not CS inverters
+// #define DIGIT_CS_ACTIVE_LEVEL LOW
+// #define DIGIT_CS_INACTIVE_LEVEL HIGH
 #else
 #define DIGIT_CS_ACTIVE_LEVEL HIGH
 #define DIGIT_CS_INACTIVE_LEVEL LOW
@@ -753,5 +758,86 @@
 #define USER_SETUP_LOADED
 
 #endif // #ifdef HARDWARE_MARVELTUBESMINI_CLOCK
+
+/**************************
+ *    D-Esign Clock       *
+ **************************/
+#ifdef HARDWARE_DDESIGN_CLOCK
+#define DEVICE_NAME "DDesign"
+#define DEVICE_MANUFACTURER "D-Esign"
+#define DEVICE_MODEL "D-Esign IPS Tube Clock"
+#define DEVICE_HW_VERSION "1.0"
+
+// WS2812B LED chain: GPIO32 -> R5 -> Gate of Q5 (NPN/N-MOSFET), Source=GND, Drain -> R25 -> DIN LED1 -> ... -> LED6
+// IMPORTANT: Q5 inverts the signal! FastLED RMT output on GPIO32 arrives inverted at WS2812B DIN.
+// Fix needed: rmt_set_tx_invert_out() after FastLED init, or switch to inverted RMT config.
+#define BACKLIGHTS_PIN (32)
+#define NUM_BACKLIGHT_LEDS (6)
+
+// Touch rings: metal ring directly connected to GPIO, finger contact creates path to GND.
+// No touch IC - standard INPUT_PULLUP + active LOW detection.
+#define BUTTON_ACTIVE_LEVEL LOW     // Touch pulls pin LOW via body resistance to GND
+#define BUTTON_LEFT_PIN (19)        // Left ring confirmed
+#define BUTTON_MODE_PIN (-1)        // No mode button
+#define BUTTON_RIGHT_PIN (18)       // Right ring confirmed
+#define BUTTON_POWER_PIN (-1)       // No power button
+
+// I2C to DS3231 RTC.
+#define RTC_SCL_PIN (22)
+#define RTC_SDA_PIN (23)
+
+// Buzzer pin (identified by GPIO scan: GPIO21 causes speaker/buzzer to sound).
+#define BUZZER_PIN (21)
+
+// Chip Select lines are directly connected GPIOs (no shift register, no I2C expander).
+// Order: Seconds Ones, Seconds Tens, Minutes Ones, Minutes Tens, Hours Ones, Hours Tens
+// GPIO  5 = Seconds Ones (rightmost)    GPIO 17 = Seconds Tens
+// GPIO  0 = Minutes Ones                GPIO  4 = Minutes Tens
+// GPIO 33 = Hours Ones                  GPIO 26 = Hours Tens (leftmost)
+#define CSSR_DATA_PIN (-1)   // No shift register
+#define CSSR_CLOCK_PIN (-1)  // No shift register
+#define CSSR_LATCH_PIN (-1)  // No shift register
+
+// No separate TFT enable/power pin.
+// LEDA (display backlight) is hardwired ON: all 6 LEDA pins tied together on trace "B",
+// pulled to 3.3V via R13. Q4 transistor gate+source both at 3.3V = not switching. Always ON.
+#define TFT_ENABLE_PIN (15) // No TFT enable pin
+
+// Configure library \TFT_eSPI\User_Setup.h: ST7735S 80x160 display (panel: NF P096H-09A).
+#define ST7735_DRIVER          // ST7735S display controller
+#define ST7735_GREENTAB160x80  // 80x160 panel: colstart=26, rowstart=1
+#define TFT_WIDTH 80
+#define TFT_HEIGHT 160
+#define CGRAM_OFFSET           // Apply colstart/rowstart offsets
+
+#define TFT_SDA_READ           // Read and write on the MOSI/SDA pin, no separate MISO pin
+#define TFT_MISO (-1)          // No separate MISO pin
+
+#define TFT_MOSI (13)  // SPI MOSI / SDA pin (confirmed by PCB measurement - was wrongly assumed GPIO15)
+#define TFT_SCLK (2)   // SPI Clock
+#define TFT_CS   (-1)  // Chip Select -> direct GPIO per digit, no shared CS line
+#define TFT_DC   (27)  // SPI Data Command / Register Select (RS pin)
+#define TFT_RST  (14)  // SPI Reset
+
+// Fonts to load for TFT.
+#define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+#define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~353 bytes in FLASH
+#define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters
+#define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
+
+// 1MHz for signal integrity debugging (increase to 10MHz after display confirmed working)
+#define SPI_FREQUENCY 1000000
+
+// Force the TFT_eSPI library to not over-write all this
+#define USER_SETUP_LOADED
+
+#endif // #ifdef HARDWARE_DDESIGN_CLOCK
+
+// ************* General display size define *************
+// Set DISPLAY_SMALL for all hardware variants that use the small 80x160 ST7735 displays.
+// Used in main.cpp to select appropriate font sizes and layout for the smaller screens.
+#if defined(HARDWARE_MARVELTUBESMINI_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK)
+#define DISPLAY_SMALL
+#endif
 
 #endif /* GLOBAL_DEFINES_H_ */
