@@ -1,30 +1,30 @@
 At least two Touch Buttons!
 
-GPIO 18 - right
-GPIO 19 - left
+GPIO 33 - right
+GPIO 32 - left
 
 CS Lines
 
-GPIO 5 - LED 6 - Seconds Oner (most right)
-GPIO 17 - LED 5 - Seconds Tener (second from right)
-GPIO 0 - LED 4 - Minutes Oner (third from right)
-GPIO 4 - LED 3 - Minutes Tener (third from left)
-GPIO 33 - LED 2 - Hours Oner (second from left)
-GPIO 26 - LED 1 - Hours Tener (most left)
+GPIO 25 - LED 6 - Seconds Oner (most right)
+GPIO 26 - LED 5 - Seconds Tener (second from right)
+GPIO 12 - LED 4 - Minutes Oner (third from right)
+GPIO 14 - LED 3 - Minutes Tener (third from left)
+GPIO 18 - LED 2 - Hours Oner (second from left)
+GPIO 17 - LED 1 - Hours Tener (most left)
 
 TFT Control
 
-GPIO 14 - RST
-GPIO 27 - RS
-GPIO 13 - MOSI
+GPIO 4 - RST
+GPIO 16 - RS
+GPIO 13 - MOSI/SDA
 GPIO 2 - SCLK
 
 Others
 
-GPIO 32 - WS2812B LEDs Data (via inverting transistor Q5)
+GPIO 19 - WS2812B LEDs Data (via inverting transistor Q5) - 
          Circuit: GPIO32 -> R5 -> Q5 Gate, Q5 Source=GND, Q5 Drain -> R25 -> DIN LED1 -> LED2...LED6
          NOTE: Signal INVERTED by Q5 - firmware RMT inversion required!
-GPIO ? - Display TFT Backlight (LEDA) - TBD, candidates: GPIO 12, 15, 16, 25
+GPIO 15 - Display TFT Backlight (LEDA)
 
 RTC
 
@@ -43,11 +43,11 @@ Microphone
 
 Available GPIOs:
 
-0, 2, 4, 5, 12, 13, 14, 15 ,16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39
+0, 2, 4, 5, 12, 13, 14, 15 , 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33, 34, 35, 36, 39
 
 Unused/Unknown I/O:
 
-12, 15, 16, 25
+0, 5, 27
 
 Unused/Unknown Input only:
 

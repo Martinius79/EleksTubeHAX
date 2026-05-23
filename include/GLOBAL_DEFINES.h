@@ -103,10 +103,6 @@
 #if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK)
 #define DIGIT_CS_ACTIVE_LEVEL LOW
 #define DIGIT_CS_INACTIVE_LEVEL HIGH
-// #elif defined(HARDWARE_DDESIGN_CLOCK)
-// // CS direct connection (standard active LOW) - SOT-23 transistors are LEDA drivers, not CS inverters
-// #define DIGIT_CS_ACTIVE_LEVEL LOW
-// #define DIGIT_CS_INACTIVE_LEVEL HIGH
 #else
 #define DIGIT_CS_ACTIVE_LEVEL HIGH
 #define DIGIT_CS_INACTIVE_LEVEL LOW
@@ -768,18 +764,16 @@
 #define DEVICE_MODEL "D-Esign IPS Tube Clock"
 #define DEVICE_HW_VERSION "1.0"
 
-// WS2812B LED chain: GPIO32 -> R5 -> Gate of Q5 (NPN/N-MOSFET), Source=GND, Drain -> R25 -> DIN LED1 -> ... -> LED6
-// IMPORTANT: Q5 inverts the signal! FastLED RMT output on GPIO32 arrives inverted at WS2812B DIN.
-// Fix needed: rmt_set_tx_invert_out() after FastLED init, or switch to inverted RMT config.
-#define BACKLIGHTS_PIN (32)
+// WS2812B LED chain: GPIO19 -> R5 -> Gate of Q5, Source=GND, Drain -> R25 -> DIN LED1 -> ... -> LED6
+#define BACKLIGHTS_PIN (19)
 #define NUM_BACKLIGHT_LEDS (6)
 
 // Touch rings: metal ring directly connected to GPIO, finger contact creates path to GND.
 // No touch IC - standard INPUT_PULLUP + active LOW detection.
 #define BUTTON_ACTIVE_LEVEL LOW     // Touch pulls pin LOW via body resistance to GND
-#define BUTTON_LEFT_PIN (19)        // Left ring confirmed
+#define BUTTON_LEFT_PIN (32)        // Left ring confirmed
 #define BUTTON_MODE_PIN (-1)        // No mode button
-#define BUTTON_RIGHT_PIN (18)       // Right ring confirmed
+#define BUTTON_RIGHT_PIN (33)       // Right ring confirmed
 #define BUTTON_POWER_PIN (-1)       // No power button
 
 // I2C to DS3231 RTC.
@@ -791,42 +785,47 @@
 
 // Chip Select lines are directly connected GPIOs (no shift register, no I2C expander).
 // Order: Seconds Ones, Seconds Tens, Minutes Ones, Minutes Tens, Hours Ones, Hours Tens
-// GPIO  5 = Seconds Ones (rightmost)    GPIO 17 = Seconds Tens
-// GPIO  0 = Minutes Ones                GPIO  4 = Minutes Tens
-// GPIO 33 = Hours Ones                  GPIO 26 = Hours Tens (leftmost)
+// GPIO 25 = Seconds Ones (rightmost)    GPIO 26 = Seconds Tens
+// GPIO 12 = Minutes Ones                GPIO 14 = Minutes Tens
+// GPIO 18 = Hours Ones                  GPIO 17 = Hours Tens (leftmost)
 #define CSSR_DATA_PIN (-1)   // No shift register
 #define CSSR_CLOCK_PIN (-1)  // No shift register
 #define CSSR_LATCH_PIN (-1)  // No shift register
 
-// No separate TFT enable/power pin.
-// LEDA (display backlight) is hardwired ON: all 6 LEDA pins tied together on trace "B",
-// pulled to 3.3V via R13. Q4 transistor gate+source both at 3.3V = not switching. Always ON.
-#define TFT_ENABLE_PIN (15) // No TFT enable pin
+// GPIO 15 controls display backlight (LEDA) via Q4 transistor.
+#define TFT_ENABLE_PIN (15) // GPIO 15 controls LEDA via Q4 transistor (LOW = ON)
 
 // Configure library \TFT_eSPI\User_Setup.h: ST7735S 80x160 display (panel: NF P096H-09A).
-#define ST7735_DRIVER          // ST7735S display controller
-#define ST7735_GREENTAB160x80  // 80x160 panel: colstart=26, rowstart=1
+#define ST7735_DRIVER // ST7735S display controller
+#define ST7735_REDTAB160x80 // colstart=24, rowstart=0
+
 #define TFT_WIDTH 80
 #define TFT_HEIGHT 160
 #define CGRAM_OFFSET           // Apply colstart/rowstart offsets
 
-#define TFT_SDA_READ           // Read and write on the MOSI/SDA pin, no separate MISO pin
-#define TFT_MISO (-1)          // No separate MISO pin
+// TFT_SDA_READ DISABLED: causes SPI bus init issues on ESP32 with custom non-standard pins.
+// Same fix was required for MarvelTubesMini (ESP32-C3). MISO must be a real (unused) GPIO.
+#define TFT_SDA_READ
+// #define TFT_MISO (34)          // Dummy MISO (GPIO34, input-only on ESP32, not connected)
 
-#define TFT_MOSI (13)  // SPI MOSI / SDA pin (confirmed by PCB measurement - was wrongly assumed GPIO15)
-#define TFT_SCLK (2)   // SPI Clock
-#define TFT_CS   (-1)  // Chip Select -> direct GPIO per digit, no shared CS line
-#define TFT_DC   (27)  // SPI Data Command / Register Select (RS pin)
-#define TFT_RST  (14)  // SPI Reset
+#define TFT_MOSI (13)  // SPI MOSI (confirmed by binary analysis: bitmask 1<<13 found in TFT code)
+#define TFT_SCLK (2)   // SPI Clock (corrected: was 14, mirrored PCB photo caused wrong identification)
+#define TFT_CS   (-1)  // Chip Select: manuell per GPIO pro Display gesteuert (kein Library-CS)
+#define TFT_DC   (16)  // SPI Data/Command (corrected: was 27, mirrored PCB photo)
+#define TFT_RST  (4)   // Reset: GPIO 4 (corrected: was -1, mirrored PCB photo)
+
+// Color order: ST7735S on this panel uses BGR internally.
+// CONFIRMED by SPI test: sending 0xF800 (RGB red) showed blue -> BGR=1 fix required.
+#define TFT_RGB_ORDER TFT_BGR
 
 // Fonts to load for TFT.
 #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
 #define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~353 bytes in FLASH
-#define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters
-#define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
+// #define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters
+#define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason on some boards....
 
-// 1MHz for signal integrity debugging (increase to 10MHz after display confirmed working)
-#define SPI_FREQUENCY 1000000
+// 27MHz confirmed working in raw SPI test (ST7735S spec max ~15MHz, but 27MHz stable on ESP32 WROOM-32)
+#define SPI_FREQUENCY 27000000
 
 // Force the TFT_eSPI library to not over-write all this
 #define USER_SETUP_LOADED

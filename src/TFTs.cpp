@@ -22,40 +22,17 @@ void TFTs::begin()
   Serial.flush();
   init();                    // Initialize the super class.
   Serial.println("TFTs: init done.");
-#if defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK)
+#if defined(HARDWARE_MARVELTUBES_CLOCK)
   // After TFT_eSPI::init(), the VSPI hardware may have taken over GPIO5 (default VSPI SS pin).
   // reclaimPins() uses gpio_reset_pin() to release it back to software GPIO control.
   chip_select.reclaimPins(); // regain control of per-digit CS pins after TFT_eSPI::init()
   chip_select.setAll(); // After regain control, start with all displays selected again
-#endif
-#ifdef HARDWARE_DDESIGN_CLOCK
-  Serial.printf("CS states (all must be 0=LOW/active): 5=%d 17=%d 0=%d 4=%d 33=%d 26=%d\n",
-    digitalRead(5), digitalRead(17), digitalRead(0),
-    digitalRead(4), digitalRead(33), digitalRead(26));
 #endif
   Serial.println("TFTs: fillScreen...");
   Serial.flush();
   fillScreen(TFT_BLACK);     // to avoid/reduce flickering patterns on the screens
   Serial.println("TFTs: fillScreen done.");
 
-#ifdef HARDWARE_DDESIGN_CLOCK
-  // Pin identification scan: one GPIO at a time, reset to INPUT between steps.
-  // Listen for buzzer + watch display at each step.
-  // Each pin: HIGH (RED, 1.5s) -> LOW (BLUE, 1.5s) -> INPUT/safe (BLACK, 0.5s)
-  Serial.println("TFTs: Pin ID scan start (listen for buzzer + watch display)");
-  // Rapidly fill with 3 solid colors (no GPIO scan) - just verify SPI+display is working at all
-  Serial.println("  Solid RED 2s - do you see anything?");
-  chip_select.setAll();
-  fillScreen(TFT_RED);   delay(2000);
-  Serial.println("  Solid GREEN 2s");
-  fillScreen(TFT_GREEN); delay(2000);
-  Serial.println("  Solid BLUE 2s");
-  fillScreen(TFT_BLUE);  delay(2000);
-  fillScreen(TFT_BLACK);
-  Serial.println("  Basic color test done.");
-  // LEDA confirmed hardwired ON (trace B -> R13 pull-up to 3.3V, Q4 not switching).
-  // No LEDA GPIO test needed.
-#endif
 #ifdef DIM_WITH_ENABLE_PIN_PWM
   delay(100); // give some time to avoid glitches on power up
   ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);                         // Attach the pin to the PWM channel -> this "enables" (backlight power on) the displays

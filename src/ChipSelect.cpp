@@ -108,10 +108,10 @@ const int numLCDs = NUM_DIGITS;
 
 #ifdef HARDWARE_DDESIGN_CLOCK
 // Direct CS GPIO lines (order: seconds ones, seconds tens, minutes ones, minutes tens, hours ones, hours tens)
-// GPIO  5 = Seconds Ones (rightmost)    GPIO 17 = Seconds Tens
-// GPIO  0 = Minutes Ones                GPIO  4 = Minutes Tens
-// GPIO 33 = Hours Ones                  GPIO 26 = Hours Tens (leftmost)
-const int lcdEnablePins[NUM_DIGITS] = {GPIO_NUM_5, GPIO_NUM_17, GPIO_NUM_0, GPIO_NUM_4, GPIO_NUM_33, GPIO_NUM_26};
+// GPIO 25 = Seconds Ones (rightmost)    GPIO 26 = Seconds Tens
+// GPIO 12 = Minutes Ones                GPIO 14 = Minutes Tens
+// GPIO 18 = Hours Ones                  GPIO 17 = Hours Tens (leftmost)
+const int lcdEnablePins[NUM_DIGITS] = {GPIO_NUM_25, GPIO_NUM_26, GPIO_NUM_12, GPIO_NUM_14, GPIO_NUM_18, GPIO_NUM_17};
 const int numLCDs = NUM_DIGITS;
 #endif
 
