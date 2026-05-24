@@ -912,7 +912,7 @@ void setupMenu()
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 #ifdef DISPLAY_SMALL
   tfts.fillRect(0, 60, 80, 60, TFT_BLACK); // use lower half of the display, fill with black
-  tfts.setCursor(0, 62, 1);
+  tfts.setCursor(0, 62, 2); // Font 2. 16 pixel high
 #else
   tfts.fillRect(0, 120, 135, 120, TFT_BLACK); // use lower half of the display, fill with black
   tfts.setCursor(0, 124, 4);                  // use font 4 - 26 pixel high - for the menu text

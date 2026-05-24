@@ -84,7 +84,15 @@ private:
   state button_state;
 
   bool isValidPin() const { return bpin != 0xFF; }
-  bool isButtonDown() { return isValidPin() && (digitalRead(bpin) == active_state); }
+  bool isButtonDown()
+  {
+    if (!isValidPin()) return false;
+#ifdef CAPACITIVE_TOUCH_BUTTONS
+    return (touchRead(bpin) < TOUCH_THRESHOLD);
+#else
+    return (digitalRead(bpin) == active_state);
+#endif
+  }
 };
 
 /*

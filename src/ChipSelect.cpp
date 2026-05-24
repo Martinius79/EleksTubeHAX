@@ -106,7 +106,7 @@ const int lcdEnablePins[NUM_DIGITS] = {15, 33, 34, 35, 36, 37};
 const int numLCDs = NUM_DIGITS;
 #endif
 
-#ifdef HARDWARE_DDESIGN_CLOCK
+#ifdef HARDWARE_DESIGN_CLOCK
 // Direct CS GPIO lines (order: seconds ones, seconds tens, minutes ones, minutes tens, hours ones, hours tens)
 // GPIO 25 = Seconds Ones (rightmost)    GPIO 26 = Seconds Tens
 // GPIO 12 = Minutes Ones                GPIO 14 = Minutes Tens
@@ -117,7 +117,7 @@ const int numLCDs = NUM_DIGITS;
 
 void ChipSelect::begin()
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   pinMode(CSSR_LATCH_PIN, OUTPUT);
   pinMode(CSSR_DATA_PIN, OUTPUT);
   pinMode(CSSR_CLOCK_PIN, OUTPUT);
@@ -136,7 +136,7 @@ void ChipSelect::begin()
   digitalWrite(CSSR_CLOCK_PIN, LOW);
   digitalWrite(CSSR_LATCH_PIN, LOW);
   update();
-#else // !HARDWARE_IPSTUBE_CLOCK && !HARDWARE_MARVELTUBES_CLOCK && !HARDWARE_DDESIGN_CLOCK
+#else // !HARDWARE_IPSTUBE_CLOCK && !HARDWARE_MARVELTUBES_CLOCK && !HARDWARE_DESIGN_CLOCK
   // Initialize all six different pins for the CS of each LCD as OUTPUT and set it to HIGH (disabled)
   for (int i = 0; i < numLCDs; ++i)
   {
@@ -149,12 +149,12 @@ void ChipSelect::begin()
     pinMode(lcdEnablePins[i], OUTPUT);
     digitalWrite(lcdEnablePins[i], DIGIT_CS_INACTIVE_LEVEL);
   }
-#endif // !HARDWARE_IPSTUBE_CLOCK && !HARDWARE_MARVELTUBES_CLOCK && !HARDWARE_DDESIGN_CLOCK
+#endif // !HARDWARE_IPSTUBE_CLOCK && !HARDWARE_MARVELTUBES_CLOCK && !HARDWARE_DESIGN_CLOCK
 }
 
 void ChipSelect::clear(bool update_)
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   setDigitMap(all_off, update_);
 #else
   disableAllCSPins();
@@ -163,7 +163,7 @@ void ChipSelect::clear(bool update_)
 
 void ChipSelect::setAll(bool update_)
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   setDigitMap(all_on, update_);
 #else
   enableAllCSPins();
@@ -173,7 +173,7 @@ void ChipSelect::setAll(bool update_)
 
 void ChipSelect::reclaimPins()
 {
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK)
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
   for (int i = 0; i < numLCDs; ++i)
   {
     gpio_reset_pin(static_cast<gpio_num_t>(lcdEnablePins[i]));
@@ -186,7 +186,7 @@ void ChipSelect::reclaimPins()
 
 void ChipSelect::setDigit(uint8_t digit, bool update_)
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   // Set the bit for the given digit in the digits_map
   setDigitMap(1 << digit, update_);
   if (update_)
@@ -206,7 +206,7 @@ void ChipSelect::setDigit(uint8_t digit, bool update_)
 
 void ChipSelect::update()
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   // Documented in README.md.  Q7 and Q6 are unused. Q5 is Seconds Ones, Q0 is Hours Tens.
   // Q7 is the first bit written, Q0 is the last.  So we push two dummy bits, then start with
   // Seconds Ones and end with Hours Tens.
@@ -228,7 +228,7 @@ void ChipSelect::update()
 
 bool ChipSelect::isSecondsOnes()
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   return ((digits_map & SECONDS_ONES_MAP) > 0);
 #else
   return true;
@@ -237,7 +237,7 @@ bool ChipSelect::isSecondsOnes()
 
 bool ChipSelect::isSecondsTens()
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   return ((digits_map & SECONDS_TENS_MAP) > 0); 
 #else
   return true;
@@ -246,7 +246,7 @@ bool ChipSelect::isSecondsTens()
 
 bool ChipSelect::isMinutesOnes()
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   return ((digits_map & MINUTES_ONES_MAP) > 0);
 #else
   return true;
@@ -255,7 +255,7 @@ bool ChipSelect::isMinutesOnes()
 
 bool ChipSelect::isMinutesTens()
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   return ((digits_map & MINUTES_TENS_MAP) > 0);
 #else
   return true;
@@ -264,7 +264,7 @@ bool ChipSelect::isMinutesTens()
 
 bool ChipSelect::isHoursOnes()
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   return ((digits_map & HOURS_ONES_MAP) > 0);
 #else
   return true;
@@ -273,7 +273,7 @@ bool ChipSelect::isHoursOnes()
 
 bool ChipSelect::isHoursTens()
 {
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK))
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
   return ((digits_map & HOURS_TENS_MAP) > 0);
 #else
   return true;
@@ -282,7 +282,7 @@ bool ChipSelect::isHoursTens()
 
 void ChipSelect::enableAllCSPins()
 {
-#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK))
+#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK))
   // enable each LCD
   for (int i = 0; i < numLCDs; ++i)
   {
@@ -293,7 +293,7 @@ void ChipSelect::enableAllCSPins()
 
 void ChipSelect::disableAllCSPins()
 {
-#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK))
+#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK))
   // disable each LCD
   for (int i = 0; i < numLCDs; ++i)
   {
@@ -304,7 +304,7 @@ void ChipSelect::disableAllCSPins()
 
 void ChipSelect::enableDigitCSPins(uint8_t digit)
 {
-#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK))
+#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK))
   // enable the LCD for the given digit
   digitalWrite(lcdEnablePins[digit], DIGIT_CS_ACTIVE_LEVEL);
 #endif
@@ -312,7 +312,7 @@ void ChipSelect::enableDigitCSPins(uint8_t digit)
 
 void ChipSelect::disableDigitCSPins(uint8_t digit)
 {
-#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK))
+#if (defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK))
   // disable the LCD for the given digit
   digitalWrite(lcdEnablePins[digit], DIGIT_CS_INACTIVE_LEVEL);
 #endif

@@ -31,7 +31,7 @@
 // #define HARDWARE_IPSTUBE_CLOCK           // Clocks with 8MB flash on PCB (like the IPSTube model H401 and H402)
 // #define HARDWARE_MARVELTUBES_CLOCK       // MarvelTubes clock with 16MB flash on PCB
 // #define HARDWARE_MARVELTUBESMINI_CLOCK   // MarvelTubes Mini clock with 4MB flash on PCB and ESP C3 Mini
-// #define HARDWARE_DDESIGN_CLOCK           // D-Esign clock with ESP32 WROOM-32, small ST7735 80x160 displays, direct GPIO CS lines
+// #define HARDWARE_DESIGN_CLOCK           // D-Esign clock with ESP32 WROOM-32, small ST7735 80x160 displays, direct GPIO CS lines
 
 #ifdef HARDWARE_PUNKCYBER_CLOCK
 // Everything else is the same, except digits are swapped from left to right.
@@ -90,17 +90,17 @@
 #define HOURS_TENS_MAP (0x01 << HOURS_TENS)
 
 // Define the activate and deactivate state for the display power transistor and how the dimming value is calculated.
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DDESIGN_CLOCK)) // for all clocks, except IPSTube, MarvelTubes and D-Esign
-#define ACTIVATEDISPLAYS HIGH                                                  // Activate is HIGH
-#define DEACTIVATEDISPLAYS LOW                                                 // Deactivate is LOW
-#define CALCDIMVALUE(x) (x)                                                    // Dimming value is directly used for software dimming
-#else                                                                          // IPSTube keeps LOW active for display power
-#define ACTIVATEDISPLAYS LOW                                                   // Activate is LOW for the IPSTube
-#define DEACTIVATEDISPLAYS HIGH                                                // Deactivate is HIGH for the IPSTube
-#define CALCDIMVALUE(x) (255 - x)                                              // Dimming value is "inverted" for hardware dimming for IPSTube
+#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK)) // for all clocks, except IPSTube, MarvelTubes and D-Esign
+#define ACTIVATEDISPLAYS HIGH                                                                                      // Activate is HIGH
+#define DEACTIVATEDISPLAYS LOW                                                                                     // Deactivate is LOW
+#define CALCDIMVALUE(x) (x)                                                                                        // Dimming value is directly used for software dimming
+#else                                                                                                              // IPSTube keeps LOW active for display power
+#define ACTIVATEDISPLAYS LOW                                                                                       // Activate is LOW for the IPSTube
+#define DEACTIVATEDISPLAYS HIGH                                                                                    // Deactivate is HIGH for the IPSTube
+#define CALCDIMVALUE(x) (255 - x)                                                                                  // Dimming value is "inverted" for hardware dimming for IPSTube
 #endif
 
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK)
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
 #define DIGIT_CS_ACTIVE_LEVEL LOW
 #define DIGIT_CS_INACTIVE_LEVEL HIGH
 #else
@@ -257,9 +257,9 @@
 // ATTENTION: Some IPSTube clocks has a LED stripe on the bottom of the clock! SOME NOT!
 // Define HARDWAREMOD_IPSTUBE_CLOCK_WITH_LED_STRIPE in platformio.ini if present!
 #ifdef HARDWAREMOD_IPSTUBE_CLOCK_WITH_LED_STRIPE
-    #define NUM_BACKLIGHT_LEDS (34) // 6 LEDs on the bottom of every LCD + 28 LEDs in a stripe on the bottom of the clock = 34 LEDs in total.
+#define NUM_BACKLIGHT_LEDS (34) // 6 LEDs on the bottom of every LCD + 28 LEDs in a stripe on the bottom of the clock = 34 LEDs in total.
 #else
-    #define NUM_BACKLIGHT_LEDS (6) // 6 LEDs, one each on the back of every LCD. For IPSTube clock without LED stripe.
+#define NUM_BACKLIGHT_LEDS (6) // 6 LEDs, one each on the back of every LCD. For IPSTube clock without LED stripe.
 #endif                         // #ifdef HARDWAREMOD_IPSTUBE_CLOCK_WITH_LED_STRIPE
 
 // Only one Button on IPSTube clocks!
@@ -381,8 +381,8 @@
 
 // No Buttons on SE version!!!
 // Set to pins, which should always be HIGH!
-#define BUTTON_LEFT_PIN (GPIO_NUM_3) // pin 3 = VDD3P3 = 3.3V analog power supply = Always HIGH on this board
-#define BUTTON_MODE_PIN (GPIO_NUM_3) // pin 3 = VDD3P3 = 3.3V analog power supply = Always HIGH on this board
+#define BUTTON_LEFT_PIN (GPIO_NUM_3)  // pin 3 = VDD3P3 = 3.3V analog power supply = Always HIGH on this board
+#define BUTTON_MODE_PIN (GPIO_NUM_3)  // pin 3 = VDD3P3 = 3.3V analog power supply = Always HIGH on this board
 #define BUTTON_RIGHT_PIN (GPIO_NUM_3) // pin 3 = VDD3P3 = 3.3V analog power supply = Always HIGH on this board
 #define BUTTON_POWER_PIN (GPIO_NUM_3) // pin 3 = VDD3P3 = 3.3V analog power supply = Always HIGH on this board
 
@@ -415,15 +415,15 @@
 
 // SPI to displays.
 #define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
-#define TFT_MISO -1           // No MISO
+#define TFT_MISO -1  // No MISO
 
 #define TFT_MOSI (GPIO_NUM_23)
 #define TFT_SCLK (GPIO_NUM_18)
-#define TFT_CS -1              // Not connected -> via shift register
-#define TFT_DC (GPIO_NUM_25)   // Data Command, aka Register Select or RS
-#define TFT_RST (GPIO_NUM_26)  // Connect reset to ensure display initialises
+#define TFT_CS -1             // Not connected -> via shift register
+#define TFT_DC (GPIO_NUM_25)  // Data Command, aka Register Select or RS
+#define TFT_RST (GPIO_NUM_26) // Connect reset to ensure display initialises
 
-#define CGRAM_OFFSET           // Library will add offsets required
+#define CGRAM_OFFSET // Library will add offsets required
 
 // Fonts to load for TFT.
 // #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
@@ -675,7 +675,7 @@
 #define DEVICE_HW_VERSION "1.0"
 
 // WS2812 (or compatible) LEDs on the back of the display modules.
-#define BACKLIGHTS_PIN (6)    // controls the WS2812B LEDs on the LCDs breakout board
+#define BACKLIGHTS_PIN (6)     // controls the WS2812B LEDs on the LCDs breakout board
 #define NUM_BACKLIGHT_LEDS (6) // 6 LEDs, one each on the back of every LCD
 
 // Buttons, active low, externally pulled up (with actual resistors!).
@@ -693,7 +693,7 @@
 #define CSSR_LATCH_PIN (-1)
 
 // No RTC on MarvelTubes Mini!
-// Soldering pads for RTC are present on the PCB, but no RTC ot battery holder is included in the kit. 
+// Soldering pads for RTC are present on the PCB, but no RTC ot battery holder is included in the kit.
 // It would be possible to solder and connect one via the I2C bus!
 // But not tested yet, so just set to -1 for now
 #define RTC_SCL_PIN (-1)
@@ -715,7 +715,7 @@
 #define DIM_SKIP_SOFTWARE_ALPHA
 
 // Configure library \TFT_eSPI\User_Setup.h: ST7735 80 x 160 display with no chip select line.
-#define ST7735_DRIVER // Configure all registers
+#define ST7735_DRIVER         // Configure all registers
 #define ST7735_GREENTAB160x80 // 80x160 panel → correct offsets (colstart=26, rowstart=1)
 #define TFT_WIDTH 80
 #define TFT_HEIGHT 160
@@ -732,12 +732,12 @@
 
 #define TFT_MOSI (8) // SPI Data
 #define TFT_SCLK (7) // SPI Clock
-#define TFT_CS (-1)   // Chip Select -> over IO Expander! -> extra class defined!
-#define TFT_DC (10)   // SPI Data Command, aka Register Select or RS
-#define TFT_RST (-1)  // SPI Reset -> over IO Expander! -> extra class defined!
+#define TFT_CS (-1)  // Chip Select -> over IO Expander! -> extra class defined!
+#define TFT_DC (10)  // SPI Data Command, aka Register Select or RS
+#define TFT_RST (-1) // SPI Reset -> over IO Expander! -> extra class defined!
 
 // Fonts to load for TFT.
-#define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+// #define LOAD_GLCD  // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
 #define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~353
 #define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters
 // #define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
@@ -758,8 +758,8 @@
 /**************************
  *    D-Esign Clock       *
  **************************/
-#ifdef HARDWARE_DDESIGN_CLOCK
-#define DEVICE_NAME "DDesign"
+#ifdef HARDWARE_DESIGN_CLOCK
+#define DEVICE_NAME "D-Esign"
 #define DEVICE_MANUFACTURER "D-Esign"
 #define DEVICE_MODEL "D-Esign IPS Tube Clock"
 #define DEVICE_HW_VERSION "1.0"
@@ -768,13 +768,16 @@
 #define BACKLIGHTS_PIN (19)
 #define NUM_BACKLIGHT_LEDS (6)
 
-// Touch rings: metal ring directly connected to GPIO, finger contact creates path to GND.
-// No touch IC - standard INPUT_PULLUP + active LOW detection.
-#define BUTTON_ACTIVE_LEVEL LOW     // Touch pulls pin LOW via body resistance to GND
-#define BUTTON_LEFT_PIN (32)        // Left ring confirmed
-#define BUTTON_MODE_PIN (-1)        // No mode button
-#define BUTTON_RIGHT_PIN (33)       // Right ring confirmed
-#define BUTTON_POWER_PIN (-1)       // No power button
+// Touch rings: metal rings connected to ESP32 capacitive touch inputs (TOUCH8/TOUCH9).
+// touchRead() returns a raw capacitance value; lower = touched, higher = idle.
+// Measured on hardware: LEFT idle ~38, RIGHT idle ~51, both touched ~4-8.
+// CAPACITIVE_TOUCH_BUTTONS switches Button::isButtonDown() from digitalRead to touchRead.
+#define CAPACITIVE_TOUCH_BUTTONS // Use touchRead() instead of digitalRead() for buttons
+#define TOUCH_THRESHOLD (25)     // touchRead() below this = touched (idle LEFT≈38, RIGHT≈51, touched≈4-8)
+#define BUTTON_LEFT_PIN (32)     // GPIO32 = TOUCH9 = left  metal ring
+#define BUTTON_MODE_PIN (-1)     // No mode button
+#define BUTTON_RIGHT_PIN (33)    // GPIO33 = TOUCH8 = right metal ring
+#define BUTTON_POWER_PIN (-1)    // No power button
 
 // I2C to DS3231 RTC.
 #define RTC_SCL_PIN (22)
@@ -788,38 +791,38 @@
 // GPIO 25 = Seconds Ones (rightmost)    GPIO 26 = Seconds Tens
 // GPIO 12 = Minutes Ones                GPIO 14 = Minutes Tens
 // GPIO 18 = Hours Ones                  GPIO 17 = Hours Tens (leftmost)
-#define CSSR_DATA_PIN (-1)   // No shift register
-#define CSSR_CLOCK_PIN (-1)  // No shift register
-#define CSSR_LATCH_PIN (-1)  // No shift register
+#define CSSR_DATA_PIN (-1)  // No shift register
+#define CSSR_CLOCK_PIN (-1) // No shift register
+#define CSSR_LATCH_PIN (-1) // No shift register
 
 // GPIO 15 controls display backlight (LEDA) via Q4 transistor.
 #define TFT_ENABLE_PIN (15) // GPIO 15 controls LEDA via Q4 transistor (LOW = ON)
 
 // Configure library \TFT_eSPI\User_Setup.h: ST7735S 80x160 display (panel: NF P096H-09A).
-#define ST7735_DRIVER // ST7735S display controller
+#define ST7735_DRIVER       // ST7735S display controller
 #define ST7735_REDTAB160x80 // colstart=24, rowstart=0
 
 #define TFT_WIDTH 80
 #define TFT_HEIGHT 160
-#define CGRAM_OFFSET           // Apply colstart/rowstart offsets
+#define CGRAM_OFFSET // Apply colstart/rowstart offsets
 
 // TFT_SDA_READ DISABLED: causes SPI bus init issues on ESP32 with custom non-standard pins.
 // Same fix was required for MarvelTubesMini (ESP32-C3). MISO must be a real (unused) GPIO.
 #define TFT_SDA_READ
 // #define TFT_MISO (34)          // Dummy MISO (GPIO34, input-only on ESP32, not connected)
 
-#define TFT_MOSI (13)  // SPI MOSI (confirmed by binary analysis: bitmask 1<<13 found in TFT code)
-#define TFT_SCLK (2)   // SPI Clock (corrected: was 14, mirrored PCB photo caused wrong identification)
-#define TFT_CS   (-1)  // Chip Select: manuell per GPIO pro Display gesteuert (kein Library-CS)
-#define TFT_DC   (16)  // SPI Data/Command (corrected: was 27, mirrored PCB photo)
-#define TFT_RST  (4)   // Reset: GPIO 4 (corrected: was -1, mirrored PCB photo)
+#define TFT_MOSI (13) // SPI MOSI (confirmed by binary analysis: bitmask 1<<13 found in TFT code)
+#define TFT_SCLK (2)  // SPI Clock (corrected: was 14, mirrored PCB photo caused wrong identification)
+#define TFT_CS (-1)   // Chip Select: manuell per GPIO pro Display gesteuert (kein Library-CS)
+#define TFT_DC (16)   // SPI Data/Command (corrected: was 27, mirrored PCB photo)
+#define TFT_RST (4)   // Reset: GPIO 4 (corrected: was -1, mirrored PCB photo)
 
 // Color order: ST7735S on this panel uses BGR internally.
 // CONFIRMED by SPI test: sending 0xF800 (RGB red) showed blue -> BGR=1 fix required.
 #define TFT_RGB_ORDER TFT_BGR
 
 // Fonts to load for TFT.
-#define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+// #define LOAD_GLCD  // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
 #define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~353 bytes in FLASH
 // #define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters
 #define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason on some boards....
@@ -830,12 +833,12 @@
 // Force the TFT_eSPI library to not over-write all this
 #define USER_SETUP_LOADED
 
-#endif // #ifdef HARDWARE_DDESIGN_CLOCK
+#endif // #ifdef HARDWARE_DESIGN_CLOCK
 
 // ************* General display size define *************
 // Set DISPLAY_SMALL for all hardware variants that use the small 80x160 ST7735 displays.
 // Used in main.cpp to select appropriate font sizes and layout for the smaller screens.
-#if defined(HARDWARE_MARVELTUBESMINI_CLOCK) || defined(HARDWARE_DDESIGN_CLOCK)
+#if defined(HARDWARE_MARVELTUBESMINI_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
 #define DISPLAY_SMALL
 #endif
 

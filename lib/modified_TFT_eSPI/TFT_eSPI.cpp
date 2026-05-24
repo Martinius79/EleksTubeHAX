@@ -16,7 +16,7 @@
 #include "TFT_eSPI.h"
 
 // Debug macro – only active for D-Esign hardware
-#ifdef HARDWARE_DDESIGN_CLOCK
+#ifdef HARDWARE_DESIGN_CLOCK
   #define TFT_INIT_DBG(msg) do { Serial.println(F("[TFT] " msg)); Serial.flush(); } while(0)
 #else
   #define TFT_INIT_DBG(msg) do {} while(0)
