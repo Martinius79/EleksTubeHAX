@@ -26,7 +26,7 @@ void Button::begin()
   // capacitive touch pins: touchRead() uses the hardware touch peripheral directly,
   // no pinMode needed (and no pull-up makes sense on a touch ring).
 #else
-  pinMode(bpin, INPUT_PULLUP);  // pull-up: pin HIGH when idle, LOW when button pressed
+  pinMode(bpin, INPUT_PULLUP); // pull-up: pin HIGH when idle, LOW when button pressed
 #endif
 
   down_last_time = isButtonDown();
@@ -42,7 +42,8 @@ void Button::begin()
 
 void Button::loop()
 {
-  if (!isValidPin()) return;
+  if (!isValidPin())
+    return;
 
   millis_at_last_loop = millis();
   bool down_now = isButtonDown();

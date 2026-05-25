@@ -86,7 +86,8 @@ private:
   bool isValidPin() const { return bpin != 0xFF; }
   bool isButtonDown()
   {
-    if (!isValidPin()) return false;
+    if (!isValidPin())
+      return false;
 #ifdef CAPACITIVE_TOUCH_BUTTONS
     return (touchRead(bpin) < TOUCH_THRESHOLD);
 #else
@@ -100,7 +101,7 @@ private:
  */
 
 #ifndef BUTTON_ACTIVE_LEVEL
-#define BUTTON_ACTIVE_LEVEL LOW  // default: active LOW for hardware buttons with pull-up
+#define BUTTON_ACTIVE_LEVEL LOW // default: active LOW for hardware buttons with pull-up
 #endif
 
 #ifndef ONE_BUTTON_ONLY_MENU

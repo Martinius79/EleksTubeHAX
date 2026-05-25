@@ -364,7 +364,7 @@ In short:
 
 The EspressIF 32 development platform for PlatformIO is required to support the ESP32 microcontroller. It will be installed automatically when this project is opened in VSCode/PlatformIO or if the first build is triggered. It will take a while - observe status messages in the bottom right corner.
 
-Tested on version 6.0.12 from the [PlatformIO registry](https://registry.platformio.org/platforms/platformio/espressif32).
+Tested on version 7.0.1 from the [PlatformIO registry](https://registry.platformio.org/platforms/platformio/espressif32).
 
 It is possible that the project also works with ESP32 platform modules from other sources (like Tasmota or PIOArduino), but it is not recommended!
 

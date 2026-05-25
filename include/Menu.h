@@ -70,8 +70,7 @@ private:
   uint32_t millis_last_button_press;
   bool state_changed; // So we're not redrawing the screen every damn time, signal if the state has changed.
 #ifdef CAPACITIVE_TOUCH_BUTTONS
-  bool suppress_next_up_edge = false; // Swallow the up_edge that follows the touch that woke the menu.
-  bool power_toggle = false;          // Set for one loop when a display power-toggle gesture fires.
+  bool power_toggle = false; // Set for one loop when a display power-toggle gesture fires.
 #endif
 };
 

@@ -31,7 +31,7 @@
 // #define HARDWARE_IPSTUBE_CLOCK           // Clocks with 8MB flash on PCB (like the IPSTube model H401 and H402)
 // #define HARDWARE_MARVELTUBES_CLOCK       // MarvelTubes clock with 16MB flash on PCB
 // #define HARDWARE_MARVELTUBESMINI_CLOCK   // MarvelTubes Mini clock with 4MB flash on PCB and ESP C3 Mini
-// #define HARDWARE_DESIGN_CLOCK           // D-Esign clock with ESP32 WROOM-32, small ST7735 80x160 displays, direct GPIO CS lines
+// #define HARDWARE_DESIGN_CLOCK            // D-Esign clock with ESP32 WROOM-32, small ST7735 80x160 displays, direct GPIO CS lines
 
 #ifdef HARDWARE_PUNKCYBER_CLOCK
 // Everything else is the same, except digits are swapped from left to right.
@@ -91,13 +91,13 @@
 
 // Define the activate and deactivate state for the display power transistor and how the dimming value is calculated.
 #if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK)) // for all clocks, except IPSTube, MarvelTubes and D-Esign
-#define ACTIVATEDISPLAYS HIGH                                                                                      // Activate is HIGH
-#define DEACTIVATEDISPLAYS LOW                                                                                     // Deactivate is LOW
-#define CALCDIMVALUE(x) (x)                                                                                        // Dimming value is directly used for software dimming
-#else                                                                                                              // IPSTube keeps LOW active for display power
-#define ACTIVATEDISPLAYS LOW                                                                                       // Activate is LOW for the IPSTube
-#define DEACTIVATEDISPLAYS HIGH                                                                                    // Deactivate is HIGH for the IPSTube
-#define CALCDIMVALUE(x) (255 - x)                                                                                  // Dimming value is "inverted" for hardware dimming for IPSTube
+#define ACTIVATEDISPLAYS HIGH                                                                                     // Activate is HIGH
+#define DEACTIVATEDISPLAYS LOW                                                                                    // Deactivate is LOW
+#define CALCDIMVALUE(x) (x)                                                                                       // Dimming value is directly used for software dimming
+#else                                                                                                             // IPSTube keeps LOW active for display power
+#define ACTIVATEDISPLAYS LOW                                                                                      // Activate is LOW for the IPSTube
+#define DEACTIVATEDISPLAYS HIGH                                                                                   // Deactivate is HIGH for the IPSTube
+#define CALCDIMVALUE(x) (255 - x)                                                                                 // Dimming value is "inverted" for hardware dimming for IPSTube
 #endif
 
 #if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)

@@ -22,7 +22,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 void Menu::loop(Buttons &buttons)
 {
-  Button::state left_state  = buttons.left.getState();
+  Button::state left_state = buttons.left.getState();
   Button::state right_state = buttons.right.getState();
 
   change = 0;
@@ -70,7 +70,8 @@ void Menu::loop(Buttons &buttons)
   if (state != idle && right_state == Button::down_long_edge)
   {
     uint8_t new_state = (uint8_t(state) + 1) % num_states;
-    if (new_state == 0) new_state = 1; // Skip over idle.
+    if (new_state == 0)
+      new_state = 1; // Skip over idle.
     state = states(new_state);
     millis_last_button_press = millis();
     state_changed = true;
@@ -179,7 +180,7 @@ void Menu::loop(Buttons &buttons)
   // add an if() block above.
 }
 
-#else // ONE_BUTTON_ONLY_MENU
+#else  // ONE_BUTTON_ONLY_MENU
 void Menu::loop(Buttons &buttons)
 {
   Button::state mode_state = buttons.mode.getState(); // next menu

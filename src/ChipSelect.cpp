@@ -14,7 +14,8 @@ static bool i2cWriteReg(uint8_t address, uint8_t reg, uint8_t value)
 void ChipSelect::i2cReplayInitSequence(uint8_t address)
 {
   static bool replay_done = false;
-  if (replay_done) return;
+  if (replay_done)
+    return;
   replay_done = true;
   Serial.println("ChipSelect: I2C expander init sequence 01 FE -> 01 FC -> 01 FE");
   i2cWriteReg(address, 0x01, 0xFE);
@@ -75,12 +76,12 @@ bool ChipSelect::isSecondsOnes() { return true; }
 bool ChipSelect::isSecondsTens() { return true; }
 bool ChipSelect::isMinutesOnes() { return true; }
 bool ChipSelect::isMinutesTens() { return true; }
-bool ChipSelect::isHoursOnes()   { return true; }
-bool ChipSelect::isHoursTens()   { return true; }
+bool ChipSelect::isHoursOnes() { return true; }
+bool ChipSelect::isHoursTens() { return true; }
 
-void ChipSelect::enableAllCSPins()  {}
+void ChipSelect::enableAllCSPins() {}
 void ChipSelect::disableAllCSPins() {}
-void ChipSelect::enableDigitCSPins(uint8_t digit)  {}
+void ChipSelect::enableDigitCSPins(uint8_t digit) {}
 void ChipSelect::disableDigitCSPins(uint8_t digit) {}
 
 void ChipSelect::setEnabled(bool enabled) {}
@@ -130,13 +131,13 @@ void ChipSelect::begin()
 
   digitalWrite(GPIO_NUM_14, LOW);  // Set this pin to LOW
   digitalWrite(GPIO_NUM_17, HIGH); // Set this latch pin to HIGH
-#endif                             // HARDWARE_XUNFENG_CLOCK
+#endif // HARDWARE_XUNFENG_CLOCK
 
   digitalWrite(CSSR_DATA_PIN, LOW);
   digitalWrite(CSSR_CLOCK_PIN, LOW);
   digitalWrite(CSSR_LATCH_PIN, LOW);
   update();
-#else // !HARDWARE_IPSTUBE_CLOCK && !HARDWARE_MARVELTUBES_CLOCK && !HARDWARE_DESIGN_CLOCK
+#else  // !HARDWARE_IPSTUBE_CLOCK && !HARDWARE_MARVELTUBES_CLOCK && !HARDWARE_DESIGN_CLOCK
   // Initialize all six different pins for the CS of each LCD as OUTPUT and set it to HIGH (disabled)
   for (int i = 0; i < numLCDs; ++i)
   {
@@ -170,7 +171,6 @@ void ChipSelect::setAll(bool update_)
 #endif
 }
 
-
 void ChipSelect::reclaimPins()
 {
 #if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
@@ -182,7 +182,6 @@ void ChipSelect::reclaimPins()
   }
 #endif
 }
-
 
 void ChipSelect::setDigit(uint8_t digit, bool update_)
 {
@@ -238,7 +237,7 @@ bool ChipSelect::isSecondsOnes()
 bool ChipSelect::isSecondsTens()
 {
 #if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK))
-  return ((digits_map & SECONDS_TENS_MAP) > 0); 
+  return ((digits_map & SECONDS_TENS_MAP) > 0);
 #else
   return true;
 #endif
@@ -320,7 +319,7 @@ void ChipSelect::disableDigitCSPins(uint8_t digit)
 
 void ChipSelect::setEnabled(bool enabled)
 {
-  
+
 #if defined(DIM_WITH_ENABLE_PIN_PWM)
   // Handled via ProcessUpdatedDimming() / ledcWrite - nothing to do here directly
   (void)enabled;
