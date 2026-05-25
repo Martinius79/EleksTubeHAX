@@ -624,6 +624,27 @@ void loop()
 #endif // ONE_BUTTON_ONLY_MENU
 
   menu.loop(buttons); // Must be called after buttons.loop()
+
+#ifdef CAPACITIVE_TOUCH_BUTTONS
+  // D-Esign: LEFT long press while idle → toggle display and backlight power.
+  if (menu.isPowerToggle())
+  {
+    if (tfts.isEnabled())
+    {
+      tfts.chip_select.setAll();
+      tfts.fillScreen(TFT_BLACK); // Blank the screens before turning off
+      tfts.disableAllDisplays();
+      backlights.PowerOff();
+    }
+    else
+    {
+      tfts.enableAllDisplays();
+      updateClockDisplay(TFTs::force);
+      backlights.PowerOn();
+    }
+  }
+#endif // CAPACITIVE_TOUCH_BUTTONS
+
   backlights.loop();
   uclock.loop();
 

@@ -770,16 +770,15 @@
 
 // Touch rings: metal rings connected to ESP32 capacitive touch inputs (TOUCH8/TOUCH9).
 // touchRead() returns a raw capacitance value; lower = touched, higher = idle.
-// Measured on hardware: LEFT idle ~38, RIGHT idle ~51, both touched ~4-8.
 // CAPACITIVE_TOUCH_BUTTONS switches Button::isButtonDown() from digitalRead to touchRead.
 #define CAPACITIVE_TOUCH_BUTTONS // Use touchRead() instead of digitalRead() for buttons
-#define TOUCH_THRESHOLD (25)     // touchRead() below this = touched (idle LEFT≈38, RIGHT≈51, touched≈4-8)
+#define TOUCH_THRESHOLD (25)     // touchRead() below this = touched (idle RIGHT≈38, LEFT≈51, touched≈4-8)
 #define BUTTON_LEFT_PIN (32)     // GPIO32 = TOUCH9 = left  metal ring
 #define BUTTON_MODE_PIN (-1)     // No mode button
 #define BUTTON_RIGHT_PIN (33)    // GPIO33 = TOUCH8 = right metal ring
 #define BUTTON_POWER_PIN (-1)    // No power button
 
-// I2C to DS3231 RTC.
+// I2C to DS3231 RTC
 #define RTC_SCL_PIN (22)
 #define RTC_SDA_PIN (23)
 
@@ -798,7 +797,7 @@
 // GPIO 15 controls display backlight (LEDA) via Q4 transistor.
 #define TFT_ENABLE_PIN (15) // GPIO 15 controls LEDA via Q4 transistor (LOW = ON)
 
-// Configure library \TFT_eSPI\User_Setup.h: ST7735S 80x160 display (panel: NF P096H-09A).
+// Configure library \TFT_eSPI\User_Setup.h: ST7735S 80x160 display (panel: NF P096H-09B).
 #define ST7735_DRIVER       // ST7735S display controller
 #define ST7735_REDTAB160x80 // colstart=24, rowstart=0
 
@@ -806,16 +805,13 @@
 #define TFT_HEIGHT 160
 #define CGRAM_OFFSET // Apply colstart/rowstart offsets
 
-// TFT_SDA_READ DISABLED: causes SPI bus init issues on ESP32 with custom non-standard pins.
-// Same fix was required for MarvelTubesMini (ESP32-C3). MISO must be a real (unused) GPIO.
+// SPI to displays: 3-wire SPI (MOSI/SDA only, no MISO), no CS pin (manually controlled via GPIOs for each display).
 #define TFT_SDA_READ
-// #define TFT_MISO (34)          // Dummy MISO (GPIO34, input-only on ESP32, not connected)
-
-#define TFT_MOSI (13) // SPI MOSI (confirmed by binary analysis: bitmask 1<<13 found in TFT code)
-#define TFT_SCLK (2)  // SPI Clock (corrected: was 14, mirrored PCB photo caused wrong identification)
-#define TFT_CS (-1)   // Chip Select: manuell per GPIO pro Display gesteuert (kein Library-CS)
-#define TFT_DC (16)   // SPI Data/Command (corrected: was 27, mirrored PCB photo)
-#define TFT_RST (4)   // Reset: GPIO 4 (corrected: was -1, mirrored PCB photo)
+#define TFT_MOSI (13) // SPI MOSI
+#define TFT_SCLK (2)  // SPI Clock
+#define TFT_CS (-1)   // Chip Select: manually controlled via GPIO for each display (no library CS)
+#define TFT_DC (16)   // SPI Data/Command
+#define TFT_RST (4)   // Reset
 
 // Color order: ST7735S on this panel uses BGR internally.
 // CONFIRMED by SPI test: sending 0xF800 (RGB red) showed blue -> BGR=1 fix required.

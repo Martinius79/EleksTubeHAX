@@ -4,18 +4,21 @@
 
 #if defined(CAPACITIVE_TOUCH_BUTTONS)
 // ─────────────────────────────────────────────────────────────────────────────
-// 2-button capacitive touch menu  (D-Esign: LEFT ring = GPIO33, RIGHT = GPIO32)
+// 2-button capacitive touch menu  (D-Esign: LEFT ring = GPIO32, RIGHT = GPIO33)
 //
-//  Both rings idle          → nothing
-//  Any short tap (idle)     → wake menu, enter first menu item
-//  LEFT  short (up_edge)    → decrement value  (change--)
-//  RIGHT short (up_edge)    → increment value  (change++)
-//  RIGHT long  (500 ms)     → next menu item
-//  LEFT  long  (500 ms)     → exit to idle
+//  Both rings idle                  → nothing
+//  Any short tap release (idle)     → wake menu, enter first menu item
+//  LEFT  short (up_edge)            → decrement value  (change--)
+//  RIGHT short (up_edge)            → increment value  (change++)
+//  RIGHT long  (500 ms)             → next menu item
+//  LEFT  long  (500 ms, in menu)    → exit to idle
+//  LEFT  long  (500 ms, idle)       → toggle display power
 //
-// Using up_edge (not down_edge) for value changes ensures a long-press on
-// LEFT/RIGHT never accidentally triggers a value change: a long-press releases
-// via up_long_edge, not up_edge.
+// The menu wakes on up_edge (release), NOT on down_edge (press). This is
+// intentional: it allows a LEFT long-press while idle to be captured by the
+// power-toggle handler before the menu ever opens. A long press fires
+// down_long_edge after 500 ms and releases via up_long_edge (not up_edge),
+// so only a genuine short tap triggers the up_edge that opens the menu.
 // ─────────────────────────────────────────────────────────────────────────────
 void Menu::loop(Buttons &buttons)
 {
@@ -24,6 +27,7 @@ void Menu::loop(Buttons &buttons)
 
   change = 0;
   state_changed = false;
+  power_toggle = false;
 
   // Early out for fully idle state.
   if (state == idle && left_state == Button::idle && right_state == Button::idle)
@@ -37,17 +41,24 @@ void Menu::loop(Buttons &buttons)
     return;
   }
 
-  // Wake menu from idle on any first touch (down_edge).
-  if (state == idle && (left_state == Button::down_edge || right_state == Button::down_edge))
+  // LEFT long press while idle → toggle display power.
+  // Must be checked before the menu-wake handler so the menu never opens.
+  if (state == idle && left_state == Button::down_long_edge)
+  {
+    power_toggle = true;
+    return;
+  }
+
+  // Wake menu from idle on short release (up_edge).
+  if (state == idle && (left_state == Button::up_edge || right_state == Button::up_edge))
   {
     state = states(1); // Start at the beginning of the menu.
     millis_last_button_press = millis();
     state_changed = true;
-    suppress_next_up_edge = true; // Suppress the up_edge from this same touch.
     return;
   }
 
-  // LEFT long press → exit to idle.
+  // LEFT long press while in menu → exit to idle.
   if (state != idle && left_state == Button::down_long_edge)
   {
     state = idle;
@@ -69,7 +80,6 @@ void Menu::loop(Buttons &buttons)
   // LEFT short release → decrement value.
   if (state != idle && left_state == Button::up_edge)
   {
-    if (suppress_next_up_edge) { suppress_next_up_edge = false; return; }
     change--;
     millis_last_button_press = millis();
     state_changed = true;
@@ -79,7 +89,6 @@ void Menu::loop(Buttons &buttons)
   // RIGHT short release → increment value.
   if (state != idle && right_state == Button::up_edge)
   {
-    if (suppress_next_up_edge) { suppress_next_up_edge = false; return; }
     change++;
     millis_last_button_press = millis();
     state_changed = true;

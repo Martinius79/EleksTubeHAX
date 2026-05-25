@@ -21,15 +21,13 @@ GPIO 2 - SCLK
 
 Others
 
-GPIO 19 - WS2812B LEDs Data (via inverting transistor Q5) - 
-         Circuit: GPIO32 -> R5 -> Q5 Gate, Q5 Source=GND, Q5 Drain -> R25 -> DIN LED1 -> LED2...LED6
-         NOTE: Signal INVERTED by Q5 - firmware RMT inversion required!
+GPIO 19 - WS2812B LEDs Data          
 GPIO 15 - Display TFT Backlight (LEDA)
 
 RTC
 
-GPIO 22 - SCL i2c
-GPIO 23 - SDA i2c
+GPIO 22 - SCL - I2C
+GPIO 23 - SDA - I2C
 
 Buzzer
 
@@ -37,9 +35,7 @@ GPIO 21
 
 Microphone
 
-?? GPIO 36 ?? GPIO 34 ??
-?? GPIO 39 ?? GPIO 35 ??
-
+GPIO 36
 
 Available GPIOs:
 
@@ -51,4 +47,4 @@ Unused/Unknown I/O:
 
 Unused/Unknown Input only:
 
-34 (i), 35 (i), 36 (i), 39 (i)
+34 (i), 35 (i), 39 (i)
