@@ -90,7 +90,7 @@
 #define HOURS_TENS_MAP (0x01 << HOURS_TENS)
 
 // Define the activate and deactivate state for the display power transistor and how the dimming value is calculated.
-#if (!defined(HARDWARE_IPSTUBE_CLOCK) && !defined(HARDWARE_MARVELTUBES_CLOCK) && !defined(HARDWARE_DESIGN_CLOCK)) // for all clocks, except IPSTube, MarvelTubes and D-Esign
+#ifndef CS_DIRECT_GPIO // for all clocks, except IPSTube, MarvelTubes and D-Esign
 #define ACTIVATEDISPLAYS HIGH                                                                                     // Activate is HIGH
 #define DEACTIVATEDISPLAYS LOW                                                                                    // Deactivate is LOW
 #define CALCDIMVALUE(x) (x)                                                                                       // Dimming value is directly used for software dimming
@@ -100,7 +100,7 @@
 #define CALCDIMVALUE(x) (255 - x)                                                                                 // Dimming value is "inverted" for hardware dimming for IPSTube
 #endif
 
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
+#ifdef CS_DIRECT_GPIO
 #define DIGIT_CS_ACTIVE_LEVEL LOW
 #define DIGIT_CS_INACTIVE_LEVEL HIGH
 #else
@@ -836,6 +836,13 @@
 // Used in main.cpp to select appropriate font sizes and layout for the smaller screens.
 #if defined(HARDWARE_MARVELTUBESMINI_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
 #define DISPLAY_SMALL
+#endif
+
+// ************* Chip Select method define *************
+// Set CS_DIRECT_GPIO for all hardware variants that control each display CS line directly via GPIO
+// (as opposed to using a 74HC595 shift register or I/O expander).
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
+#define CS_DIRECT_GPIO
 #endif
 
 #endif /* GLOBAL_DEFINES_H_ */
