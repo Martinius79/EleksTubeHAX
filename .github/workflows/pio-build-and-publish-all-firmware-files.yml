@@ -23,7 +23,7 @@ jobs:
       envs: ${{ steps.find.outputs.envs }}
     steps:
       - name: Checkout repo.
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Find [env:*] sections in platformio.ini file.
         id: find
@@ -62,10 +62,10 @@ jobs:
 
     steps:
       - name: Checkout repo.
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Python.
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 
@@ -123,7 +123,7 @@ jobs:
 
       - name: Upload partial artifact for ${{ matrix.env }}.
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: fw-${{ matrix.env }} # Unique per environment
           path: _artifact/*.bin
@@ -136,7 +136,7 @@ jobs:
 
     steps:
       - name: Download all combined firmware artifacts (merged dir).
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: fw-* # Grab every per-env artifact
           merge-multiple: true # Flatten into one directory
@@ -146,7 +146,7 @@ jobs:
         run: ls -al merged_fw
 
       - name: Upload combined firmware bundle (once).
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: all-firmware # Single final artifact
           path: merged_fw/**
