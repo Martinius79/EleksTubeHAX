@@ -89,6 +89,21 @@
 #define HOURS_ONES_MAP (0x01 << HOURS_ONES)
 #define HOURS_TENS_MAP (0x01 << HOURS_TENS)
 
+// ************* Chip Select method define *************
+// Set CS_DIRECT_GPIO for all hardware variants that control each display CS line directly via GPIO
+// (as opposed to using a 74HC595 shift register or I/O expander).
+// Must be defined BEFORE the ACTIVATEDISPLAYS / DIGIT_CS_ACTIVE_LEVEL blocks below that depend on it!
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
+#define CS_DIRECT_GPIO
+#endif
+
+// ************* General display size define *************
+// Set DISPLAY_SMALL for all hardware variants that use the small 80x160 ST7735 displays.
+// Used in main.cpp to select appropriate font sizes and layout for the smaller screens.
+#if defined(HARDWARE_MARVELTUBESMINI_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
+#define DISPLAY_SMALL
+#endif
+
 // Define the activate and deactivate state for the display power transistor and how the dimming value is calculated.
 #ifndef CS_DIRECT_GPIO // for all clocks, except IPSTube, MarvelTubes and D-Esign
 #define ACTIVATEDISPLAYS HIGH                                                                                     // Activate is HIGH
@@ -830,19 +845,5 @@
 #define USER_SETUP_LOADED
 
 #endif // #ifdef HARDWARE_DESIGN_CLOCK
-
-// ************* General display size define *************
-// Set DISPLAY_SMALL for all hardware variants that use the small 80x160 ST7735 displays.
-// Used in main.cpp to select appropriate font sizes and layout for the smaller screens.
-#if defined(HARDWARE_MARVELTUBESMINI_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
-#define DISPLAY_SMALL
-#endif
-
-// ************* Chip Select method define *************
-// Set CS_DIRECT_GPIO for all hardware variants that control each display CS line directly via GPIO
-// (as opposed to using a 74HC595 shift register or I/O expander).
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
-#define CS_DIRECT_GPIO
-#endif
 
 #endif /* GLOBAL_DEFINES_H_ */
