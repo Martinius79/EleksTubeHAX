@@ -4,9 +4,7 @@
 
 void TFTs::begin()
 {
-  Serial.println("TFTs: chip_select.begin...");
   chip_select.begin();
-  Serial.println("TFTs: chip_select.setAll...");
   chip_select.setAll(); // Start with all displays selected for broadcast init
   delay(5);             // settling time (needed for I2C expander, harmless for others)
 
@@ -18,20 +16,14 @@ void TFTs::begin()
   pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
   InvalidateImageInBuffer(); // Signal, that the image in the buffer is invalid and needs to be reloaded and refilled
-  Serial.println("TFTs: TFT_eSPI::init...");
-  Serial.flush();
   init(); // Initialize the super class.
-  Serial.println("TFTs: init done.");
 #if defined(HARDWARE_MARVELTUBES_CLOCK)
   // After TFT_eSPI::init(), the VSPI hardware may have taken over GPIO5 (default VSPI SS pin).
   // reclaimPins() uses gpio_reset_pin() to release it back to software GPIO control.
   chip_select.reclaimPins(); // regain control of per-digit CS pins after TFT_eSPI::init()
   chip_select.setAll();      // After regain control, start with all displays selected again
 #endif
-  Serial.println("TFTs: fillScreen...");
-  Serial.flush();
   fillScreen(TFT_BLACK); // to avoid/reduce flickering patterns on the screens
-  Serial.println("TFTs: fillScreen done.");
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
   delay(100);                                                             // give some time to avoid glitches on power up
@@ -40,15 +32,12 @@ void TFTs::begin()
 #endif
   enableAllDisplays(); // Signal, that the displays are enabled now and do the hardware dimming, if available and enabled
 
-  Serial.println("TFTs: LittleFS.begin...");
-  Serial.flush();
   if (!LittleFS.begin(false, "/littlefs", 5, "littlefs")) // Initialize LittleFS (partition label: littlefs)
   {
     Serial.println("LittleFS initialization failed!");
     NumberOfClockFaces = 0;
     return;
   }
-  Serial.println("TFTs: LittleFS ok.");
 
   NumberOfClockFaces = CountNumberOfClockFaces();
   loadClockFacesNames();
