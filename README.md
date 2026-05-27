@@ -403,7 +403,7 @@ All external libraries in use (for details, see the `platformio.ini` file) are a
 
 * Standard libraries from the frameworks (espressif32 + arduino) are not explicitly listed.
 
-##### 5.3.3.1 Verified Working Versions (as of 2026-05-24)
+##### 5.3.3.1 Verified Working Versions (as of 2026-05-27)
 
 The project compiles and runs correctly with the library versions listed below. Newer (and possibly older) versions should also work.
 
@@ -413,7 +413,7 @@ If you encounter issues with automatic installation, refer to the comments in `p
 
 | Library | Author | Version | Source Code Link |
 | --- | --- | --- | --- |
-| adafruit/Adafruit NeoPixel | Adafruit | 1.15.4 | [https://github.com/adafruit/Adafruit\_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) |
+| adafruit/Adafruit NeoPixel | Adafruit | 1.15.5 | [https://github.com/adafruit/Adafruit\_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) |
 | adafruit/RTClib | Adafruit | 2.1.4 | [https://github.com/adafruit/RTClib](https://github.com/adafruit/RTClib) |
 | paulstoffregen/Time | Paul Stoffregen | 1.6.1 | [https://github.com/PaulStoffregen/Time](https://github.com/PaulStoffregen/Time) |
 | bodmer/TFT\_eSPI *(standard registry version replaced by modified local copy, see 5.3.3.4)* | Bodmer | 2.5.43 | [https://github.com/Bodmer/TFT\_eSPI](https://github.com/Bodmer/TFT_eSPI) |
