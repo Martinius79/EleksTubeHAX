@@ -339,13 +339,20 @@ In short:
 
 The EspressIF 32 development platform for PlatformIO is required to support the ESP32 microcontroller. It will be installed automatically when this project is opened in VSCode/PlatformIO or if the first build is triggered. It will take a while - observe status messages in the bottom right corner.
 
-Tested on version 6.0.12 from the [PlatformIO registry](https://registry.platformio.org/platforms/platformio/espressif32).
+Tested on version 7.0.1 from the [PlatformIO registry](https://registry.platformio.org/platforms/platformio/espressif32).
 
 It is possible that the project also works with ESP32 platform modules from other sources (like Tasmota or PIOArduino), but it is not recommended!
 
 #### 5.3.2 PIO build environment
 
-The PIO build environments for this project are named after each clock (e.g.,"EleksTube") using the board definition of the original "Espressif ESP32 Dev Module" named "esp32dev". The IPSTube needs to use the "IPSTube" environment with a custom board definition ("Espressif ESP32 Dev Module 8MB") named "esp32dev8MB" in the `boards` folder. The MarvelTubes environment uses the `esp32devs2marveltubes` board file from the same folder to match its 16MB ESP32-S2 hardware. The MarvelTubes Mini uses the `MarvelTubesMini` environment with the custom board definition `esp32devc3minimarveltubesmini` for its ESP32-C3-based hardware. The Xunfeng clock needs also its own board definition "esp32devS2" in the `boards` folder
+The PIO build environments for this project are named after each clock (e.g.,"EleksTube") using the board definition of the original "Espressif ESP32 Dev Module" named "esp32dev".
+
+##### Custom boards
+
+The IPSTube needs to use the "IPSTube" environment with a custom board definition ("Espressif ESP32 Dev Module 8MB") named "esp32dev8MB" in the `boards` folder.
+The MarvelTubes environment uses the `esp32devs2marveltubes` board file from the same folder to match its 16MB ESP32-S2 hardware.
+The MarvelTubes Mini uses the `MarvelTubesMini` environment with the custom board definition `esp32devc3minimarveltubesmini` for its ESP32-C3-based hardware.
+The Xunfeng clock needs also its own board definition `esp32devS2` in the `boards` folder.
 
 Flash partition size settings are already configured in the following files.
 
@@ -371,7 +378,7 @@ All external libraries in use (for details, see the `platformio.ini` file) are a
 
 * Standard libraries from the frameworks (espressif32 + arduino) are not explicitly listed.
 
-##### 5.3.3.1 Verified Working Versions (as of 2026-05-02)
+##### 5.3.3.1 Verified Working Versions (as of 2026-05-27)
 
 The project compiles and runs correctly with the library versions listed below. Newer (and possibly older) versions should also work.
 
@@ -381,7 +388,7 @@ If you encounter issues with automatic installation, refer to the comments in `p
 
 | Library | Author | Version | Source Code Link |
 | --- | --- | --- | --- |
-| adafruit/Adafruit NeoPixel | Adafruit | 1.15.4 | [https://github.com/adafruit/Adafruit\_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) |
+| adafruit/Adafruit NeoPixel | Adafruit | 1.15.5 | [https://github.com/adafruit/Adafruit\_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) |
 | adafruit/RTClib | Adafruit | 2.1.4 | [https://github.com/adafruit/RTClib](https://github.com/adafruit/RTClib) |
 | paulstoffregen/Time | Paul Stoffregen | 1.6.1 | [https://github.com/PaulStoffregen/Time](https://github.com/PaulStoffregen/Time) |
 | bodmer/TFT\_eSPI *(standard registry version replaced by modified local copy, see 5.3.3.4)* | Bodmer | 2.5.43 | [https://github.com/Bodmer/TFT\_eSPI](https://github.com/Bodmer/TFT_eSPI) |
@@ -987,6 +994,16 @@ Some versions of the IPSTubes have a LED stripe with 28 RGB LEDs installed on th
 ##### 6.6 Xunfeng clocks
 
 * The CyberPunk clocks identify themselves as "Xunfeng" when they start up with the original firmware. This suggests that the Xunfeng clock with the S2 chip and the CyberPunk clocks are made by the same company.
+
+##### 6.7 MarvelTubes: Missing WiFi antenna (UE module variant)
+
+Some MarvelTubes clocks are shipped with an **ESP32-S2 UE** module (the variant with an external antenna connector, U.FL/IPEX) instead of the standard module with a built-in PCB trace antenna. These clocks are delivered **without an antenna plugged in**, so the WiFi signal is extremely weak or completely unusable out of the box.
+
+If your MarvelTubes clock suffers from frequent WiFi disconnects or fails to connect at all, check whether the ESP32 module on the PCB has a small U.FL/IPEX coaxial connector socket. If it does, no antenna is attached.
+
+**Solution**: Purchase a suitable **IPEX (U.FL) WiFi antenna**. A flat/ribbon (FPC) antenna is recommended because it is thin enough to be routed and tucked inside the housing without requiring any case modification. Simply plug the antenna into the U.FL socket on the module.
+
+Without an antenna, expect very unreliable WiFi — repeated disconnects, failed NTP sync and MQTT dropouts are typical symptoms.
 
 ## 7\. Development Process/History
 

@@ -140,7 +140,7 @@ void HandleGesture()
 }
 #endif // #ifdef HARDWARE_NOVELLIFE_CLOCK
 
-char UniqueDeviceName[32];      // Enough space for <DeviceName> + 6 hex chars + null
+char UniqueDeviceName[32]; // Enough space for <DeviceName> + 6 hex chars + null
 
 Backlights backlights;
 Buttons buttons;
@@ -247,6 +247,7 @@ void setup()
   // Setup the displays (TFTs) initaly and show bootup message(s).
   tfts.begin(); // ...and count number of clock faces available...
   tfts.fillScreen(TFT_BLACK);
+
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 #ifdef HARDWARE_MARVELTUBESMINI_CLOCK
   tfts.setCursor(0, 0, 1); // Font 1. 8 pixel high
@@ -904,7 +905,7 @@ void loop()
 }
 
 void setupMenu()
-{                                  // Prepare drawing of the menu texts
+{ // Prepare drawing of the menu texts
   tfts.chip_select.setHoursTens();
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 #ifdef HARDWARE_MARVELTUBESMINI_CLOCK
