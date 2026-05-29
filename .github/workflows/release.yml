@@ -1,0 +1,208 @@
+name: Build & Release firmware binaries
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags like v1.3.10, v2.0.0, etc.
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g. v1.3.10)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # Required to create releases
+
+jobs:
+  discover-envs:
+    name: Discover PlatformIO environments
+    runs-on: ubuntu-latest
+    outputs:
+      envs: ${{ steps.find.outputs.envs }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Find [env:*] sections in platformio.ini
+        id: find
+        shell: bash
+        run: |
+          envs_json="$(
+            awk '
+              /^\[env:[^]]+\]/ {
+                match($0, /^\[env:([^]]+)\]/, m)
+                if (m[1] != "") envs[count++] = m[1]
+              }
+              END {
+                printf("[")
+                for (i=0; i<count; i++) printf("%s\"%s\"", (i>0?",":""), envs[i])
+                printf("]")
+              }
+            ' platformio.ini
+          )"
+          echo "envs=${envs_json}" >> "$GITHUB_OUTPUT"
+          echo "Detected PIO environments: ${envs_json}"
+
+  build:
+    name: Build ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    needs: discover-envs
+
+    strategy:
+      fail-fast: false
+      matrix:
+        env: ${{ fromJson(needs.discover-envs.outputs.envs) }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install PlatformIO + dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio intelhex esptool
+
+      - name: Ensure default _USER_DEFINES.h exists
+        shell: bash
+        run: |
+          SRC="include/_USER_DEFINES - empty.h"
+          DST="include/_USER_DEFINES.h"
+          if [[ ! -f "$DST" ]]; then
+            cp "$SRC" "$DST"
+            echo "Copied default _USER_DEFINES.h"
+          fi
+
+      - name: Build filesystem image
+        run: pio run --environment "${{ matrix.env }}" --target buildfs
+
+      - name: Build firmware
+        env:
+          PLATFORMIO_BUILD_FLAGS: "-D CREATE_FIRMWAREFILE"
+        run: pio run --environment "${{ matrix.env }}"
+
+      - name: Stage firmware binaries
+        shell: bash
+        run: |
+          mkdir -p _artifact
+          BUILD_DIR=".pio/build/${{ matrix.env }}"
+          # Copy combined firmware files (FW_*.bin)
+          find "$BUILD_DIR" -maxdepth 1 -type f -name 'FW_*.bin' -exec cp {} _artifact/ \;
+          # Also copy the standard firmware .bin for OTA updates
+          if [ -f "$BUILD_DIR/${{ matrix.env }}_*.bin" ]; then
+            cp "$BUILD_DIR"/${{ matrix.env }}_*.bin _artifact/ 2>/dev/null || true
+          fi
+          # Find the app binary (for OTA - the one without FW_ prefix)
+          for f in "$BUILD_DIR"/*.bin; do
+            fname=$(basename "$f")
+            # Skip filesystem and FW_ files, keep app binaries
+            if [[ "$fname" != littlefs* && "$fname" != FW_* && "$fname" != partitions* && "$fname" != bootloader* ]]; then
+              cp "$f" "_artifact/${fname}"
+              echo "Staged OTA binary: ${fname}"
+            fi
+          done
+          ls -la _artifact/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: fw-${{ matrix.env }}
+          path: _artifact/*.bin
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repo (for changelog)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download all firmware artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: fw-*
+          merge-multiple: true
+          path: release_assets
+
+      - name: List release assets
+        run: ls -la release_assets/
+
+      - name: Determine tag name
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          # Try to find previous tag for changelog
+          PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${TAG}$" | head -n 1 || echo "")
+          
+          {
+            echo "notes<<EOF"
+            echo "## EleksTubeHAX Firmware ${TAG}"
+            echo ""
+            echo "### Firmware binaries"
+            echo ""
+            echo "| File | Description |"
+            echo "|------|-------------|"
+            echo "| \`FW_*.bin\` | Combined binary (flash from address 0x0) |"
+            echo "| \`*_v*.bin\` | App-only binary (for OTA update via web interface) |"
+            echo ""
+            echo "### How to flash"
+            echo ""
+            echo "**OTA (Over-The-Air):** Open \`http://<clock-ip>/update\` in your browser and upload the app-only \`.bin\` file for your hardware variant."
+            echo ""
+            echo "**USB:** Use esptool or the PlatformIO upload command with the \`FW_*.bin\` (combined) file flashed to address 0x0."
+            echo ""
+            echo "### Hardware variants"
+            echo ""
+            echo "- **EleksTube** - Original EleksTube IPS (4MB)"
+            echo "- **EleksTube_Gen2** - EleksTube Gen2.1 (ESP32 Pico D4)"
+            echo "- **SI_HAI** - Si Hai clock"
+            echo "- **Xunfeng** - Xunfeng clock (ESP32-S2)"
+            echo "- **NovelLife** - NovelLife SE/Pro"
+            echo "- **PunkCyber** - PunkCyber / RGB Glow Tube"
+            echo "- **IPSTube** - IPSTube H401/H402 (8MB)"
+            echo "- **MarvelTubes** - MarvelTubes (ESP32-S2, 16MB)"
+            echo "- **MarvelTubesMini** - MarvelTubes Mini (ESP32-C3)"
+            echo "- **DEsign** - D-Esign clock (small displays)"
+            echo ""
+            if [ -n "$PREV_TAG" ]; then
+              echo "### Changes since ${PREV_TAG}"
+              echo ""
+              git log --oneline "${PREV_TAG}..HEAD" 2>/dev/null | head -50 || echo "_(no commits found)_"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "EleksTubeHAX ${{ steps.tag.outputs.tag }}"
+          body: ${{ steps.notes.outputs.notes }}
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.tag, '-rc') || contains(steps.tag.outputs.tag, '-beta') || contains(steps.tag.outputs.tag, '-alpha') }}
+          files: release_assets/*.bin
+          fail_on_unmatched_files: true
