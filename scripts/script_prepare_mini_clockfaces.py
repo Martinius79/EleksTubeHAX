@@ -346,8 +346,11 @@ def _resize_clk_in_place(path):
 
 def _prepare_mini_data_dir():
 	project_dir = env.subst("$PROJECT_DIR")
-	source_data_dir = os.path.join(project_dir, "data")
-	generated_data_dir = os.path.join(project_dir, ".pio", "generated_data", "MarvelTubesMini")
+	# Use PROJECT_DATA_DIR so that script_select_clockfaces.py can pre-filter sets
+	# before this script resizes them. Falls back to the default "data/" directory.
+	source_data_dir = env.subst("$PROJECT_DATA_DIR")
+	env_name = env.subst("$PIOENV")
+	generated_data_dir = os.path.join(project_dir, ".pio", "generated_data", env_name + "_mini")
 
 	if not os.path.isdir(source_data_dir):
 		print("[mini-data] ERROR: source data directory missing:", source_data_dir)
