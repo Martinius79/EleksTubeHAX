@@ -126,8 +126,10 @@ void setup()
   // Gesture sensor (NovelLife only, no-op for other hardware)
   tfts.setTextColor(TFT_ORANGE, TFT_BLACK);
   tfts.print("Gest start...");
+  Serial.println("Gesture sensor start...");
   gestureHandler.begin();
   tfts.println("Done!");
+  Serial.println("Gesture sensor Done.");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
   // WiFi
@@ -156,25 +158,34 @@ void setup()
 #if defined(MQTT_PLAIN_ENABLED) || defined(MQTT_HOME_ASSISTANT)
   tfts.setTextColor(TFT_YELLOW, TFT_BLACK);
   tfts.print("MQTT start...");
-  Serial.println("\nMQTT start...");
+  Serial.println("MQTT start...");
   MQTTStart(false);
   mqttProcessor.begin(&tfts, &backlights, &uclock, &stored_config, &menu);
   tfts.println("Done!");
+  Serial.println("MQTT Done.");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 #endif
 
   // Geolocation
   tfts.setTextColor(TFT_CYAN, TFT_BLACK);
   tfts.println("GeoLoc query...");
+  Serial.println("GeoLoc query...");
   geolocation.begin(&uclock, &stored_config);
   if (geolocation.queryTimezoneOffset())
   {
-    tfts.println("TZ updated!");
+    int32_t tzOffsetH = uclock.getTimeZoneOffset() / 3600;
+    tfts.print("TZ: ");
+    Serial.print("TZ offset (hours): ");
+    tfts.println(tzOffsetH);
+    Serial.println(tzOffsetH);
+    tfts.println("Done!");
+    Serial.println("GeoLoc Done!");
   }
   else
   {
     tfts.setTextColor(TFT_RED, TFT_BLACK);
     tfts.println("GeoLoc FAILED");
+    Serial.println("GeoLoc FAILED!");
   }
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
@@ -193,14 +204,16 @@ void setup()
 
   // Initialize extracted modules
   menuRenderer.begin(&tfts, &uclock, &backlights, &stored_config);
-  dimming.begin(&uclock, &tfts, &backlights);
+  dimming.begin(&uclock, &tfts, &backlights, &stored_config);
   serialCmd.begin(&uclock, &tfts, &backlights, &stored_config);
 
   // Web server & OTA
   tfts.setTextColor(TFT_GREENYELLOW, TFT_BLACK);
   tfts.print("Web/OTA...");
-  webOta.begin(&uclock, &tfts, &backlights, &stored_config, UniqueDeviceName);
+  Serial.println("Web server & OTA start...");
+  webOta.begin(&uclock, &tfts, &backlights, &stored_config, &dimming, UniqueDeviceName);
   tfts.println("Done!");
+  Serial.println("Web/OTA Done.");
   tfts.setTextColor(TFT_WHITE, TFT_BLACK);
 
   tfts.println("Done with Setup!");
@@ -229,6 +242,7 @@ void loop()
 
   // ─── Connectivity ──────────────────────────────────────────────────────────
   WifiReconnect();
+  WifiPortalHandle(); // Handle captive portal if active (no-op when not in AP mode)
 
   // ─── MQTT ──────────────────────────────────────────────────────────────────
   mqttProcessor.loop();

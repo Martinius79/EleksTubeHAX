@@ -159,8 +159,38 @@ void WifiBegin()
       }
     }
   }
-#else // NO WPS -- Try using hardcoded credentials.
-  WiFi.begin(WIFI_SSID, WIFI_PASSWD);
+#else // NO WPS -- Use stored credentials, hardcoded fallback, or captive portal
+  // Determine which credentials to use
+  const char *useSSID = nullptr;
+  const char *usePass = nullptr;
+
+  if (stored_config.config.wifi.WPS_connected == StoredConfig::valid &&
+      strlen(stored_config.config.wifi.ssid) > 0)
+  {
+    // Use stored credentials (previously configured via portal or WPS)
+    useSSID = stored_config.config.wifi.ssid;
+    usePass = stored_config.config.wifi.password;
+    Serial.printf("Using stored WiFi credentials for SSID: '%s'\n", useSSID);
+  }
+  else
+  {
+#if defined(WIFI_SSID) && defined(WIFI_PASSWD)
+    // Fallback to hardcoded credentials
+    useSSID = WIFI_SSID;
+    usePass = WIFI_PASSWD;
+    Serial.printf("Using hardcoded WiFi credentials for SSID: '%s'\n", useSSID);
+#else
+    // No credentials available at all - go straight to captive portal
+    Serial.println("No WiFi credentials available. Starting captive portal...");
+    tfts.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tfts.println("No WiFi config!");
+    tfts.println("Starting AP...");
+    WifiStartCaptivePortal();
+    return;
+#endif
+  }
+
+  WiFi.begin(useSSID, usePass);
   WiFi.onEvent(WiFiEvent);
   unsigned long StartTime = millis();
   while ((WiFi.status() != WL_CONNECTED))
@@ -172,10 +202,11 @@ void WifiBegin()
     {
       tfts.setTextColor(TFT_RED, TFT_BLACK);
       tfts.println("\nTIMEOUT!");
-      tfts.setTextColor(TFT_WHITE, TFT_BLACK);
-      Serial.println("\r\nWiFi connection timeout!");
-      WifiState = disconnected;
-      return; // Exit loop, exit procedure, continue clock startup
+      tfts.setTextColor(TFT_YELLOW, TFT_BLACK);
+      tfts.println("Starting AP...");
+      Serial.println("\r\nWiFi connection timeout! Starting captive portal...");
+      WifiStartCaptivePortal();
+      return;
     }
   }
 
@@ -333,3 +364,169 @@ void WiFiStartWps()
   WifiWpsActive = false;
 }
 #endif
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Captive Portal for WiFi Provisioning
+// ═══════════════════════════════════════════════════════════════════════════════
+
+#include <WebServer.h>
+#include <DNSServer.h>
+
+static WebServer *portalServer = nullptr;
+static DNSServer *dnsServer = nullptr;
+static bool portalActive = false;
+static String scannedNetworks = "";
+
+static const char PORTAL_HTML[] PROGMEM = R"rawliteral(<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EleksTubeHAX WiFi Setup</title>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; background: #1a1a2e; color: #eee; }
+  h1 { color: #e94560; text-align: center; font-size: 1.4em; }
+  .info { background: #16213e; border-radius: 8px; padding: 12px; margin: 10px 0; font-size: 0.9em; color: #aaa; }
+  label { display: block; margin: 12px 0 4px; font-size: 0.9em; color: #ccc; }
+  input, select { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 4px; background: #0f3460; color: #eee; box-sizing: border-box; font-size: 1em; }
+  button { width: 100%; padding: 12px; margin-top: 20px; border: none; border-radius: 4px; background: #e94560; color: white; font-weight: bold; font-size: 1.1em; cursor: pointer; }
+  button:hover { background: #c73e54; }
+  .networks { max-height: 200px; overflow-y: auto; }
+  .net-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #333; }
+  .net-item:hover { background: #0f3460; }
+  .signal { float: right; color: #888; font-size: 0.8em; }
+</style>
+</head><body>
+<h1>EleksTubeHAX WiFi Setup</h1>
+<div class="info">Connect your clock to your home WiFi network.</div>
+<form method="POST" action="/save">
+  <label>Available Networks:</label>
+  <div class="networks" id="nets">%NETWORKS%</div>
+  <label>SSID:</label>
+  <input type="text" name="ssid" id="ssid" maxlength="31" required>
+  <label>Password:</label>
+  <input type="password" name="pass" id="pass" maxlength="31">
+  <button type="submit">Connect & Save</button>
+</form>
+<script>
+document.querySelectorAll('.net-item').forEach(el => {
+  el.addEventListener('click', () => { document.getElementById('ssid').value = el.dataset.ssid; });
+});
+</script>
+</body></html>)rawliteral";
+
+static const char PORTAL_SUCCESS[] PROGMEM = R"rawliteral(<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WiFi Configured</title>
+<style>body{font-family:sans-serif;max-width:400px;margin:0 auto;padding:20px;background:#1a1a2e;color:#eee;text-align:center;}
+h1{color:#0f3;}p{color:#aaa;}</style>
+</head><body><h1>WiFi Configured!</h1><p>The clock will now connect to your network and restart.</p>
+<p>You can close this page.</p></body></html>)rawliteral";
+
+static void scanNetworks()
+{
+  Serial.println("Portal: scanning WiFi networks...");
+  int n = WiFi.scanNetworks();
+  scannedNetworks = "";
+  for (int i = 0; i < n && i < 15; i++)
+  {
+    int rssi = WiFi.RSSI(i);
+    const char *enc = (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? "Open" : "🔒";
+    scannedNetworks += "<div class='net-item' data-ssid='" + WiFi.SSID(i) + "'>";
+    scannedNetworks += WiFi.SSID(i);
+    scannedNetworks += "<span class='signal'>" + String(rssi) + " dBm " + enc + "</span></div>";
+  }
+  WiFi.scanDelete();
+  if (n == 0)
+    scannedNetworks = "<div class='net-item'>No networks found</div>";
+}
+
+static void handlePortalRoot()
+{
+  String page = String(PORTAL_HTML);
+  page.replace("%NETWORKS%", scannedNetworks);
+  portalServer->send(200, "text/html", page);
+}
+
+static void handlePortalSave()
+{
+  if (!portalServer->hasArg("ssid") || portalServer->arg("ssid").length() == 0)
+  {
+    portalServer->send(400, "text/plain", "SSID is required");
+    return;
+  }
+
+  String ssid = portalServer->arg("ssid");
+  String pass = portalServer->hasArg("pass") ? portalServer->arg("pass") : "";
+
+  // Save to stored_config
+  snprintf(stored_config.config.wifi.ssid, sizeof(stored_config.config.wifi.ssid), "%s", ssid.c_str());
+  snprintf(stored_config.config.wifi.password, sizeof(stored_config.config.wifi.password), "%s", pass.c_str());
+  stored_config.config.wifi.WPS_connected = StoredConfig::valid;
+
+  Serial.printf("Portal: saving WiFi credentials for SSID '%s'\n", ssid.c_str());
+  stored_config.save();
+
+  portalServer->send(200, "text/html", String(PORTAL_SUCCESS));
+  Serial.println("Portal: credentials saved, restarting in 2s...");
+
+  delay(2000);
+  ESP.restart();
+}
+
+static void handlePortalNotFound()
+{
+  // Captive portal: redirect all requests to the config page
+  portalServer->sendHeader("Location", "http://192.168.4.1/", true);
+  portalServer->send(302, "text/plain", "");
+}
+
+bool WifiStartCaptivePortal()
+{
+  Serial.println("Starting WiFi Captive Portal (AP mode)...");
+
+  // Stop any existing STA connection
+  WiFi.disconnect(true, false);
+  delay(100);
+
+  // Create AP
+  String apName = String("EleksTubeHAX-") + String(UniqueDeviceName).substring(String(UniqueDeviceName).lastIndexOf('-') + 1);
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(apName.c_str());
+  delay(100);
+
+  Serial.printf("Portal AP started: '%s', IP: %s\n", apName.c_str(), WiFi.softAPIP().toString().c_str());
+
+  // Scan for available networks
+  WiFi.mode(WIFI_AP_STA);
+  scanNetworks();
+  WiFi.mode(WIFI_AP);
+
+  // Start DNS server (captive portal redirect)
+  dnsServer = new DNSServer();
+  dnsServer->start(53, "*", WiFi.softAPIP());
+
+  // Start web server
+  portalServer = new WebServer(80);
+  portalServer->on("/", HTTP_GET, handlePortalRoot);
+  portalServer->on("/save", HTTP_POST, handlePortalSave);
+  portalServer->onNotFound(handlePortalNotFound);
+  portalServer->begin();
+
+  portalActive = true;
+  WifiState = ap_portal_active;
+
+  return true;
+}
+
+void WifiPortalHandle()
+{
+  if (!portalActive)
+    return;
+  dnsServer->processNextRequest();
+  portalServer->handleClient();
+}
+
+bool WifiIsPortalActive()
+{
+  return portalActive;
+}

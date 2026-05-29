@@ -1,5 +1,10 @@
 # Name,   Type, SubType,  Offset,   Size,     Flags
-nvs,      data, nvs,      0x9000,   0x7000,
-app0,     app,  factory,  0x10000,  0x130000,
-littlefs, data, spiffs,   0x140000, 0x2b0000,
-coredump, data, coredump, 0x3f0000, 0x10000,
+# OTA-enabled partition table for 4MB flash
+# App size: 1.25MB each (enough for ~1.08MB firmware with growth margin)
+# LittleFS: ~1.375MB (reduced from 2.69MB to enable OTA)
+nvs,      data, nvs,      0x9000,   0x5000,
+otadata,  data, ota,      0xE000,   0x2000,
+app0,     app,  ota_0,    0x10000,  0x140000,
+app1,     app,  ota_1,    0x150000, 0x140000,
+littlefs, data, spiffs,   0x290000, 0x160000,
+coredump, data, coredump, 0x3F0000, 0x10000,

@@ -9,11 +9,13 @@
 #include "TFTs.h"
 #include "Backlights.h"
 #include "StoredConfig.h"
+#include "DimmingManager.h"
 
 class WebOTAManager
 {
 public:
-  void begin(Clock *uclock, TFTs *tfts, Backlights *backlights, StoredConfig *config, const char *deviceName);
+  void begin(Clock *uclock, TFTs *tfts, Backlights *backlights, StoredConfig *config,
+             DimmingManager *dimming, const char *deviceName);
   void handle();
 
 private:
@@ -21,6 +23,7 @@ private:
   TFTs *_tfts = nullptr;
   Backlights *_backlights = nullptr;
   StoredConfig *_config = nullptr;
+  DimmingManager *_dimming = nullptr;
   const char *_deviceName = nullptr;
 
   WebServer _server{80};
@@ -30,6 +33,8 @@ private:
   String buildMainPage();
   String buildStatusJson();
   void handleApiCommand();
+  String buildWifiPage();
+  void handleWifiSave();
 };
 
 #endif // WEB_OTA_MANAGER_H
