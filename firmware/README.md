@@ -45,6 +45,8 @@ See also the section "Backup first" and following in the `README.md` file in the
 In this folder you will find the flashable files.
 They are updated from time to time in the repository, so version number may vary.
 
+The newest pre-built firmware files are published as **GitHub Releases** and can be downloaded directly from the [Releases page](https://github.com/aly-fly/EleksTubeHAX/releases).
+
 Last Update: 2026-05-27 to Version 1.3.10
 
 | clock model | firmware image file |
@@ -83,21 +85,11 @@ Some clocks needs a button pressed while the powering phase (plugging the USB ca
 
 ## 5. Download the newest firmware files
 
-Everytime a commit is done to the main branch of this repo, a GitHub action is triggered and a workflow run builds all firmware files.
+The newest pre-built firmware files are published as **GitHub Releases** and can be downloaded directly from the [Releases page](https://github.com/aly-fly/EleksTubeHAX/releases).
 
-All workflow runs of the GutHub action can be found under [EleksTubeHAX generate firmware files](https://github.com/aly-fly/EleksTubeHAX/actions/workflows/pio-build-and-publish-all-firmware-files.yml)
+Each release contains all firmware binaries for all supported hardware variants. Download the `FW_*.bin` file that matches your clock model.
 
-Should look like:
-
-![GitHub Actions Overview](../docs/ImagesMD/GitHubActionsOverview.png)
-
-The first entry is always the newest.
-
-If you click on the workflow run, you will be able to donwload either all firmwares at once, by downloading the `all-firmware-vX.X.X`, or the file for your clock separately. Where X.X.X is the actual version number.
-
-![GitHub Actions Artifact view](../docs/ImagesMD/GitHubActionsArtifactView.png)
-
-The downloaded firmware file can be flashed to the clock modifying the existing CMD file or using the esptool directly.
+The downloaded firmware file can be flashed to the clock by modifying the existing CMD file or using esptool directly (see section 4).
 
 ## 6. There is no warranty of any type
 

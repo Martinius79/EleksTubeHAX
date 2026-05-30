@@ -1,4 +1,4 @@
-name: Create each PlatformIO EleksTubeHAX environment build on multiple OSes.
+name: Build all PIO environments on multiple OSes.
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
       envs: ${{ steps.find.outputs.envs }}
     steps:
       - name: Checkout repo.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Find [env:*] sections in platformio.ini file.
         id: find
@@ -64,9 +64,8 @@ jobs:
       # 2. <Linux, Release, toolchain on the default runner image, default generator>
 
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
-      matrix:        
-        # os: [ubuntu-latest] # For local testing: act can’t run runs-on: windows-latest (or macos-latest)
-        os: [ubuntu-latest, windows-latest]
+      matrix:
+        os: [ubuntu-latest, windows-2025-vs2026] # windows-2025-vs2026 because windows-latest will be deprecated by June 2026 - refresh, if newer windows image is available by then
         env: ${{ fromJson(needs.discover-envs.outputs.envs) }}
 
     defaults:
@@ -75,10 +74,10 @@ jobs:
 
     steps:
       - name: Checkout repo.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python.
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 
