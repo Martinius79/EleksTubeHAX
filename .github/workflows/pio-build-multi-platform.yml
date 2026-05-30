@@ -65,7 +65,7 @@ jobs:
 
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-latest, windows-2025] # windows-2025 because windows-latest will be deprecated by June 2026 - refresh, if newer windows image is available by then
+        os: [ubuntu-latest, windows-2025-vs2026] # windows-2025-vs2026 because windows-latest will be deprecated by June 2026 - refresh, if newer windows image is available by then
         env: ${{ fromJson(needs.discover-envs.outputs.envs) }}
 
     defaults:
