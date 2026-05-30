@@ -286,6 +286,8 @@ To read from (or write to) the clock, it needs to be in the "download mode". Mos
 
 If you just want to use this firmware without setting up the development tools, download the latest firmware binary for your clock from the [Releases page](https://github.com/aly-fly/EleksTubeHAX/releases) and flash it using the `_ESP32 write flash.cmd` script in the `firmware` subdirectory.
 
+Alternatively, the `firmware` subdirectory of this repo also contains pre-built firmware images that are updated from time to time.
+
 More info can be found in the `firmware` subdirectory in the [README.MD](firmware/README.md). Like:
 
 * Features enabled in the images
