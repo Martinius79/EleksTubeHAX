@@ -177,7 +177,7 @@ jobs:
             echo ""
             echo "### Hardware variants"
             echo ""
-            echo "- **EleksTube** - Original EleksTube IPS (4MB)"
+            echo "- **EleksTube** - Original EleksTube IPS"
             echo "- **EleksTube_Gen2** - EleksTube Gen2.1 (ESP32 Pico D4)"
             echo "- **SI_HAI** - Si Hai clock"
             echo "- **Xunfeng** - Xunfeng clock (ESP32-S2)"
@@ -185,7 +185,7 @@ jobs:
             echo "- **PunkCyber** - PunkCyber / RGB Glow Tube"
             echo "- **IPSTube** - IPSTube H401/H402 (8MB)"
             echo "- **MarvelTubes** - MarvelTubes (ESP32-S2, 16MB)"
-            echo "- **MarvelTubesMini** - MarvelTubes Mini (ESP32-C3)"
+            echo "- **MarvelTubesMini** - MarvelTubes Mini (small displays, ESP32-C3)"
             echo "- **DEsign** - D-Esign clock (small displays)"
             echo ""
             if [ -n "$PREV_TAG" ]; then
