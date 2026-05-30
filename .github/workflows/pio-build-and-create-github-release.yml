@@ -1,0 +1,233 @@
+name: Build & Create GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags like v1.3.10, v2.0.0, etc.
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g. v1.3.10)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # Required to create releases
+
+jobs:
+  discover-envs:
+    name: Discover PlatformIO environments.
+    runs-on: ubuntu-latest
+    outputs:
+      envs: ${{ steps.find.outputs.envs }}
+    steps:
+      - name: Checkout repo.
+        uses: actions/checkout@v6
+
+      - name: Find [env:*] sections in platformio.ini file.
+        id: find
+        shell: bash
+        run: |
+          envs_json="$(
+            awk '
+              /^\[env:[^]]+\]/ {
+                match($0, /^\[env:([^]]+)\]/, m)
+                if (m[1] != "") envs[count++] = m[1]
+              }
+              END {
+                printf("[")
+                for (i=0; i<count; i++) printf("%s\"%s\"", (i>0?",":""), envs[i])
+                printf("]")
+              }
+            ' platformio.ini
+          )"
+          echo "envs=${envs_json}" >> "$GITHUB_OUTPUT"
+          echo "  🐞 Detected PIO environments: ${envs_json}."
+
+  build:
+    name: Build ${{ matrix.env }} on ubuntu-latest.
+    runs-on: ubuntu-latest
+    needs: discover-envs
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
+      matrix:
+        env: ${{ fromJson(needs.discover-envs.outputs.envs) }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repo.
+        uses: actions/checkout@v6
+
+      - name: Setup Python.
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install PlatformIO + IntelHex and esptool libraries.
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio intelhex esptool
+
+      - name: Ensure default _USER_DEFINES.h file exists.
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="include/_USER_DEFINES - empty.h"
+          DST="include/_USER_DEFINES.h"
+          mkdir -p "$(dirname "$DST")"
+          if [[ ! -f "$DST" ]]; then
+            if [[ ! -f "$SRC" ]]; then
+              echo "  ❌ Source file not found: '$SRC'."
+              exit 1
+            fi
+            cp "$SRC" "$DST"
+            echo "  🔧 Copied: '$SRC' -> '$DST'."
+          else
+            echo "  ⚠️ Already present: '$DST'."
+          fi
+
+      - name: Build filesystem image for ${{ matrix.env }}.
+        run: pio run --environment "${{ matrix.env }}" --target buildfs
+
+      - name: Build ${{ matrix.env }} environment.
+        env:
+          PLATFORMIO_BUILD_FLAGS: "-D CREATE_FIRMWAREFILE"
+        run: pio run --environment "${{ matrix.env }}"
+
+      - name: Stage combined firmware binaries (flat).
+        shell: bash
+        run: |
+          mkdir -p _artifact
+          BUILD_DIR=".pio/build/${{ matrix.env }}"
+          if [ -d "$BUILD_DIR" ]; then
+            # Copy and also fail if no FW_*.bin exists.
+            files=$(find "$BUILD_DIR" -maxdepth 1 -type f -name 'FW_*.bin')
+            if [ -z "$files" ]; then
+              echo "  ⛔ No FW_*.bin produced for environment '${{ matrix.env }}'."
+              exit 1
+            fi
+            echo "$files" | while read -r f; do
+              echo "  🐞 Found '$f'."
+              cp "$f" _artifact/
+            done
+          else
+            echo "  ⛔ Build directory $BUILD_DIR does not exist for environment '${{ matrix.env }}'."
+            exit 1
+          fi
+
+      - name: Upload partial artifact for ${{ matrix.env }}.
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fw-${{ matrix.env }}
+          path: _artifact/*.bin
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release.
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repo (for changelog).
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download all firmware artifacts.
+        uses: actions/download-artifact@v8
+        with:
+          pattern: fw-*
+          merge-multiple: true
+          path: release_assets
+
+      - name: List release assets.
+        run: ls -la release_assets/
+
+      - name: Determine tag name.
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate release notes file.
+        shell: bash
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          # Try to find previous tag for changelog.
+          PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${TAG}$" | head -n 1 || echo "")
+
+          cat > release_notes.md << 'MARKDOWN'
+          ## EleksTubeHAX Firmware TAG_PLACEHOLDER
+
+          ### Firmware binaries
+
+          | File | Description |
+          |------|-------------|
+          | `FW_*.bin` | Combined binary (flash from address 0x0) |
+
+          ### How to flash
+
+          Use esptool or the PlatformIO upload command with the `FW_*.bin` (combined) file flashed to address `0x0`.
+
+          ### Hardware variants
+
+          | Variant | Description |
+          |---------|-------------|
+          | `EleksTube` | EleksTube IPS - Original version |
+          | `EleksTube_Gen2` | EleksTube IPS - Gen2 models (PR1, PR2 and others, sold after July 2022, ESP32 Pico D4) |
+          | `SI_HAI` | Si Hai IPS clock |
+          | `Xunfeng` | Xunfeng IPS clock (ESP32-S2) |
+          | `NovelLife` | NovelLife SE version |
+          | `PunkCyber` | PunkCyber version (aka "RGB Glow Tube DIY" from PCBWay marketplace) |
+          | `IPSTube` | IPSTube - Model H401/H402 (8MB) |
+          | `MarvelTubes` | MarvelTubes (ESP32-S2, 16MB) |
+          | `MarvelTubesMini` | MarvelTubes Mini (ESP32-C3, small displays) |
+          | `DEsign` | D'Esign clock (small displays) |
+
+          > For flashing instructions, esptool notes per chip variant, and how to backup your original firmware,
+          > see [`firmware/README.md`](https://github.com/${{ github.repository }}/blob/main/firmware/README.md).
+          MARKDOWN
+
+          # Replace placeholder with actual tag, strip leading spaces from heredoc indent.
+          sed -i "s/TAG_PLACEHOLDER/${TAG}/" release_notes.md
+          sed -i 's/^          //' release_notes.md
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "" >> release_notes.md
+            echo "### Changes since ${PREV_TAG}" >> release_notes.md
+            echo "" >> release_notes.md
+            git log --oneline "${PREV_TAG}..HEAD" 2>/dev/null | head -50 >> release_notes.md || echo "_(no commits found)_" >> release_notes.md
+          fi
+
+          echo "  🐞 Generated release_notes.md:"
+          cat release_notes.md
+
+      - name: Create GitHub Release.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          PRERELEASE_FLAG=""
+          if [[ "$TAG" == *"-rc"* || "$TAG" == *"-beta"* || "$TAG" == *"-alpha"* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          gh release create "$TAG" \
+            --title "EleksTubeHAX ${TAG}" \
+            --notes-file release_notes.md \
+            $PRERELEASE_FLAG \
+            release_assets/*.bin
