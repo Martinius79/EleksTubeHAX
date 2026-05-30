@@ -198,7 +198,40 @@ jobs:
           | `MarvelTubesMini` | MarvelTubes Mini (ESP32-C3, small displays) |
           | `DEsign` | D'Esign clock (small displays) |
 
-          > For flashing instructions, esptool notes per chip variant, and how to backup your original firmware,
+          ### ⚠️ Pre-built firmware limitations
+
+          These binaries may have limited functionality compared to a self-built firmware, because not all available features are enabled or can be configured.
+
+          The image files (clock faces) are fixed and can't be changed without building your own firmware file with the development tools!
+
+          #### Pre-configured functionality
+
+          **Enabled:**
+          - WiFi connectivity via WPS (while clock is in boot phase, press WPS button on your router for WiFi setup)
+          - Night time dimming — from 22:00h (10 pm) to 07:00h (7 am)
+          - IP-based geolocation — time zone & DST from IP-API.com
+
+          **Disabled:**
+          - MQTT — no remote control, no Home Assistant support
+          - Debug outputs via serial interface
+          - For IPSTube clock: LED stripe disabled, hardware dimming enabled
+
+          **General:**
+          - 6 different sets of clock faces present. See [data](https://github.com/${{ github.repository }}/tree/main/data)
+          - BMP mode active for the given clock faces
+
+          ### 🔒 Backup first!
+
+          **Always backup YOUR clock's original firmware before flashing!**
+
+          Save your original firmware using the script that matches your device:
+          - `_ESP32 save flash 4MB.cmd` — most clocks
+          - `_ESP32 save flash 8MB.cmd` — IPSTube
+          - `_ESP32 save flash 16MB.cmd` — MarvelTubes
+
+          Change the COM port number to match your clock, run the script, then rename and store `backup1.bin` safely.
+
+          > For flashing instructions, esptool notes per chip variant, and more details,
           > see [`firmware/README.md`](https://github.com/${{ github.repository }}/blob/main/firmware/README.md).
           MARKDOWN
 
