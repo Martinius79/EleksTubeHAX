@@ -45,6 +45,8 @@ See also the section "Backup first" and following in the `README.md` file in the
 In this folder you will find the flashable files.
 They are updated from time to time in the repository, so version number may vary.
 
+The newest pre-built firmware files are published as **GitHub Releases** and can be downloaded directly from the [Releases page](https://github.com/aly-fly/EleksTubeHAX/releases).
+
 Last Update: 2026-05-27 to Version 1.3.10
 
 | clock model | firmware image file |
