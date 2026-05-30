@@ -48,7 +48,7 @@ They are updated from time to time in the repository, so version number may vary
 Last Update: 2026-05-27 to Version 1.3.10
 
 | clock model | firmware image file |
-|--|--|
+| -- | -- |
 | EleksTube IPS - Orginal Version | `FW_EleksTube_v1.3.10.bin` |
 | EleksTube IPS - Gen2 models | `FW_EleksTube_Gen2_v1.3.10.bin` |
 | SI HAI IPS | `FW_SI_HAI_v1.3.10.bin` |
@@ -58,6 +58,7 @@ Last Update: 2026-05-27 to Version 1.3.10
 | IPSTUBE - Model H401 and H402| `FW_IPSTube_v1.3.10.bin` |
 | MarvelTubes | `FW_MarvelTubes_v1.3.10.bin` |
 | MarvelTubes Mini | `FW_MarvelTubesMini_v1.3.10.bin` |
+| D-Esign Clock | `FW_DEsign_v1.3.10.bin` |
 
 Note: All "Original" EleksTube clocks, sold after July 2022 are "Gen2" versions. See [Note on EleksTube website](https://elekstube.com/blogs/news/instructions-on-elekstube-clock-for-gen2-systems). But always check the PCB version of your clock!
 
