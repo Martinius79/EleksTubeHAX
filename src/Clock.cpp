@@ -68,7 +68,7 @@ void RtcSet(uint32_t tt)
 #endif
   RTC.SetDateTime(temptime);
 }
-#elif defined(HARDWARE_NOVELLIFE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_MARVELTUBES_GEN2_CLOCK) // R8025T RTC chip
+#elif defined(HARDWARE_NOVELLIFE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) // R8025T RTC chip
 #include <RTC_RX8025T.h>
 
 RX8025T RTC;
@@ -125,7 +125,9 @@ uint32_t RtcGet()
 #endif
   return returnvalue;
 } // RX8025T RTC chip end
-#elif defined(HARDWARE_MARVELTUBESMINI_CLOCK)
+#elif defined(HARDWARE_MARVELTUBESMINI_CLOCK) || defined(HARDWARE_MARVELTUBES_GEN2_CLOCK)
+// No RTC chip present on this hardware — stub out all RTC calls to prevent
+// Wire.begin() from reconfiguring GPIO21 (TFT_DC) and GPIO22 (LCD CS Hours Tens).
 void RtcBegin()
 {
   Serial.println("No RTC!");

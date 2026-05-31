@@ -93,7 +93,7 @@
 // Set CS_DIRECT_GPIO for all hardware variants that control each display CS line directly via GPIO
 // (as opposed to using a 74HC595 shift register or I/O expander).
 // Must be defined BEFORE the ACTIVATEDISPLAYS / DIGIT_CS_ACTIVE_LEVEL blocks below that depend on it!
-#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
+#if defined(HARDWARE_IPSTUBE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_MARVELTUBES_GEN2_CLOCK) || defined(HARDWARE_DESIGN_CLOCK)
 #define CS_DIRECT_GPIO
 #endif
 
@@ -690,22 +690,22 @@
 #define DEVICE_HW_VERSION "1.0"
 
 // WS2812 (or compatible) LEDs on the back of the display modules.
-#define BACKLIGHTS_PIN (38)    // controls the WS2812B LEDs
+#define BACKLIGHTS_PIN (4)    // controls the WS2812B LEDs
 #define NUM_BACKLIGHT_LEDS (6) // 6 LEDs, one each on the back of every LCD
 
 // Buttons, active low, externally pulled up (with actual resistors!).
-#define BUTTON_LEFT_PIN (13)  // Style/Left button
-#define BUTTON_MODE_PIN (12)  // Menu/Mode button
-#define BUTTON_RIGHT_PIN (11) // Time/Right button
-#define BUTTON_POWER_PIN (10) // Alarm/Power button
+#define BUTTON_LEFT_PIN (35)  // Style/Left button
+#define BUTTON_MODE_PIN (34)  // Menu/Mode button
+#define BUTTON_RIGHT_PIN (39) // Time/Right button
+#define BUTTON_POWER_PIN (36) // Alarm/Power button
 
-// RTC UNKWONN TYPE! I2C bus! 5609 HDN2mY - ECS-RTC-3225-5609 clone -> I2C ID 0x32 -> RX8025T compatible -> modified driver is working
-#define RTC_SCL_PIN (20)
-#define RTC_SDA_PIN (21)
+// No RTC or backup battery on MarvelTubes Gen2!
+#define RTC_SCL_PIN (-1)
+#define RTC_SDA_PIN (-1)
 
 // Power for TFT displays backlight (LEDA) through a MOSFET - so they can all be dimmed and turned on/off.
 // Active is LOW for this clock!
-#define TFT_ENABLE_PIN (19)
+#define TFT_ENABLE_PIN (26)
 
 #define TFT_PWM_CHANNEL 0 // Use PWM channel 0 for TFT dimming
 
@@ -720,11 +720,11 @@
 
 
 #define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
-#define TFT_MOSI (40) // SPI Data
-#define TFT_SCLK (39) // SPI Clock
+#define TFT_MOSI (18) // SPI Data
+#define TFT_SCLK (16) // SPI Clock
 #define TFT_CS (-1)   // Not connected -> we use direct GPIOs for CS later
-#define TFT_DC (41)   // SPI Data Command, aka Register Select or RS
-#define TFT_RST (42)  // SPI Reset
+#define TFT_DC (21)   // SPI Data Command, aka Register Select or RS
+#define TFT_RST (23)  // SPI Reset
 
 // Fonts to load for TFT.
 // #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
