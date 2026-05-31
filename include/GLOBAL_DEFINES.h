@@ -681,6 +681,75 @@
 #endif // #ifdef HARDWARE_MARVELTUBES_CLOCK
 
 /*******************************
+ *    MarvelTubes Gen2 Clone   *
+ *******************************/
+#ifdef HARDWARE_MARVELTUBES_GEN2_CLOCK
+#define DEVICE_NAME "MarvelTubesG2"
+#define DEVICE_MANUFACTURER "MarvelTubes"
+#define DEVICE_MODEL "MarvelTubes IPS Tube Clock - Gen2"
+#define DEVICE_HW_VERSION "1.0"
+
+// WS2812 (or compatible) LEDs on the back of the display modules.
+#define BACKLIGHTS_PIN (38)    // controls the WS2812B LEDs
+#define NUM_BACKLIGHT_LEDS (6) // 6 LEDs, one each on the back of every LCD
+
+// Buttons, active low, externally pulled up (with actual resistors!).
+#define BUTTON_LEFT_PIN (13)  // Style/Left button
+#define BUTTON_MODE_PIN (12)  // Menu/Mode button
+#define BUTTON_RIGHT_PIN (11) // Time/Right button
+#define BUTTON_POWER_PIN (10) // Alarm/Power button
+
+// RTC UNKWONN TYPE! I2C bus! 5609 HDN2mY - ECS-RTC-3225-5609 clone -> I2C ID 0x32 -> RX8025T compatible -> modified driver is working
+#define RTC_SCL_PIN (20)
+#define RTC_SDA_PIN (21)
+
+// Power for TFT displays backlight (LEDA) through a MOSFET - so they can all be dimmed and turned on/off.
+// Active is LOW for this clock!
+#define TFT_ENABLE_PIN (19)
+
+#define TFT_PWM_CHANNEL 0 // Use PWM channel 0 for TFT dimming
+
+#define DIM_WITH_ENABLE_PIN_PWM // Enable hardware dimming with TFT_ENABLE_PIN
+#define DIM_SKIP_SOFTWARE_ALPHA // Hardware handles dimming; skip software alpha blending in image loader
+
+// Configure library \TFT_eSPI\User_Setup.h: ST7789 135 x 240 display with no chip select line.
+#define ST7789_DRIVER // Configure all registers
+#define TFT_WIDTH 135
+#define TFT_HEIGHT 240
+#define CGRAM_OFFSET // Library will add offsets required
+
+
+#define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
+#define TFT_MOSI (40) // SPI Data
+#define TFT_SCLK (39) // SPI Clock
+#define TFT_CS (-1)   // Not connected -> we use direct GPIOs for CS later
+#define TFT_DC (41)   // SPI Data Command, aka Register Select or RS
+#define TFT_RST (42)  // SPI Reset
+
+// Fonts to load for TFT.
+// #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
+#define LOAD_FONT2 // Font 2. Small 16 pixel high font, needs ~353
+#define LOAD_FONT4 // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters
+// #define LOAD_FONT6  // Font 6. Large 48 pixel font, needs ~2666 bytes in FLASH, only characters 1234567890:-.apm
+// #define LOAD_FONT7  // Font 7. 7-segment 48 pixel font, needs ~2438 bytes in FLASH, only characters 1234567890:.
+// #define LOAD_FONT8  // Font 8. Large 75 pixel font needs ~3256 bytes in FLASH, only characters 1234567890:-.
+// #define LOAD_FONT8N // Font 8. Alternative to Font 8 above, slightly narrower, so 3 digits fit a 160 pixel TFT
+// #define LOAD_GFXFF  // FreeFonts. Include access to the 48 Adafruit_GFX free fonts FF1 to FF48 and custom fonts
+#define SMOOTH_FONT // MUST REMAIN ACTIVE OTHERWISE BUTTON CONFIG IS CORRUPTED for some reason....
+
+// only working at 20MHz
+#define SPI_FREQUENCY 20000000
+
+// Definitions for PWM frequency and resolution for TFT dimming.
+#define TFT_PWM_FREQ 20000   // PWM frequency for TFT dimming (Hz)
+#define TFT_PWM_RESOLUTION 8 // PWM resolution for TFT dimming (bits)
+
+// Force the TFT_eSPI library to not over-write all this
+#define USER_SETUP_LOADED
+
+#endif // #ifdef HARDWARE_MARVELTUBES_GEN2_CLOCK
+
+/*******************************
  *    MarvelTubes Mini clone   *
  *******************************/
 #ifdef HARDWARE_MARVELTUBESMINI_CLOCK

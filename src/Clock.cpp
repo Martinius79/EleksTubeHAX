@@ -68,7 +68,7 @@ void RtcSet(uint32_t tt)
 #endif
   RTC.SetDateTime(temptime);
 }
-#elif defined(HARDWARE_NOVELLIFE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) // R8025T RTC chip
+#elif defined(HARDWARE_NOVELLIFE_CLOCK) || defined(HARDWARE_MARVELTUBES_CLOCK) || defined(HARDWARE_MARVELTUBES_GEN2_CLOCK) // R8025T RTC chip
 #include <RTC_RX8025T.h>
 
 RX8025T RTC;
@@ -124,7 +124,7 @@ uint32_t RtcGet()
   Serial.println(returnvalue);
 #endif
   return returnvalue;
-}
+} // RX8025T RTC chip end
 #elif defined(HARDWARE_MARVELTUBESMINI_CLOCK)
 void RtcBegin()
 {
