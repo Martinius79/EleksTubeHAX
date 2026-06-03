@@ -8,11 +8,11 @@
   - No PSRAM
 - UART Chip **CH340** as CH340C, see [datasheet](https://web.archive.org/web/20230328023924/http://wch-ic.com/downloads/file/79.html?time=2023-01-31%2005:37:01&code=byrlQteadwoMguMjmbWlPKyCiEACwGGapSxnN8I1)
 - Audio **NAU88C22** 24-bit Stereo Audio Codec with Speaker Driver [datasheet](https://www.nuvoton.com/resource-files/NAU88C22DataSheet0.6.pdf)
-  - Control interface: **I2C or 3-wire SPI**, selected by the CSB pin on the PCB
-    - CSB pulled HIGH → I2C mode, 7-bit address 0x1A (CSAD=0) or 0x1B (CSAD=1)
-    - CSB pulled LOW → 3-wire SPI mode
-  - Audio output: I2S (BCLK, LRCK/WS, SDIN) — exact GPIO assignments unknown, need discovery
-  - I2C/SPI GPIO assignments: unknown, need discovery
+  - Control interface: **I2C **
+    - **Confirmed: CSB HIGH → I2C mode, address 0x1A** (verified via WorkingTest2.cpp)
+  - I2C control GPIO assignments: **SDA=GPIO33, SCL=GPIO25**
+  - Audio output: I2S — **BCLK=GPIO0, LRCK/WS=GPIO13, SDIN(data to codec)=GPIO32**
+  - PLL source: BCLK (3.072 MHz @ 16-bit stereo 48 kHz), VCO/2=12.288 MHz SYSCLK
 - **No RTC** — no real-time clock chip, no backup battery on Gen2
 - Generic active buzzer (GPIO unknown, need discovery)
 - **LCD panels** × 6
@@ -38,7 +38,12 @@
 | 22   | LCD CS — Hours Tens | out | CS_DIRECT_GPIO |
 | 23   | TFT RST (Reset) | out | |
 | 26   | TFT backlight enable (PWM dim) | out | Active LOW via AO3407; PWM channel 0 |
+| 0    | I2S BCLK (NAU88C22) | out | Strapping pin — boot mode; shared with auto-download circuit |
+| 13   | I2S LRCK/WS (NAU88C22) | out | |
+| 25   | NAU88C22 I2C SCL | out | |
 | 27   | LCD CS — Seconds Tens | out | CS_DIRECT_GPIO |
+| 32   | I2S SDIN — data to NAU88C22 | out | |
+| 33   | NAU88C22 I2C SDA | in/out | |
 | 34   | Button LEFT (Style) | in-only | active LOW, external pull-up |
 | 35   | Button MODE (Menu) | in-only | active LOW, external pull-up |
 | 36   | Button POWER (Alarm) | in-only | active LOW, external pull-up |
@@ -46,9 +51,11 @@
 
 ## Free output-capable GPIOs (unassigned)
 
-`2`, `12`, `13`, `15`, `25`, `32`, `33`
+`2`, `12`, `15`
 
-These are candidates for: NAU88C22 I2C/SPI control lines, I2S audio lines (BCLK, LRCK, SDIN), buzzer.
+These are candidates for: buzzer, or other future use.
+
+Note: `0` (I2S BCLK) is also the ESP32 boot strapping / auto-download button pin — use with care.
 
 ## Firmware notes
 
