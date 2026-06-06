@@ -105,14 +105,14 @@
 #endif
 
 // Define the activate and deactivate state for the display power transistor and how the dimming value is calculated.
-#ifndef CS_DIRECT_GPIO // for all clocks, except IPSTube, MarvelTubes and D-Esign
-#define ACTIVATEDISPLAYS HIGH                                                  // Activate is HIGH
-#define DEACTIVATEDISPLAYS LOW                                                 // Deactivate is LOW
-#define CALCDIMVALUE(x) (x)                                                    // Dimming value is directly used for software dimming
-#else                                                                          // IPSTube keeps LOW active for display power
-#define ACTIVATEDISPLAYS LOW                                                   // Activate is LOW for the IPSTube
-#define DEACTIVATEDISPLAYS HIGH                                                // Deactivate is HIGH for the IPSTube
-#define CALCDIMVALUE(x) (255 - x)                                              // Dimming value is "inverted" for hardware dimming for IPSTube
+#ifndef CS_DIRECT_GPIO            // for all clocks, except IPSTube, MarvelTubes and D-Esign
+#define ACTIVATEDISPLAYS HIGH     // Activate is HIGH
+#define DEACTIVATEDISPLAYS LOW    // Deactivate is LOW
+#define CALCDIMVALUE(x) (x)       // Dimming value is directly used for software dimming
+#else                             // IPSTube keeps LOW active for display power
+#define ACTIVATEDISPLAYS LOW      // Activate is LOW for the IPSTube
+#define DEACTIVATEDISPLAYS HIGH   // Deactivate is HIGH for the IPSTube
+#define CALCDIMVALUE(x) (255 - x) // Dimming value is "inverted" for hardware dimming for IPSTube
 #endif
 
 #ifdef CS_DIRECT_GPIO

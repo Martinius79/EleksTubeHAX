@@ -383,15 +383,7 @@ It is possible that the project also works with ESP32 platform modules from othe
 
 #### 5.3.2 PIO build environment
 
-The PIO build environments for this project are named after each clock (e.g.,"EleksTube") using the board definition of the original "Espressif ESP32 Dev Module" named "esp32dev".
-
-##### Custom boards
-
-The IPSTube needs to use the "IPSTube" environment with a custom board definition ("Espressif ESP32 Dev Module 8MB") named "esp32dev8MB" in the `boards` folder.
-The MarvelTubes environment uses the `esp32devs2marveltubes` board file from the same folder to match its 16MB ESP32-S2 hardware.
-The MarvelTubes Gen2 uses the `MarvelTubes_Gen2` environment with the custom board definition `esp32devmarveltubesgen2` for its standard ESP32-based hardware.
-The MarvelTubes Mini uses the `MarvelTubesMini` environment with the custom board definition `esp32devc3minimarveltubesmini` for its ESP32-C3-based hardware.
-The Xunfeng clock needs also its own board definition `esp32devS2` in the `boards` folder.
+The PIO build environments for this project are named after each clock (e.g.,"EleksTube") using the board definition of the original "Espressif ESP32 Dev Module" named "esp32dev". The IPSTube needs to use the "IPSTube" environment with a custom board definition ("Espressif ESP32 Dev Module 8MB") named "esp32dev8MB" in the `boards` folder. The MarvelTubes environment uses the `esp32devs2marveltubes` board file from the same folder to match its 16MB ESP32-S2 hardware. The MarvelTubes Mini uses the `MarvelTubesMini` environment with the custom board definition `esp32devc3minimarveltubesmini` for its ESP32-C3-based hardware. The Xunfeng clock needs also its own board definition "esp32devS2" in the `boards` folder
 
 Flash partition size settings are already configured in the following files.
 
