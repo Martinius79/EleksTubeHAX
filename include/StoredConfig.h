@@ -64,6 +64,7 @@ public:
       char password[str_buffer_size];
       uint8_t WPS_connected; // Write StoredConfig::valid here when valid data is loaded.
     } wifi;
+
   } config;
 
   const static uint8_t valid = 0x55; // neither 0x00 nor 0xFF, signaling loaded config isn't just default data.

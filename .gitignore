@@ -38,3 +38,6 @@ include/_USER_DEFINES.h
 .act_artifacts
 .actrc
 .act
+
+# Local agent instructions.
+AGENTS.md
