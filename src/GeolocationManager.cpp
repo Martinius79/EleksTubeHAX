@@ -144,8 +144,48 @@ bool GeolocationManager::fetchTimezoneOffset()
 
       if (diff > (2 * 3600))
       {
-        Serial.printf("GeoLoc offset deviates by more than 2h from stored value (prev: %ds, new: %ds). Ignoring update.\n",
+        Serial.printf("GeoLoc offset deviates by more than 2h from stored value (prev: %ds, new: %ds). Retrying in 30s to verify...\n",
                       previousOffsetSeconds, newOffsetSeconds);
+        delay(30000);
+
+#ifdef GEOLOCATION_PROVIDER_IPAPI
+        IPGeolocation locationRetry(GEOLOCATION_API_KEY, "IPAPI");
+#elif defined(GEOLOCATION_PROVIDER_IPGEOLOCATION)
+        IPGeolocation locationRetry(GEOLOCATION_API_KEY, "IPGEOLOCATION");
+#elif defined(GEOLOCATION_PROVIDER_ABSTRACTAPI)
+        IPGeolocation locationRetry(GEOLOCATION_API_KEY, "ABSTRACTAPI");
+#else
+        IPGeolocation locationRetry(GEOLOCATION_API_KEY, "IPAPI");
+#endif
+
+        IPGeo ipgRetry;
+        if (locationRetry.updateStatus(&ipgRetry))
+        {
+          const double rawOffsetHoursRetry = ipgRetry.offset;
+          const int32_t retryOffsetSeconds = static_cast<int32_t>(lround(rawOffsetHoursRetry * 3600.0));
+
+          if ((retryOffsetSeconds % (15 * 60)) == 0)
+          {
+            int32_t diffRetry = retryOffsetSeconds - newOffsetSeconds;
+            if (diffRetry < 0) diffRetry = -diffRetry;
+
+            if (diffRetry <= 900)
+            {
+              Serial.printf("GeoLoc retry confirmed new offset (%ds). Applying update.\n", retryOffsetSeconds);
+              _tzOffset = static_cast<double>(retryOffsetSeconds) / 3600.0;
+              return true;
+            }
+
+            Serial.printf("GeoLoc retry offset (%ds) differs from first attempt (%ds). Update rejected.\n",
+                          retryOffsetSeconds, newOffsetSeconds);
+            return false;
+          }
+
+          Serial.println("GeoLoc retry returned offset not aligned to 15-min grid. Rejected.");
+          return false;
+        }
+
+        Serial.println("GeoLoc retry failed. Update rejected.");
         return false;
       }
     }
