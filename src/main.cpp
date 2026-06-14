@@ -1032,13 +1032,47 @@ bool GetGeoLocationTimeZoneOffset()
         diff = -diff;
       }
 
-      if (diff > (2 * 3600)) // more than 2 hours difference -> reject
+      if (diff > (2 * 3600)) // more than 2 hours difference -> verify with retry
       {
         Serial.print("GeoLoc offset deviates by more than 2h from stored value (prev: ");
         Serial.print(previousOffsetSeconds);
         Serial.print("s, new: ");
         Serial.print(newOffsetSeconds);
-        Serial.println("s). Ignoring update.");
+        Serial.println("s). Retrying in 30s to verify...");
+        delay(30000);
+
+        if (location.updateStatus(&ipg))
+        {
+          const double rawOffsetHoursRetry = ipg.offset;
+          const int32_t retryOffsetSeconds = static_cast<int32_t>(lround(rawOffsetHoursRetry * 3600.0));
+
+          if ((retryOffsetSeconds % (15 * 60)) == 0)
+          {
+            int32_t diffRetry = retryOffsetSeconds - newOffsetSeconds;
+            if (diffRetry < 0) diffRetry = -diffRetry;
+
+            if (diffRetry <= 900)
+            {
+              Serial.print("GeoLoc retry confirmed new offset (");
+              Serial.print(retryOffsetSeconds);
+              Serial.println("s). Applying update.");
+              GeoLocTZoffset = static_cast<double>(retryOffsetSeconds) / 3600.0;
+              return true;
+            }
+
+            Serial.print("GeoLoc retry offset (");
+            Serial.print(retryOffsetSeconds);
+            Serial.print("s) differs from first attempt (");
+            Serial.print(newOffsetSeconds);
+            Serial.println("s). Update rejected.");
+            return false;
+          }
+
+          Serial.println("GeoLoc retry returned offset not aligned to 15-min grid. Rejected.");
+          return false;
+        }
+
+        Serial.println("GeoLoc retry failed. Update rejected.");
         return false;
       }
     }
