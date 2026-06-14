@@ -148,20 +148,9 @@ bool GeolocationManager::fetchTimezoneOffset()
                       previousOffsetSeconds, newOffsetSeconds);
         delay(30000);
 
-#ifdef GEOLOCATION_PROVIDER_IPAPI
-        IPGeolocation locationRetry(GEOLOCATION_API_KEY, "IPAPI");
-#elif defined(GEOLOCATION_PROVIDER_IPGEOLOCATION)
-        IPGeolocation locationRetry(GEOLOCATION_API_KEY, "IPGEOLOCATION");
-#elif defined(GEOLOCATION_PROVIDER_ABSTRACTAPI)
-        IPGeolocation locationRetry(GEOLOCATION_API_KEY, "ABSTRACTAPI");
-#else
-        IPGeolocation locationRetry(GEOLOCATION_API_KEY, "IPAPI");
-#endif
-
-        IPGeo ipgRetry;
-        if (locationRetry.updateStatus(&ipgRetry))
+        if (location.updateStatus(&ipg))
         {
-          const double rawOffsetHoursRetry = ipgRetry.offset;
+          const double rawOffsetHoursRetry = ipg.offset;
           const int32_t retryOffsetSeconds = static_cast<int32_t>(lround(rawOffsetHoursRetry * 3600.0));
 
           if ((retryOffsetSeconds % (15 * 60)) == 0)
