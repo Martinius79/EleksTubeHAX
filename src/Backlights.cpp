@@ -56,7 +56,7 @@ void Backlights::adjustIntensity(int16_t adj)
 void Backlights::setIntensity(uint8_t intensity)
 {
   config->intensity = intensity;
-  setBrightness(0xFF >> max_intensity - config->intensity - 1);
+  setBrightness(0xFF >> (max_intensity - config->intensity - 1));
   pattern_needs_init = true;
 }
 
@@ -88,11 +88,11 @@ void Backlights::loop()
     }
     if (dimming)
     {
-      setBrightness(0xFF >> max_intensity - BACKLIGHT_DIMMED_INTENSITY - 1);
+      setBrightness(0xFF >> (max_intensity - BACKLIGHT_DIMMED_INTENSITY - 1));
     }
     else
     {
-      setBrightness(0xFF >> max_intensity - config->intensity - 1);
+      setBrightness(0xFF >> (max_intensity - config->intensity - 1));
     }
     show();
   }
@@ -173,11 +173,11 @@ void Backlights::testPattern()
 
   if (dimming)
   {
-    setBrightness(0xFF >> max_intensity - (uint8_t)BACKLIGHT_DIMMED_INTENSITY - 1);
+    setBrightness(0xFF >> (max_intensity - (uint8_t)BACKLIGHT_DIMMED_INTENSITY - 1));
   }
   else
   {
-    setBrightness(0xFF >> max_intensity - config->intensity - 1);
+    setBrightness(0xFF >> (max_intensity - config->intensity - 1));
   }
 
   show();
@@ -258,14 +258,14 @@ void Backlights::rainbowPattern()
   if (dimming)
   {
 #if BACKLIGHT_DIMMED_INTENSITY > 0
-    setBrightness(0xFF >> max_intensity - (uint8_t)BACKLIGHT_DIMMED_INTENSITY - 1);
+    setBrightness(0xFF >> (max_intensity - (uint8_t)BACKLIGHT_DIMMED_INTENSITY - 1));
 #else // turn off backlight if intensity is 0
     setBrightness(0);
 #endif
   }
   else
   {
-    setBrightness(0xFF >> max_intensity - config->intensity - 1);
+    setBrightness(0xFF >> (max_intensity - config->intensity - 1));
   }
   show();
 }

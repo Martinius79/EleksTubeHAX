@@ -267,6 +267,16 @@ uint32_t Clock::current_ntp_interval_ms = Clock::ntp_interval_initial_ms;
 uint8_t Clock::consecutive_failures = 0;
 uint8_t Clock::consecutive_successes = 0;
 
+// Out-of-class definitions of the NTP interval constants.
+// These are required as soon as a constant is ODR-used, for example when
+// std::min() binds it to a const reference. Arduino core 3.x no longer
+// provides the min()/max() macros, so the template version is used now.
+const uint32_t Clock::ntp_interval_initial_ms;
+const uint32_t Clock::ntp_interval_normal_ms;
+const uint32_t Clock::ntp_interval_stable_ms;
+const uint32_t Clock::ntp_interval_error_ms;
+const uint32_t Clock::ntp_interval_max_ms;
+
 void Clock::begin(StoredConfig::Config::Clock *config_)
 {
   config = config_;

@@ -19,7 +19,7 @@
 class StoredConfig
 {
 public:
-  StoredConfig() : prefs(), config_size(sizeof(config)), loaded(false), config() {}
+  StoredConfig() : config(), prefs(), config_size(sizeof(config)), loaded(false) {}
   void begin()
   {
     prefs.begin(SAVED_CONFIG_NAMESPACE, false);

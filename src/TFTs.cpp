@@ -2,6 +2,43 @@
 #include "TFTs.h"
 #include "WiFi_WPS.h"
 
+#ifdef DIM_WITH_ENABLE_PIN_PWM
+// Arduino-ESP32 3.x replaced the channel based LEDC API (ledcSetup/ledcAttachPin)
+// with a pin based one where the channel is allocated automatically.
+// These helpers keep the call sites free of version checks.
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+static void TftPwmSetup()
+{
+  // Keep the displays off while the pin is handed over to the LEDC peripheral
+  digitalWrite(TFT_ENABLE_PIN, DEACTIVATEDISPLAYS);
+  pinMode(TFT_ENABLE_PIN, OUTPUT);
+  ledcAttach(TFT_ENABLE_PIN, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);
+}
+static void TftPwmEnable()
+{
+  ledcChangeFrequency(TFT_ENABLE_PIN, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);
+}
+static void TftPwmWrite(uint32_t value)
+{
+  ledcWrite(TFT_ENABLE_PIN, value);
+}
+#else
+static void TftPwmSetup()
+{
+  ledcSetup(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);
+}
+static void TftPwmEnable()
+{
+  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
+  ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);
+}
+static void TftPwmWrite(uint32_t value)
+{
+  ledcWrite(TFT_PWM_CHANNEL, value);
+}
+#endif
+#endif // DIM_WITH_ENABLE_PIN_PWM
+
 void TFTs::begin()
 {
   chip_select.begin();
@@ -9,9 +46,9 @@ void TFTs::begin()
   delay(5);             // settling time (needed for I2C expander, harmless for others)
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
-  // If hardware dimming is used, init ledc, set the pin and channel for PWM and set frequency and resolution
-  ledcSetup(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION); // PWM, globally defined
-  ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(0));                  // Set initial dimming value to 0 (off)
+  // If hardware dimming is used, init ledc, set the pin for PWM and set frequency and resolution
+  TftPwmSetup();                  // PWM, globally defined
+  TftPwmWrite(CALCDIMVALUE(0));   // Set initial dimming value to 0 (off)
 #elif defined(TFT_ENABLE_PIN) && TFT_ENABLE_PIN >= 0
   pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
@@ -28,9 +65,8 @@ void TFTs::begin()
   fillScreen(TFT_BLACK); // to avoid/reduce flickering patterns on the screens
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
-  delay(100);                                                             // give some time to avoid glitches on power up
-  ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);                         // Attach the pin to the PWM channel -> this "enables" (backlight power on) the displays
-  ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION); // need to set the frequency and resolution again to have the hardware dimming working properly
+  delay(100);       // give some time to avoid glitches on power up
+  TftPwmEnable(); // Attach the pin to the PWM (core 2.x) / re-apply frequency and resolution (core 3.x) -> this "enables" (backlight power on) the displays
 #endif
   enableAllDisplays(); // Signal, that the displays are enabled now and do the hardware dimming, if available and enabled
 
@@ -55,8 +91,7 @@ void TFTs::reinit()
     chip_select.setAll(); // Start again with all displays selected.
 
 #ifdef DIM_WITH_ENABLE_PIN_PWM
-    ledcAttachPin(TFT_ENABLE_PIN, TFT_PWM_CHANNEL);
-    ledcChangeFrequency(TFT_PWM_CHANNEL, TFT_PWM_FREQ, TFT_PWM_RESOLUTION);
+    TftPwmEnable();
 #elif defined(TFT_ENABLE_PIN) && TFT_ENABLE_PIN >= 0
     pinMode(TFT_ENABLE_PIN, OUTPUT); // Set pin for turning display power on and off.
 #endif
@@ -255,12 +290,12 @@ void TFTs::ProcessUpdatedDimming()
   // ONLY for IPSTUBE clocks in the moment! Other clocks may be damaged!
   if (TFTsEnabled)
   {
-    ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(dimming));
+    TftPwmWrite(CALCDIMVALUE(dimming));
   }
   else
   {
     // no dimming means 255 (full brightness)
-    ledcWrite(TFT_PWM_CHANNEL, CALCDIMVALUE(0));
+    TftPwmWrite(CALCDIMVALUE(0));
   }
 #else
   // "software" dimming is done via alpha blending in the image drawing function
@@ -288,14 +323,15 @@ uint16_t TFTs::UnpackedImageBuffer[TFT_HEIGHT][TFT_WIDTH];
 
 int8_t TFTs::CountNumberOfClockFaces()
 {
-  int8_t i, found;
+  uint8_t i;
+  int8_t found;
   char filename[10];
 
   Serial.print("Searching for BMP clock files... ");
   found = 0;
   for (i = 1; i < 10; i++)
   {
-    sprintf(filename, "/%d.bmp", i * 10); // search for files 10.bmp, 20.bmp,...
+    snprintf(filename, sizeof(filename), "/%d.bmp", i * 10); // search for files 10.bmp, 20.bmp,...
     if (!FileExists(filename))
     {
       found = i - 1;
@@ -309,7 +345,9 @@ int8_t TFTs::CountNumberOfClockFaces()
 
 bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 {
+#ifdef DEBUG_OUTPUT_IMAGES
   uint32_t StartTime = millis();
+#endif
 
   fs::File bmpFS;
   // Filenames are no bigger than "255.bmp\0"
@@ -474,14 +512,15 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
 int8_t TFTs::CountNumberOfClockFaces()
 {
-  int8_t i, found;
+  uint8_t i;
+  int8_t found;
   char filename[10];
 
   Serial.print("Searching for CLK clock files... ");
   found = 0;
   for (i = 1; i < 10; i++)
   {
-    sprintf(filename, "/%d.clk", i * 10); // search for files 10.clk, 20.clk,...
+    snprintf(filename, sizeof(filename), "/%d.clk", i * 10); // search for files 10.clk, 20.clk,...
     if (!FileExists(filename))
     {
       found = i - 1;
@@ -495,7 +534,9 @@ int8_t TFTs::CountNumberOfClockFaces()
 
 bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 {
+#ifdef DEBUG_OUTPUT_IMAGES
   uint32_t StartTime = millis();
+#endif
 
   fs::File bmpFS;
   // Filenames are no bigger than "255.clk\0"
@@ -610,9 +651,8 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
 void TFTs::DrawImage(uint8_t file_index)
 {
-
-  uint32_t StartTime = millis();
 #ifdef DEBUG_OUTPUT_IMAGES
+  uint32_t StartTime = millis();
   Serial.println("");
   Serial.print("Drawing image: ");
   Serial.println(file_index);

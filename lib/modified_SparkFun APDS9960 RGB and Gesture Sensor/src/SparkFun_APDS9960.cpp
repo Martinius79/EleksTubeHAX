@@ -289,7 +289,7 @@ bool SparkFun_APDS9960::setMode(uint8_t mode, uint8_t enable)
 
     /* Change bit(s) in ENABLE register */
     enable = enable & 0x01;
-    if (mode >= 0 && mode <= 6)
+    if (mode <= 6)
     {
         if (enable)
         {
@@ -569,7 +569,7 @@ bool SparkFun_APDS9960::isGestureAvailable()
 int SparkFun_APDS9960::readGesture()
 {
     uint8_t fifo_level = 0;
-    uint8_t bytes_read = 0;
+    int bytes_read = 0;
     uint8_t fifo_data[128];
     uint8_t gstatus;
     int motion;

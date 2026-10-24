@@ -695,7 +695,7 @@ void loop()
         }
         setupMenu();
         tfts.println("Color:");
-        tfts.printf("%06X\n", backlights.getColor());
+        tfts.printf("%06X\n", (unsigned)backlights.getColor());
       }
       // Backlight Intensity
       else if (menu_state == Menu::backlight_intensity)

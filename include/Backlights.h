@@ -21,8 +21,8 @@
 class Backlights : public Adafruit_NeoPixel
 {
 public:
-  Backlights() : config(NULL), pattern_needs_init(true), off(true),
-                 Adafruit_NeoPixel(NUM_BACKLIGHT_LEDS, BACKLIGHTS_PIN, NEO_GRB + NEO_KHZ800)
+  Backlights() : Adafruit_NeoPixel(NUM_BACKLIGHT_LEDS, BACKLIGHTS_PIN, NEO_GRB + NEO_KHZ800),
+                 pattern_needs_init(true), off(true), config(NULL)
   {
   }
 
