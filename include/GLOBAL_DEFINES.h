@@ -645,6 +645,11 @@
 
 #define SPI_FREQUENCY 40000000
 
+// ESP32-S2 has a small dram0_0_seg. Decoding a whole 135x240 clock face needs 64800 bytes of
+// static RAM, which does not fit anymore since Arduino core 3.x. Decode the image in horizontal
+// bands instead -> the frame buffer shrinks to 135 x TFT_IMAGE_BAND_ROWS x 2 bytes.
+#define TFT_IMAGE_BAND_ROWS 120
+
 // To make the TFT_eSPI library not over-write all this with its default settings:
 #define USER_SETUP_LOADED
 
@@ -715,6 +720,11 @@
 // Definitions for PWM frequency and resolution for TFT dimming.
 #define TFT_PWM_FREQ 20000   // PWM frequency for TFT dimming (Hz)
 #define TFT_PWM_RESOLUTION 8 // PWM resolution for TFT dimming (bits)
+
+// ESP32-S2 has a small dram0_0_seg. Decoding a whole 135x240 clock face needs 64800 bytes of
+// static RAM, which does not fit anymore since Arduino core 3.x. Decode the image in horizontal
+// bands instead -> the frame buffer shrinks to 135 x TFT_IMAGE_BAND_ROWS x 2 bytes.
+#define TFT_IMAGE_BAND_ROWS 120
 
 // Force the TFT_eSPI library to not over-write all this
 #define USER_SETUP_LOADED
@@ -955,5 +965,12 @@
 #define USER_SETUP_LOADED
 
 #endif // #ifdef HARDWARE_DESIGN_CLOCK
+
+// Number of image rows that are decoded into the static frame buffer at once.
+// Default: the whole frame (TFT_HEIGHT), so nothing changes for boards with enough DRAM.
+// Boards with a small dram0_0_seg (ESP32-S2) override this to decode clock faces in bands.
+#ifndef TFT_IMAGE_BAND_ROWS
+#define TFT_IMAGE_BAND_ROWS TFT_HEIGHT
+#endif
 
 #endif /* GLOBAL_DEFINES_H_ */

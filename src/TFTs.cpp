@@ -266,13 +266,18 @@ void TFTs::showDigit(uint8_t digit)
 
 void TFTs::LoadNextImage()
 {
+#if TFT_IMAGE_BAND_ROWS >= TFT_HEIGHT
   if (NextFileRequired != FileInBuffer)
   {
 #ifdef DEBUG_OUTPUT_IMAGES
     Serial.println("Preload next img");
 #endif
-    LoadImageIntoBuffer(NextFileRequired);
+    LoadImageIntoBuffer(NextFileRequired, 0, TFT_HEIGHT);
   }
+#else
+  // The frame buffer only holds one band of the image, so preloading the next clock face into it
+  // makes no sense. DrawImage() decodes all bands from flash when the image is actually needed.
+#endif
 }
 
 void TFTs::InvalidateImageInBuffer()
@@ -315,9 +320,11 @@ bool TFTs::FileExists(const char *path)
 // These BMP functions are stolen directly from the TFT_SPIFFS_BMP example in the TFT_eSPI library.
 // Unfortunately, they aren't part of the library itself, so I had to copy them.
 // I've modified DrawImage to buffer the whole image at once instead of doing it line-by-line.
+// Boards with too little DRAM (see TFT_IMAGE_BAND_ROWS) buffer it in horizontal bands instead.
 
 // Too big to fit on the stack.
-uint16_t TFTs::UnpackedImageBuffer[TFT_HEIGHT][TFT_WIDTH];
+// Only TFT_IMAGE_BAND_ROWS rows are buffered, see the default / per board value in GLOBAL_DEFINES.h.
+uint16_t TFTs::UnpackedImageBuffer[TFT_IMAGE_BAND_ROWS][TFT_WIDTH];
 
 #ifndef USE_CLK_FILES
 
@@ -343,7 +350,7 @@ int8_t TFTs::CountNumberOfClockFaces()
   return found;
 }
 
-bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
+bool TFTs::LoadImageIntoBuffer(uint8_t file_index, uint16_t band_start, uint16_t band_rows)
 {
 #ifdef DEBUG_OUTPUT_IMAGES
   uint32_t StartTime = millis();
@@ -442,13 +449,26 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
     }
   }
 
-  bmpFS.seek(seekOffset);
-
   uint32_t lineSize = ((bitDepth * w + 31) >> 5) * 4;
   uint8_t lineBuffer[lineSize];
 
+  // Only the rows belonging to the requested band are decoded. BMP data is stored bottom up, so
+  // the band is read in descending row order and the rows outside the band are skipped by seeking
+  // -> over all bands every row is read exactly once.
+  int16_t row_min = (int16_t)band_start - y;
+  int16_t row_max = (int16_t)(band_start + band_rows) - 1 - y;
+  if (row_min < 0)
+    row_min = 0;
+  if (row_max > h - 1)
+    row_max = h - 1;
+
+  if (row_max >= row_min)
+  {
+    bmpFS.seek(seekOffset + (uint32_t)(h - 1 - row_max) * lineSize);
+  }
+
   // row is decremented as the BMP image is drawn bottom up
-  for (row = h - 1; row >= 0; row--)
+  for (row = row_max; row >= row_min; row--)
   {
     bmpFS.read(lineBuffer, sizeof(lineBuffer));
     uint8_t *bptr = lineBuffer;
@@ -494,10 +514,13 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
       } // dimming
 #endif
 
-      UnpackedImageBuffer[row + y][col + x] = color;
+      UnpackedImageBuffer[(row + y) - band_start][col + x] = color;
     } // col
   } // row
+#if TFT_IMAGE_BAND_ROWS >= TFT_HEIGHT
+  // Only a fully buffered image can be reused, a band buffer is overwritten by the next band.
   FileInBuffer = file_index;
+#endif
 
   bmpFS.close();
 #ifdef DEBUG_OUTPUT_IMAGES
@@ -532,7 +555,7 @@ int8_t TFTs::CountNumberOfClockFaces()
   return found;
 }
 
-bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
+bool TFTs::LoadImageIntoBuffer(uint8_t file_index, uint16_t band_start, uint16_t band_rows)
 {
 #ifdef DEBUG_OUTPUT_IMAGES
   uint32_t StartTime = millis();
@@ -602,8 +625,22 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
 
   uint8_t lineBuffer[w * 2];
 
+  // Only the rows belonging to the requested band are decoded. CLK data is stored top down, so the
+  // file is seeked to the first needed row -> over all bands every row is read exactly once.
+  int16_t row_min = (int16_t)band_start - y;
+  int16_t row_max = (int16_t)(band_start + band_rows) - 1 - y;
+  if (row_min < 0)
+    row_min = 0;
+  if (row_max > h - 1)
+    row_max = h - 1;
+
+  if (row_max >= row_min)
+  {
+    bmpFS.seek(6 + (uint32_t)row_min * (uint32_t)w * 2); // 6 byte header: magic, width, height
+  }
+
   // 0,0 coordinates are top left
-  for (row = 0; row < h; row++)
+  for (row = row_min; row <= row_max; row++)
   {
     bmpFS.read(lineBuffer, sizeof(lineBuffer));
     uint8_t PixM, PixL;
@@ -612,11 +649,11 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
     for (col = 0; col < w; col++)
     {
 #ifdef DIM_SKIP_SOFTWARE_ALPHA // skip alpha blending for dimming if hardware dimming is used
-      UnpackedImageBuffer[row + y][col + x] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
+      UnpackedImageBuffer[(row + y) - band_start][col + x] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
 #else
       if (dimming == 255)
       { // not needed, copy directly
-        UnpackedImageBuffer[row + y][col + x] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
+        UnpackedImageBuffer[(row + y) - band_start][col + x] = (lineBuffer[col * 2 + 1] << 8) | (lineBuffer[col * 2]);
       }
       else
       {
@@ -633,12 +670,15 @@ bool TFTs::LoadImageIntoBuffer(uint8_t file_index)
         r = r >> 8;
         g = g >> 8;
         b = b >> 8;
-        UnpackedImageBuffer[row + y][col + x] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+        UnpackedImageBuffer[(row + y) - band_start][col + x] = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
       } // dimming
 #endif
     } // col
   } // row
+#if TFT_IMAGE_BAND_ROWS >= TFT_HEIGHT
+  // Only a fully buffered image can be reused, a band buffer is overwritten by the next band.
   FileInBuffer = file_index;
+#endif
 
   bmpFS.close();
 #ifdef DEBUG_OUTPUT_IMAGES
@@ -657,18 +697,36 @@ void TFTs::DrawImage(uint8_t file_index)
   Serial.print("Drawing image: ");
   Serial.println(file_index);
 #endif
+
+  bool oldSwapBytes = getSwapBytes();
+  setSwapBytes(true);
+
+#if TFT_IMAGE_BAND_ROWS >= TFT_HEIGHT
   // check if file is already loaded into buffer; skip loading if it is. Saves 50 to 150 msec of time.
   if (file_index != FileInBuffer)
   {
 #ifdef DEBUG_OUTPUT_IMAGES
     Serial.println("Not preloaded; loading now...");
 #endif
-    LoadImageIntoBuffer(file_index);
+    LoadImageIntoBuffer(file_index, 0, TFT_HEIGHT);
   }
 
-  bool oldSwapBytes = getSwapBytes();
-  setSwapBytes(true);
   pushImage(0, 0, TFT_WIDTH, TFT_HEIGHT, reinterpret_cast<uint16_t *>(UnpackedImageBuffer));
+#else
+  // The image does not fit into RAM as a whole, so it is decoded and pushed band by band.
+  for (uint16_t band_start = 0; band_start < TFT_HEIGHT; band_start += TFT_IMAGE_BAND_ROWS)
+  {
+    uint16_t band_rows = TFT_HEIGHT - band_start;
+    if (band_rows > TFT_IMAGE_BAND_ROWS)
+      band_rows = TFT_IMAGE_BAND_ROWS;
+
+    if (!LoadImageIntoBuffer(file_index, band_start, band_rows))
+      break;
+
+    pushImage(0, band_start, TFT_WIDTH, band_rows, reinterpret_cast<uint16_t *>(UnpackedImageBuffer));
+  }
+#endif
+
   setSwapBytes(oldSwapBytes);
 
 #ifdef DEBUG_OUTPUT_IMAGES

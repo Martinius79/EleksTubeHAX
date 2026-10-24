@@ -71,12 +71,14 @@ private:
 
   bool FileExists(const char *path);
   int8_t CountNumberOfClockFaces();
-  bool LoadImageIntoBuffer(uint8_t file_index);
+  bool LoadImageIntoBuffer(uint8_t file_index, uint16_t band_start, uint16_t band_rows);
   void DrawImage(uint8_t file_index);
   uint16_t read16(fs::File &f);
   uint32_t read32(fs::File &f);
 
-  static uint16_t UnpackedImageBuffer[TFT_HEIGHT][TFT_WIDTH];
+  // Horizontal band of a clock face that is decoded into RAM at once.
+  // TFT_IMAGE_BAND_ROWS == TFT_HEIGHT buffers the whole image, smaller values decode in bands.
+  static uint16_t UnpackedImageBuffer[TFT_IMAGE_BAND_ROWS][TFT_WIDTH];
   uint8_t FileInBuffer = 255; // invalid, always load first image
   uint8_t NextFileRequired = 0;
 
