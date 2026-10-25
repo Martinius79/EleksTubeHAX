@@ -34,14 +34,14 @@
 // #define HARDWARE_DESIGN_CLOCK            // D-Esign clock with ESP32 WROOM-32, small ST7735 80x160 displays, direct GPIO CS lines
 
 // ************* ESP32-S3 IPSTube variant *************
-// The IPSTube_S3 PlatformIO environment passes -DIPSTUBE_S3. That board is an
+// The IPSTUBE_GEN3 PlatformIO environment passes -DIPSTUBE_GEN3. That board is an
 // ESP32-S3 with a different pinout than the classic-ESP32 IPSTube. When the flag
 // is set we still use the HARDWARE_IPSTUBE_CLOCK code paths but override the pins.
-#ifdef IPSTUBE_S3
+#ifdef IPSTUBE_GEN3
 #ifndef HARDWARE_IPSTUBE_CLOCK
 #define HARDWARE_IPSTUBE_CLOCK
 #endif
-#endif // IPSTUBE_S3
+#endif // IPSTUBE_GEN3
 
 #ifdef HARDWARE_PUNKCYBER_CLOCK
 // Everything else is the same, except digits are swapped from left to right.
@@ -277,7 +277,7 @@
 #define DEVICE_HW_VERSION "H401/H402"
 
 // WS2812 (or compatible) LEDs on the back of the display modules.
-#ifdef IPSTUBE_S3
+#ifdef IPSTUBE_GEN3
 #define BACKLIGHTS_PIN (GPIO_NUM_42) // S3: WS2812 data on GPIO42
 #else
 #define BACKLIGHTS_PIN (GPIO_NUM_5) // pin 35 is GPIO5
@@ -306,7 +306,7 @@
 #endif
 
 // 3-wire to DS1302 RTC.
-#ifdef IPSTUBE_S3
+#ifdef IPSTUBE_GEN3
 // The S3 IPSTube keeps time via NTP; the classic DS1302 pins (incl. GPIO22)
 // do not exist on the ESP32-S3. Point these at valid, safe S3 GPIOs so the
 // code compiles. If your S3 board actually has a DS1302, set the real pins here.
@@ -322,7 +322,7 @@
 // All IPSTubes has the LCDs pins VCC power (LED Anode) and VDD (Power Supply for Analog) connected to the VCC (3.3V) and Ground to Ground (PCB), so the displays are Always-On!
 // EXCEPT: The Q1 transistor is present!
 // Then the GPIO4 pin is connected to the transistor and Ground of the LCDs is running through the transistor, so the LCDs can be turned on and off AND dimmed!
-#ifdef IPSTUBE_S3
+#ifdef IPSTUBE_GEN3
 #define TFT_ENABLE_PIN (GPIO_NUM_9) // S3: display backlight/enable on GPIO9 (active low, PWM)
 #else
 #define TFT_ENABLE_PIN (GPIO_NUM_4) // pin 24 is GPIO4
@@ -372,14 +372,14 @@
 // The 135x240 ST7789(VW) panels sit at an offset inside the controller's
 // 240x320 RAM, so the CGRAM offset is REQUIRED on the S3 or content lands
 // off-screen (looks blank).
-#ifdef IPSTUBE_S3
+#ifdef IPSTUBE_GEN3
 #define CGRAM_OFFSET // Library will add offsets required
 #endif
 // #define CGRAM_OFFSET // Library will add offsets required
 #define TFT_SDA_READ // Read and write on the MOSI/SDA pin, no separate MISO pin
 
 #define TFT_MISO -1            // No MISO
-#ifdef IPSTUBE_S3
+#ifdef IPSTUBE_GEN3
 #define TFT_MOSI (GPIO_NUM_6)  // S3: SDA / MOSI
 #define TFT_SCLK (GPIO_NUM_7)  // S3: SCL / SCLK
 #define TFT_CS (-1)            // CS handled per-digit in ChipSelect.cpp
