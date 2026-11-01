@@ -1,0 +1,79 @@
+IPSTube Crystal Time "LCD Display Ball" - Geraete-Infos
+========================================================
+Ausgelesen am 2026-11-01 ueber USB/ADB (nur lesende Befehle).
+KEIN Firmware-Backup: Es wurde noch nichts vom Geraet gesichert.
+
+
+Kurzfassung
+-----------
+Kein ESP32. SoC ist ein ArtInChip D21x mit RT-Thread (Luban-Lite SDK).
+Das Geraet hat keinen COM-Port, sondern eine offene ADB-Shell ohne Passwort.
+EleksTubeHAX laeuft hier nicht, es braeuchte eine eigene Firmware auf Basis des
+ArtInChip-SDK.
+
+
+USB
+---
+Name:           ADB Interface (Windows-Treiber: WinUSB "ADB Device")
+VID:PID:        18D1:4E26
+USB-Klasse:     FF/42/01 (ADB)
+Seriennummer:   32021919830108
+adb devices -l: product:mido model:rtthread device:mido
+Zugang:         adb shell <befehl>, Prompt "aic />"
+
+Das System lief beim Auslesen normal (LVGL aktiv). ADB ist also vermutlich im
+Normalbetrieb aktiv, die Powertaste loest wohl keinen Sondermodus aus.
+Ein Vergleich ohne gedrueckte Taste steht noch aus.
+
+
+Hardware und Software
+---------------------
+SoC:            ArtInChip D21x ("D21x Inside")
+SDK/OS:         Luban-Lite 1.3.0 auf RT-Thread
+Firmware:       Image 1.0.0.22, gebaut am Jun 18 2026 21:19:12
+RAM:            64 MB DRAM (0x40000000-0x44000000), davon 32 MB CMA-Heap
+Flash:          SPI-NAND, ID 0x71E571E5, 2048 Byte Page, 64 Spare,
+                64 Pages/Block, Partitionen belegen 1020 Bloecke
+WLAN:           wlan0/wlan1, Interface w0, ueber SDIO
+Grafik:         LVGL, ge (Grafikbeschleuniger), aicfb, Video-/Bilddekoder
+Audio:          sound0, dmic0
+Netzdienste:    websocket_srv, Mongoose, /data/www, http_ota, ka_mqtt
+
+Aus dem Gedaechtnis, nicht geprueft:
+- D21x ist RISC-V (XuanTie C906)
+- Flash-ID passt zu Dosilicon DS35Q1GA (1 Gbit)
+
+Vermutung: Bluetooth vorhanden (Thread hci_uart_rx).
+
+
+Flash-Layout (A/B-Slots, aktiv: A)
+----------------------------------
+Partition   Bloecke     Groesse
+spl         0-7         1 MB
+env         8-9         256 KB
+env_r       10-11       256 KB
+os          12-75       8 MB
+os_r        76-139      8 MB
+rodata      140-219     10 MB
+rodata_r    220-299     10 MB
+data        300-1019    90 MB (77,5 MB frei)
+
+MTD=spi0.0:1m(spl),256k(env),256k(env_r),8m(os),8m(os_r),10m(rodata),10m(rodata_r),90m(data)
+
+
+Dateisystem
+-----------
+/         ram, data, rodata, sdcard, udisk
+/rodata   alarm, boot, font, image, style0-style5 (3,6 MB frei)
+/data     alarm, boot, style0-style5, www, params.json (1951 Byte), wlan_cfg (116 Byte)
+
+Die Stil-Ordner in /data sind vermutlich der Ansatzpunkt fuer eigene Designs.
+
+
+Hinweise fuer ein spaeteres Backup
+----------------------------------
+- Dateien aus /rodata und /data koennten per adb pull zu sichern sein (nicht getestet).
+- Fuer rohe Partitionen (spl, os) gibt es in der Shell keinen erkennbaren Lesebefehl.
+- wlan_cfg enthaelt vermutlich das WLAN-Passwort: nicht ins Repo uebernehmen.
+- Daten-loeschend: mkfs, nerase, nerase_all. Upgrade-Modus: aicupg.
+  Die A/B-Slots schuetzen nicht spl.
