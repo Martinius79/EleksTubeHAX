@@ -271,9 +271,14 @@
  *    IPSTube Clone     *
  ************************/
 #ifdef HARDWARE_IPSTUBE_CLOCK
+#ifdef IPSTUBE_GEN3
+#define DEVICE_NAME "IPSTube-Gen3" // Dashes, not spaces: stays a valid hostname after the sanitizing in main.cpp
+#define DEVICE_MODEL "IPSTube Gen3 Clock"
+#else
 #define DEVICE_NAME "IPSTube"
-#define DEVICE_MANUFACTURER "IPSTube"
 #define DEVICE_MODEL "IPSTube Tube Clock"
+#endif
+#define DEVICE_MANUFACTURER "IPSTube"
 #define DEVICE_HW_VERSION "H401/H402"
 
 // WS2812 (or compatible) LEDs on the back of the display modules.
