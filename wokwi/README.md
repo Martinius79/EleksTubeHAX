@@ -40,6 +40,15 @@ Headless run (serial output + screenshot of the displays), needs `WOKWI_CLI_TOKE
 wokwi-cli --timeout 25000 --screenshot-part tubes --screenshot-time 24000 .
 ```
 
+Automated scenarios (button presses + screenshots to `.pio/build_wokwi/screenshots/`):
+
+```bash
+wokwi-cli --timeout 120000 --scenario wokwi/scenarios/menu_walkthrough.yaml .
+wokwi-cli --timeout 120000 --scenario wokwi/scenarios/power_backlight.yaml .
+```
+
+They are split because the Wokwi free plan limits one CLI session to 5 minutes (wall clock).
+
 ## Differences to the real clock
 
 - **RTC**: Wokwi has no DS3231, a DS1307 is used (same I2C address and time registers).
@@ -47,6 +56,8 @@ wokwi-cli --timeout 25000 --screenshot-part tubes --screenshot-time 24000 .
 - **Web setup portal**: the env removes `WEB_SETUP_PORTAL` (the simulator has no soft AP),
   so it is the classic build with fixed WiFi credentials.
 - **Displays**: write-only emulation (no `readPixel`), 16 bit colour only, no scrolling.
+  The panels are modelled with BGR subpixels (attribute `panelBgr`, default 1), matching
+  TFT_eSPI, which sets the MADCTL BGR bit for these panels (`CGRAM_OFFSET`).
   All six panels live in one custom chip: the firmware selects several panels at once
   (broadcast init) and Wokwi does not handle several custom chips receiving on the same
   SPI bus at the same time.

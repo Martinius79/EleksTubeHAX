@@ -1,0 +1,68 @@
+# Wokwi automation scenario: backlight LEDs and display power off/on with the POWER button
+# Screenshots of the displays go to .pio/build_wokwi/screenshots/ (paths are relative to this file).
+# Buttons are held 1.5 s: a loop with a redraw of the digits or the menu takes 0.4-1 s in the simulator,
+# shorter presses can fall between two button polls (the 4-button menu reacts to the press edge only).
+# Kept short on purpose: the Wokwi free plan limits one CLI session to 5 minutes.
+#   wokwi-cli --timeout 120000 --scenario wokwi/scenarios/power_backlight.yaml .
+name: EleksTube power button and backlights
+version: 1
+author: EleksTubeHAX
+
+steps:
+  - wait-serial: 'Starting main loop...'
+  - delay: 2000ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/power_01_clock.png
+  - take-screenshot:
+      part-id: bl1
+      save-to: ../../.pio/build_wokwi/screenshots/power_02_backlight_led1.png
+  - take-screenshot:
+      part-id: bl2
+      save-to: ../../.pio/build_wokwi/screenshots/power_03_backlight_led2.png
+  - take-screenshot:
+      part-id: bl3
+      save-to: ../../.pio/build_wokwi/screenshots/power_04_backlight_led3.png
+  - take-screenshot:
+      part-id: bl4
+      save-to: ../../.pio/build_wokwi/screenshots/power_05_backlight_led4.png
+  - take-screenshot:
+      part-id: bl5
+      save-to: ../../.pio/build_wokwi/screenshots/power_06_backlight_led5.png
+  - take-screenshot:
+      part-id: bl6
+      save-to: ../../.pio/build_wokwi/screenshots/power_07_backlight_led6.png
+  # POWER: displays + backlights off
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 1
+  - delay: 1500ms
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 0
+  - delay: 1000ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/power_08_power_off.png
+  - take-screenshot:
+      part-id: bl1
+      save-to: ../../.pio/build_wokwi/screenshots/power_09_power_off_led1.png
+  # POWER: displays + backlights on (re-init of the displays)
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 1
+  - delay: 1500ms
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 0
+  - delay: 3000ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/power_10_power_on.png
+  - take-screenshot:
+      part-id: bl1
+      save-to: ../../.pio/build_wokwi/screenshots/power_11_power_on_led1.png

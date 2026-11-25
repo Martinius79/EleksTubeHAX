@@ -84,6 +84,7 @@ typedef struct
   uint32_t col_offset;
   uint32_t row_offset;
   bool panel_inverted; // IPS panels show correct colours only with INVON
+  bool panel_bgr;      // panel subpixels are BGR: correct colours only with MADCTL BGR set
 
   panel_t panels[NUM_PANELS];
   uint32_t row_rgba[PANEL_W]; // conversion buffer for buffer_write()
@@ -103,7 +104,7 @@ static uint32_t to_rgba(const chip_state_t *c, const panel_t *p, uint16_t px, bo
   r = (r << 3) | (r >> 2);
   g = (g << 2) | (g >> 4);
   b = (b << 3) | (b >> 2);
-  if (p->madctl & MADCTL_BGR)
+  if (((p->madctl & MADCTL_BGR) != 0) != c->panel_bgr)
   {
     uint32_t t = r;
     r = b;
@@ -397,6 +398,7 @@ void chip_init(void)
   c->col_offset = attr_read(attr_init("colOffset", 52));
   c->row_offset = attr_read(attr_init("rowOffset", 40));
   c->panel_inverted = attr_read(attr_init("panelInverted", 1)) != 0;
+  c->panel_bgr = attr_read(attr_init("panelBgr", 1)) != 0; // TFT_eSPI sets BGR for these panels (CGRAM_OFFSET)
   if (c->col_offset + PANEL_W > GRAM_W)
     c->col_offset = GRAM_W - PANEL_W;
   if (c->row_offset + PANEL_H > GRAM_H)
