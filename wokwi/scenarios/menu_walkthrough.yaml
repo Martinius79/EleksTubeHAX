@@ -1,0 +1,267 @@
+# Wokwi automation scenario: walks through the complete 4-button menu of the EleksTube clock
+# and saves a screenshot of the displays after every step (.pio/build_wokwi/screenshots/,
+# paths are relative to this file).
+# Buttons are held 700 ms: a redraw of the digits takes ~420 ms per loop in the simulator,
+# shorter presses can fall between two button polls (the 4-button menu reacts to the press edge only).
+#   wokwi-cli --timeout 180000 --scenario wokwi/scenarios/menu_walkthrough.yaml .
+name: EleksTube menu walkthrough
+version: 1
+author: EleksTubeHAX
+
+steps:
+  - wait-serial: 'Starting main loop...'
+  - delay: 3000ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/01_clock.png
+  - take-screenshot:
+      part-id: bl1
+      save-to: ../../.pio/build_wokwi/screenshots/02_backlight_led1.png
+  # MODE: open the menu (backlight pattern)
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/03_menu_backlight_pattern.png
+  # RIGHT: next backlight pattern
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/04_backlight_pattern_next.png
+  # MODE: pattern color
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  # RIGHT: change color
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  # RIGHT: change color
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/05_pattern_color.png
+  # MODE: backlight intensity
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  # LEFT: darker
+  - set-control:
+      part-id: btnLeft
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnLeft
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/06_backlight_intensity.png
+  # MODE: 12/24 hour
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  # RIGHT: toggle 12 hour mode
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/07_twelve_hour.png
+  # MODE: blank leading hour zero
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  # RIGHT: toggle blanking
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/08_blank_hours_zero.png
+  # MODE: UTC offset hours
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  # RIGHT: +1 hour
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/09_utc_offset_hour.png
+  # MODE: UTC offset 15 minutes
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/10_utc_offset_15m.png
+  # MODE: clock face
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnMode
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  # RIGHT: next clock face
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnRight
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/11_clock_face.png
+  # POWER: leave the menu (saves config)
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - wait-serial: 'Triggered from leaving menu'
+  - delay: 3000ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/12_clock_after_menu.png
+  # POWER: displays + backlights off
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/13_power_off.png
+  # POWER: displays + backlights on
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 1
+  - delay: 700ms
+  - set-control:
+      part-id: btnPower
+      name: pressed
+      value: 0
+  - delay: 1500ms
+  - delay: 3000ms
+  - take-screenshot:
+      part-id: tubes
+      save-to: ../../.pio/build_wokwi/screenshots/14_power_on.png

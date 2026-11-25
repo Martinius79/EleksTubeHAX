@@ -19,7 +19,11 @@
 #define IPGeolocation_h
 
 #include <Arduino.h>
+#ifdef WOKWI_SIMULATION
+#include "_USER_DEFINES_WOKWI.h"
+#else
 #include "_USER_DEFINES.h"
+#endif
 
 // ************* Compile-time validation checks  *************
 // Geolocation provider validation - ensure only one provider is selected

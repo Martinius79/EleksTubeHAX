@@ -1,0 +1,11 @@
+# Wokwi simulator configuration (VS Code extension "Wokwi Simulator").
+# Simulates the original EleksTube IPS clock, see wokwi/README.md.
+# Build first:  pio run -c wokwi/platformio_wokwi.ini -e EleksTube_Wokwi
+[wokwi]
+version = 1
+firmware = ".pio/build_wokwi/EleksTube_Wokwi/wokwi_flash.bin"
+elf = ".pio/build_wokwi/EleksTube_Wokwi/wokwi_firmware.elf"
+
+[[chip]]
+name = "st7789x6"
+binary = "wokwi/chips/st7789x6.chip.wasm"

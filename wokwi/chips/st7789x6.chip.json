@@ -1,0 +1,10 @@
+{
+  "name": "6x ST7789 135x240",
+  "author": "EleksTubeHAX",
+  "pins": ["GND", "VCC", "SCL", "SDA", "RES", "DC", "EN", "CS0", "CS1", "CS2", "CS3", "CS4", "CS5"],
+  "display": {
+    "width": 885,
+    "height": 240
+  },
+  "controls": []
+}

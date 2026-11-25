@@ -49,3 +49,4 @@ scripts/**    text
 *.kicad_sch   binary
 *.xcf         binary
 *.clk         binary
+*.wasm        binary

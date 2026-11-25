@@ -14,7 +14,11 @@
 
 #include <Arduino.h>
 #include <stdint.h>
+#ifdef WOKWI_SIMULATION
+#include "_USER_DEFINES_WOKWI.h" // Wokwi simulator build (see wokwi/README.md): template defines + simulator WiFi
+#else
 #include "_USER_DEFINES.h"
+#endif
 
 // ************* Web setup portal build (-D WEB_SETUP_PORTAL, enabled for all clocks in platformio.ini [env]) *************
 // WiFi + MQTT broker are entered on a setup web page, the rest is controlled from Home Assistant.

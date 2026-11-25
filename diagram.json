@@ -1,0 +1,528 @@
+{
+  "version": 1,
+  "author": "EleksTubeHAX",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 260,
+      "left": 420,
+      "attrs": {}
+    },
+    {
+      "type": "chip-st7789x6",
+      "id": "tubes",
+      "top": -150,
+      "left": 20,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-neopixel",
+      "id": "bl1",
+      "top": 170,
+      "left": 80,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-neopixel",
+      "id": "bl2",
+      "top": 170,
+      "left": 240,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-neopixel",
+      "id": "bl3",
+      "top": 170,
+      "left": 400,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-neopixel",
+      "id": "bl4",
+      "top": 170,
+      "left": 560,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-neopixel",
+      "id": "bl5",
+      "top": 170,
+      "left": 720,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-neopixel",
+      "id": "bl6",
+      "top": 170,
+      "left": 880,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-74hc595",
+      "id": "sr",
+      "top": 260,
+      "left": 200,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-ds1307",
+      "id": "rtc",
+      "top": 420,
+      "left": 200,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnLeft",
+      "top": 300,
+      "left": 700,
+      "attrs": {
+        "color": "grey",
+        "label": "LEFT",
+        "key": "l",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_btnLeft",
+      "top": 280,
+      "left": 620,
+      "rotate": 90,
+      "attrs": {
+        "value": "10000"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnMode",
+      "top": 370,
+      "left": 700,
+      "attrs": {
+        "color": "grey",
+        "label": "MODE",
+        "key": "m",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_btnMode",
+      "top": 350,
+      "left": 620,
+      "rotate": 90,
+      "attrs": {
+        "value": "10000"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnRight",
+      "top": 440,
+      "left": 700,
+      "attrs": {
+        "color": "grey",
+        "label": "RIGHT",
+        "key": "r",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_btnRight",
+      "top": 420,
+      "left": 620,
+      "rotate": 90,
+      "attrs": {
+        "value": "10000"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnPower",
+      "top": 510,
+      "left": 700,
+      "attrs": {
+        "color": "grey",
+        "label": "POWER",
+        "key": "p",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_btnPower",
+      "top": 490,
+      "left": 620,
+      "rotate": 90,
+      "attrs": {
+        "value": "10000"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "bl1:VDD",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "bl1:VSS",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "bl2:VDD",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "bl2:VSS",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "bl3:VDD",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "bl3:VSS",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "bl4:VDD",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "bl4:VSS",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "bl5:VDD",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "bl5:VSS",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "bl6:VDD",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "bl6:VSS",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "esp:12",
+      "bl6:DIN",
+      "white",
+      []
+    ],
+    [
+      "bl6:DOUT",
+      "bl5:DIN",
+      "white",
+      []
+    ],
+    [
+      "bl5:DOUT",
+      "bl4:DIN",
+      "white",
+      []
+    ],
+    [
+      "bl4:DOUT",
+      "bl3:DIN",
+      "white",
+      []
+    ],
+    [
+      "bl3:DOUT",
+      "bl2:DIN",
+      "white",
+      []
+    ],
+    [
+      "bl2:DOUT",
+      "bl1:DIN",
+      "white",
+      []
+    ],
+    [
+      "sr:DS",
+      "esp:14",
+      "green",
+      []
+    ],
+    [
+      "sr:SHCP",
+      "esp:16",
+      "green",
+      []
+    ],
+    [
+      "sr:STCP",
+      "esp:17",
+      "green",
+      []
+    ],
+    [
+      "sr:OE",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "sr:MR",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "sr:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "sr:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "rtc:SDA",
+      "esp:21",
+      "blue",
+      []
+    ],
+    [
+      "rtc:SCL",
+      "esp:22",
+      "orange",
+      []
+    ],
+    [
+      "rtc:5V",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "rtc:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "btnLeft:1.l",
+      "esp:33",
+      "green",
+      []
+    ],
+    [
+      "btnLeft:2.r",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "r_btnLeft:1",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "r_btnLeft:2",
+      "esp:33",
+      "green",
+      []
+    ],
+    [
+      "btnMode:1.l",
+      "esp:32",
+      "green",
+      []
+    ],
+    [
+      "btnMode:2.r",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "r_btnMode:1",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "r_btnMode:2",
+      "esp:32",
+      "green",
+      []
+    ],
+    [
+      "btnRight:1.l",
+      "esp:35",
+      "green",
+      []
+    ],
+    [
+      "btnRight:2.r",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "r_btnRight:1",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "r_btnRight:2",
+      "esp:35",
+      "green",
+      []
+    ],
+    [
+      "btnPower:1.l",
+      "esp:34",
+      "green",
+      []
+    ],
+    [
+      "btnPower:2.r",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "r_btnPower:1",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "r_btnPower:2",
+      "esp:34",
+      "green",
+      []
+    ],
+    [
+      "tubes:SCL",
+      "esp:18",
+      "orange",
+      []
+    ],
+    [
+      "tubes:SDA",
+      "esp:23",
+      "blue",
+      []
+    ],
+    [
+      "tubes:DC",
+      "esp:25",
+      "purple",
+      []
+    ],
+    [
+      "tubes:RES",
+      "esp:26",
+      "gray",
+      []
+    ],
+    [
+      "tubes:EN",
+      "esp:27",
+      "yellow",
+      []
+    ],
+    [
+      "tubes:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "tubes:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "tubes:CS0",
+      "sr:Q0",
+      "green",
+      []
+    ],
+    [
+      "tubes:CS1",
+      "sr:Q1",
+      "green",
+      []
+    ],
+    [
+      "tubes:CS2",
+      "sr:Q2",
+      "green",
+      []
+    ],
+    [
+      "tubes:CS3",
+      "sr:Q3",
+      "green",
+      []
+    ],
+    [
+      "tubes:CS4",
+      "sr:Q4",
+      "green",
+      []
+    ],
+    [
+      "tubes:CS5",
+      "sr:Q5",
+      "green",
+      []
+    ]
+  ],
+  "dependencies": {}
+}
